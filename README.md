@@ -17,7 +17,7 @@ AUTHORS
 LICENCE
 -------
 
-MOOGme use the MIT licence.
+FASMA uses the MIT licence.
 Copyright © 2015 Daniel Andreasen, Guilherme Teixeira, and Maria Tsantaki.
 
 Permission is hereby granted, free of charge, to any person obtaining
