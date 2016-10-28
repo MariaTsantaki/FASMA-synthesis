@@ -4,166 +4,7 @@
 # My imports
 from __future__ import division
 import numpy as np
-from copy import copy
 import time
-
-
-class Minimize:
-    '''Minimize for best parameters given a line list'''
-
-    def __init__(self, x0, func, model, weights='null',
-                 fix_teff=False, fix_logg=False, fix_feh=False, fix_vt=False,
-                 iterations=160, EPcrit=0.001, RWcrit=0.003, ABdiffcrit=0.01,
-                 MOOGv=2014, GUI=True, **kwargs):
-        self.x0 = x0
-        self.func = func
-        self.model = model
-        self.weights = weights
-        self.fix_teff = fix_teff
-        self.fix_logg = fix_logg
-        self.fix_feh = fix_feh
-        self.fix_vt = fix_vt
-        self.maxiterations = iterations
-        self.iteration = 0
-        self.EPcrit = EPcrit
-        self.RWcrit = RWcrit
-        self.ABdiffcrit = ABdiffcrit
-        self.MOOGv = MOOGv
-        self.GUI = GUI
-        if self.model.lower() == 'kurucz95':
-            self.bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99]
-        if self.model.lower() == 'apogee_kurucz':
-            self.bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99]
-        if self.model.lower() == 'marcs':
-            self.bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99]
-
-    def _getMic(self):
-        '''Get the microturbulence if this is fixed'''
-        if self.x0[1] >= 3.95:
-            self.x0[3] = 6.932*self.x0[0]/10000 - 0.348*self.x0[1] - 1.437
-        else:
-            self.x0[3] = 2.72 - 0.457*self.x0[1] + 0.072*self.x0[2]
-
-    def print_format(self):
-        '''Print the stellar atmospheric parameters in a nice format'''
-        rest = self.x0 + list((self.slopeEP, self.slopeRW, self.Abdiff))
-        if self.iteration == 0:
-            if self.GUI:
-                print(' i     Teff       logg     [Fe/H]    vt    EPslope    RWslope    |FeI-FeII|')
-                print('-' * 99)
-            else:
-                print(' i    Teff    logg    [Fe/H]    vt    EPslope    RWslope    |FeI-FeII|')
-                print('-' * 70)
-        else:
-            print '{:4d}{:>6d}{:>8.2f}{:>+9.2f}{:>8.2f}{:>+9.3f}{:>+11.3f}{:>11.2f}'.format(self.iteration, *rest)
-
-    def check_bounds(self, i):
-        '''
-        Function which checks if parameters are within bounds.
-        Input - parameter: what we want to check; bounds: ze bounds;
-        i: the index of the bounds we want to check'''
-        if self.x0[int((i-1)/2)] < self.bounds[i-1]:
-            self.x0[int((i-1)/2)] = self.bounds[i-1]
-        elif self.x0[int((i-1)/2)] > self.bounds[i]:
-            self.x0[int((i-1)/2)] = self.bounds[i]
-
-    def check_convergence(self, fe_input):
-        '''Check the convergence criteria'''
-        self.slopeEP = 0.00 if self.fix_teff else self.slopeEP
-        self.slopeRW = 0.00 if self.fix_vt else self.slopeRW
-        self.Abdiff = 0.00 if self.fix_logg else self.Abdiff
-        fe_input = self.x0[2]+7.47 if self.fix_feh else fe_input
-
-        cond1 = abs(self.slopeRW) <= self.RWcrit
-        cond2 = abs(self.Abdiff) <= self.ABdiffcrit
-        cond3 = abs(self.slopeEP) <= self.EPcrit
-        cond4 = round(fe_input, 2) == round(self.x0[2]+7.47, 2)
-        return cond1 and cond2 and cond3 and cond4
-
-    def _bump(self, alpha):
-        '''Bump to the values in the list, x'''
-        for i, X in enumerate(zip(alpha, self.x0)):
-            ai, xi = X
-            sig = 0.01 if ai*xi == 0 else ai*xi
-            if ai:
-                self.x0[i] = np.random.normal(xi, abs(sig))
-
-    def _format_x0(self):
-        '''Format the values in x0, so first value is an integer'''
-        self.x0[0] = int(self.x0[0])
-        self.x0[1] = round(self.x0[1], 2)
-        self.x0[2] = round(self.x0[2], 2)
-        self.x0[3] = round(self.x0[3], 2)
-
-    def minimize(self):
-        self._format_x0()
-        res, self.slopeEP, self.slopeRW, abundances, self.x0 = self.func(self.x0, self.model, version=self.MOOGv)
-        self.Abdiff = np.diff(abundances)[0]
-        self.x0 = list(self.x0)
-
-        if self.check_convergence(abundances[0]):
-            return self.x0, True
-
-        parameters = [copy(self.x0)]
-        best = {}
-        # Print the header before starting
-        self.print_format()
-
-        while self.iteration < self.maxiterations:
-            # Step for Teff
-            if (abs(self.slopeEP) >= self.EPcrit) and not self.fix_teff:
-                self.x0[0] += 2000*self.slopeEP
-                self.check_bounds(1)
-
-            # Step for VT
-            if (abs(self.slopeRW) >= self.RWcrit) and not self.fix_vt:
-                self.x0[3] += 1.5*self.slopeRW
-                self.check_bounds(7)
-
-            # Step for logg
-            if (abs(self.Abdiff) >= self.ABdiffcrit) and not self.fix_logg:
-                self.x0[1] -= self.Abdiff
-                self.check_bounds(3)
-
-            # Step for [Fe/H]
-            if not self.fix_feh:
-                self.x0[2] = abundances[0]-7.47
-                self.check_bounds(5)
-
-            if self.fix_vt:
-                self._getMic()  # Reset the microturbulence
-                self.check_bounds(7)
-
-            if self.x0 in parameters:
-                alpha = [0] * 4
-                alpha[0] = abs(self.slopeEP) if not self.fix_teff else 0
-                alpha[1] = abs(self.Abdiff) if not self.fix_logg else 0
-                alpha[2] = 0.01 if not self.fix_feh else 0
-                alpha[3] = abs(self.slopeRW) if not self.fix_vt else 0
-                self._bump(alpha)
-                self.check_bounds(1)
-                self.check_bounds(3)
-                self.check_bounds(5)
-                self.check_bounds(7)
-            parameters.append(copy(self.x0))
-
-            self._format_x0()
-            res, self.slopeEP, self.slopeRW, abundances, self.x0 = self.func(self.x0, self.model, weights=self.weights, version=self.MOOGv)
-            self.Abdiff = np.diff(abundances)[0]
-            self.iteration += 1
-            self.print_format()
-            best[res] = parameters[-1]
-            if self.check_convergence(abundances[0]):
-                print '\nStopped in %i iterations' % self.iteration
-                return self.x0, True
-
-        print '\nStopped in %i iterations' % self.iteration
-        if self.check_convergence(abundances[0]):
-            return self.x0, True
-        else:
-            # Return the best solution rather than the last iteration
-            _ = self.func(best[min(best.keys())], self.model, weights=self.weights, version=self.MOOGv)
-            return best[min(best.keys())], False
 
 
 class Minimize_synth:
@@ -303,7 +144,7 @@ class Minimize_synth:
         return m.params, x_s, flux_final
 
 
-def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
+def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     '''Minimize a synthetic spectrum to an observed
 
      Input
@@ -355,20 +196,19 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
     def exclude_bad_points(x_obs, y_obs, x_s, y_s):
         '''Exclude points from the spectrum as continuum or bad points
         '''
-        # Exclude some continuum points
-        y_obs_lpts = y_obs[np.where(y_obs < 1.0)]
-        x_obs_lpts = x_obs[np.where(y_obs < 1.0)]
 
         # Exclude some bad points
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
-        ymodel = sl(x_obs_lpts)
+        ymodel = sl(x_obs)
         # Check if interpolation is done correctly
         if np.isnan(ymodel).any():
             print('Warning: Check overlapping intervals.')
-
-        delta_y    = (np.subtract(ymodel,y_obs_lpts)/ymodel)
-        y_obs_lpts = y_obs_lpts[np.where((delta_y < 0.03) | (ymodel<0.95))]
-        x_obs_lpts = x_obs_lpts[np.where((delta_y < 0.03) | (ymodel<0.95))]
+        delta_y    = (np.subtract(ymodel,y_obs)/ymodel)
+        y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
+        x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
+        #Exclude points where flux is zero
+        #y_obs_lpts = y_obs_lpts[np.where(y_obs_lpts > 0.0)]
+        #x_obs_lpts = x_obs_lpts[np.where(y_obs_lpts > 0.0)]
         return x_obs_lpts, y_obs_lpts
 
 
@@ -430,7 +270,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
             mac = -3.953 + (0.00195*teff)
         elif logg < 1.0:
             mac = -0.214 + (0.00158*teff)
-        
+
         # For negative values, keep a minimum of 0.3 km/s
         if mac < 0:
             mac = 0.30
@@ -552,11 +392,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
 
 
     #Define step for synthesis according to observations
-    delta_l = x_obs[1] - x_obs[0]
     kwargs['step_wave'] = wave_step(delta_l)
-    # Define the observation points
-    x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
-
     model = kwargs['model']
     y_obserr = 1.0/(kwargs['snr']) #Gaussian noise
     fix_teff = 1 if kwargs['fix_teff'] else 0
@@ -582,18 +418,26 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
     # user-supplied function specified by myfunct via the standard Python
     # keyword dictionary mechanism. This is the way you can pass additional
     # data to your user-supplied function without using global variables.
-    fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
+    fa = {'x_obs': x_obs, 'ranges': ranges, 'model': model, 'y': y_obs, 'y_obserr': y_obserr, 'options': kwargs}
 
     # Minimization starts here
     # Measure time
     start_time = time.time()
     m = mpfit(myfunct, xall=p0, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa)
     #Print results
-    dof = len(y_o)-len(m.params)
+    dof = len(y_obs)-len(m.params)
     if kwargs['refine']:
         print('Refining the parameters...')
-        kwargs['flag_vt'] = True
+        print('Patience is the key...')
+        kwargs['flag_vt']   = True
         kwargs['flag_vmac'] = True
+        vsini_info['fixed'] = 1
+        x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
+        if m.params[2]>-1.0:
+            x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
+        else:
+            x_o, y_o = x_obs, y_obs
+        fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
         f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa)
         parameters = convergence_info(f, parinfo, dof)
         end_time = time.time()-start_time
@@ -619,76 +463,5 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, ranges, **kwargs):
     chi = ((y_o - flux_final)**2/(err**2))
     chi2 = np.sum(chi)/dof
     print('This is your reduced chi2 value: '), round(chi2,2)
-    for i, r in enumerate(ranges):
-        wave   = x_o[np.where((x_o >= float(r[0])) & (x_o <= float(r[1])))]
-        fm     = flux_final[np.where((x_o >= float(r[0])) & (x_o <= float(r[1])))]
-        fminit = flux_initial[np.where((x_o >= float(r[0])) & (x_o <= float(r[1])))]
-        fobs   = y_o[np.where((x_o >= float(r[0])) & (x_o <= float(r[1])))]
-
-        err = np.zeros(len(fobs)) + y_obserr
-        chi = ((fobs - fm)**2/(err**2))
-        dof = len(fobs)-len(m.params)
-        chi2final = np.sum(chi)/dof
-
-        chiinit = ((fobs - fminit)**2/(err**2))
-        chi2init = np.sum(chiinit)/dof
-        print('%s This is your reduced chi2 value: initial: %s final: %s') % (i, round(chi2init,2), round(chi2final,2))
-
     parameters = parameters + [round(chi2,2)] + [int(end_time)]
     return parameters, x_o, flux_final
-
-
-def mcmc_synth(x0, observed, limits):
-    '''This could be cool if it worked'''
-
-    import emcee
-    from utils import interpol_synthetic, fun_moog as func
-
-    def lnlike(theta, x, y, yerr):
-        teff, logg = theta
-        x0 = (teff, logg, 0.0, 1.0)
-        func(x0, driver='synth')
-        _, _, model = interpol_synthetic(x, y, limits[0], limits[1])
-        inv_sigma2 = 1.0/(yerr**2 + model**2*np.exp(2))
-        return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
-
-    def lnprior(theta):
-        teff, logg = theta
-        if 5500 < teff < 6000 and 4.0 < logg < 4.9:
-            return 0.0
-        return -np.inf
-
-    def lnprob(theta, x, y, yerr):
-        lp = lnprior(theta)
-        if not np.isfinite(lp):
-            return -np.inf
-        return lp + lnlike(theta, x, y, yerr)
-
-    x, y = np.loadtxt(observed, unpack=True, usecols=(0, 1))
-    idx = (x >= limits[0]) & (x <= limits[1])
-    x, y = x[idx], y[idx]
-    y /= np.median(y)
-    # Normalization (use first 50 points below 1.2 as constant continuum)
-    maxes = y[(y < 1.2)].argsort()[-50:][::-1]
-    y /= np.median(y[maxes])
-
-    x0 = np.array(x0)
-
-    ndim, nwalkers = 2, 8
-    Teff_step, logg_step = 50, 0.1
-    pos = [x0 + np.random.randn()*np.array([Teff_step, logg_step]) for i in range(nwalkers)]
-
-    print('starting MCMC')
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, np.array([0.01]*len(x))))
-    print('still doing MCMC I guess')
-    sampler.run_mcmc(pos, 500)
-
-    print('Are we done soon???')
-    samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
-    print('Done!')
-    # print(samples)
-    print(samples.shape)
-    import corner
-    import matplotlib.pyplot as plt
-    fig = corner.corner(samples, labels=["$Teff$", "$logg$"], truths=[5777, 4.44])
-    plt.show()

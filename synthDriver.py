@@ -260,11 +260,11 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 if options['observations']:
                     # Check if observations exit, if not pass another line
                     if os.path.isfile('spectra/%s' % options['observations']):
-                        x_obs, y_obs = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
+                        x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
                         print('This is your observed spectrum: %s' % options['observations'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     elif os.path.isfile(options['observations']):
-                        x_obs, y_obs = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
+                        x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
                         print('This is your observed spectrum: %s' % options['observations'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     else:
@@ -274,7 +274,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, ranges=ranges, **options)
+                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         tmp = [line[0]] + [options['observations']] + params + initial + [options['fix_teff'], options['fix_logg'], options['fix_feh'], options['fix_vt'], options['fix_vmac'],
                         options['fix_vsini'], options['flag_vt'], options['flag_vmac'], options['model'], options['resolution'], options['snr']]
@@ -336,10 +336,10 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     print('This is your observed spectrum: %s' % options['observations'])
                     # Check if observations exit, if not pass another line
                     if os.path.isfile('spectra/%s' % options['observations']):
-                        x_obs, y_obs = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
+                        x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     elif  os.path.isfile(options['observations']):
-                        x_obs, y_obs = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
+                        x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     else:
                         logger.error('Error: %s not found.' % options['observations'])
@@ -348,7 +348,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, ranges=ranges, **options)
+                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         if options['save']:
                             save_synth_spec(x_final, y_final, y_obs=y_obs, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
