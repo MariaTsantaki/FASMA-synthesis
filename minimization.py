@@ -457,10 +457,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
         flux_final = sl(x_o)
 
-    x_init, y_init = func(p0, atmtype=model, driver='synth', ranges=ranges, **kwargs)
-    sl = InterpolatedUnivariateSpline(x_init, y_init, k=1)
-    flux_initial = sl(x_o)
-
     err = np.zeros(len(y_o)) + y_obserr
     chi = np.sum((y_o - flux_final)**2)
     chi2 = chi/dof
