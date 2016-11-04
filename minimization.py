@@ -394,7 +394,8 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     #Define step for synthesis according to observations
     kwargs['step_wave'] = wave_step(delta_l)
     model = kwargs['model']
-    y_obserr = 1.0/(kwargs['snr']) #Gaussian noise
+    #y_obserr = 1.0/(kwargs['snr']) #Gaussian noise
+    y_obserr = 0.1 #arbitary value
     fix_teff = 1 if kwargs['fix_teff'] else 0
     fix_logg = 1 if kwargs['fix_logg'] else 0
     fix_feh = 1 if kwargs['fix_feh'] else 0
@@ -439,6 +440,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
             x_o, y_o = x_obs, y_obs
         fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
         f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa)
+        dof = len(y_o)-len(f.params)
         parameters = convergence_info(f, parinfo, dof)
         end_time = time.time()-start_time
         print('Minimization finished in %s sec' % int(end_time))
@@ -460,8 +462,8 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     flux_initial = sl(x_o)
 
     err = np.zeros(len(y_o)) + y_obserr
-    chi = ((y_o - flux_final)**2/(err**2))
-    chi2 = np.sum(chi)/dof
-    print('This is your reduced chi2 value: '), round(chi2,2)
+    chi = np.sum((y_o - flux_final)**2)
+    chi2 = chi/dof
+    print('This is your reduced chi2 value: '), chi2/(y_obserr**2)
     parameters = parameters + [round(chi2,2)] + [int(end_time)]
     return parameters, x_o, flux_final

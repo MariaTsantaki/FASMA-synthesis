@@ -300,5 +300,9 @@ def snr(fname, plot=False):
     else:
         pass
 
-    snr_total = sum(snr)/len(snr)
-    return round(snr_total,1)
+    if not len(snr):
+        snr = None
+    else:
+        snr_total = sum(snr)/len(snr)
+        snr = round(snr_total,1)
+    return snr

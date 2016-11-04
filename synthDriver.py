@@ -125,7 +125,7 @@ def _options(options=None):
         if defaults['observations'] and (defaults['snr'] is None):
             if os.path.isfile('spectra/%s' % defaults['observations']):
                 defaults['snr'] = snr('spectra/%s' % defaults['observations'])
-            elif os.path.isfile(options['observations']):
+            elif os.path.isfile(defaults['observations']):
                 defaults['snr'] = snr(defaults['observations'])
         if defaults['inter_file']:
             defaults['inter_file'] = str(defaults['inter_file'])
