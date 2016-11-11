@@ -215,11 +215,11 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     def bounds(i, p, model):
         '''Smart way to calculate the bounds of each of parameters'''
         if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 50, 0, 100]
+            bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 20, 0, 100]
         if model.lower() == 'apogee_kurucz':
-            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 50, 0, 100]
+            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 20, 0, 100]
         if model.lower() == 'marcs':
-            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 50, 0, 100]
+            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 20, 0, 100]
 
         if p[int((i-1)/2)] < bounds[i-1]:
             p[int((i-1)/2)] = bounds[i-1]
@@ -410,7 +410,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     logg_info  = {'parname':'logg',   'limited': [1, 1], 'limits': [parinfo_limit(model)[2], parinfo_limit(model)[3]], 'step': 0.1,  'mpside': 2, 'fixed': fix_logg}
     feh_info   = {'parname':'[Fe/H]', 'limited': [1, 1], 'limits': [parinfo_limit(model)[4], parinfo_limit(model)[5]], 'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
     vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99],  'step': 0.5,  'mpside': 2, 'fixed': fix_vt}
-    vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 50.0],  'step': 2.0,  'mpside': 2, 'fixed': fix_vmac}
+    vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0],  'step': 2.0,  'mpside': 2, 'fixed': fix_vmac}
     vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.3, 100.0], 'step': 2.0,  'mpside': 2, 'fixed': fix_vsini}
 
     parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
@@ -449,6 +449,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
         flux_final = sl(x_o)
     else:
+        x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
         parameters = convergence_info(m, parinfo, dof)
         end_time = time.time()-start_time
         print('Minimization finished in %s sec' % int(end_time))
