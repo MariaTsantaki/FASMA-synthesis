@@ -26,6 +26,7 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
     start_norm = r[0]
     end_norm = r[1]
     #Transform SNR to noise
+    snr = float(snr)
     if snr is None:
         noise = 0.0
     else:
@@ -50,9 +51,9 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
     if method == 'scalar':
         # Divide with the median of maximum values.
         new_flux = flux_obs/np.median(f_max)
-        if snr<=55:
-            new_flux =  new_flux + (3.0*noise)
-        elif 55<snr<=150:
+        if snr<=49:
+            new_flux =  new_flux + (2.5*noise)
+        elif 49<snr<=150:
             new_flux =  new_flux + (2.0*noise)
         elif 150<snr<250:
             new_flux =  new_flux + (1.0*noise)
@@ -63,9 +64,9 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
         z = np.polyfit(w_max, f_max, 1)
         p = np.poly1d(z)
         new_flux = flux_obs/p(wave_obs)
-        if snr<=55:
-            new_flux =  new_flux + (3.0*noise)
-        elif 55<snr<=150:
+        if snr<=49:
+            new_flux =  new_flux + (2.5*noise)
+        elif 49<snr<=150:
             new_flux =  new_flux + (2.0*noise)
         elif 150<snr<250:
             new_flux =  new_flux + (1.0*noise)
@@ -73,8 +74,8 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
             new_flux =  new_flux + (0.0*noise)
 
     # Exclude some continuum points which differ 0.5% from continuum level
-    wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
-    new_flux = new_flux[np.where((1.0-new_flux)/new_flux > 0.005)]
+    #wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
+    #new_flux = new_flux[np.where((1.0-new_flux)/new_flux > 0.005)]
     wave = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
