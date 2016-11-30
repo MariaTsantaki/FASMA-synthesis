@@ -1,0 +1,14 @@
+numpy>=1.7.0
+scipy>=0.16
+matplotlib
+seaborn
+gooey>=0.8.15.2
+PyYAML
+statsmodels
+patsy
+argparse
+pandas>=0.17.0
+isochrones
+PyAstronomy
+astropy
+# emcee
