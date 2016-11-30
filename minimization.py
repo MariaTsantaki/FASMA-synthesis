@@ -7,143 +7,6 @@ import numpy as np
 import time
 
 
-class Minimize_synth:
-    '''Minimize a synthetic spectrum to an observed
-
-    Input
-    -----
-    p0 : list
-      Initial parameters (teff, logg, feh, vt)
-    x_obs : ndarray
-      Observed wavelength
-    y_obs : ndarray
-      Observed flux
-    r : ndarray
-      ranges of the intervals
-    fout : str
-      Input line list files
-
-    Output
-    -----
-    params : list
-      Final parameters
-    x_final : ndarray
-      Final wavelength
-    y_final : ndarray
-      Final synthetic flux
-    '''
-
-    from utils import fun_moog_synth as func
-    from mpfit import mpfit
-    from scipy.interpolate import InterpolatedUnivariateSpline
-    from synthetic import save_synth_spec
-
-    def __init__(self, p0, x_obs, y_obs, r, fout, model='kurucz95',
-                 fix_teff=None, fix_logg=None, fix_feh=None, fix_vt=None,
-                 fix_vmac=None, fix_vsini=None, **kwargs):
-
-        self.p0 = p0
-        self.x_obs = x_obs
-        self.y_obs = y_obs
-        self.r = r
-        self.fout = fout
-        self.model = model
-        self.fix_teff = 1 if fix_teff else 0
-        self.fix_logg = 1 if fix_logg else 0
-        self.fix_feh = 1 if fix_feh else 0
-        self.fix_vt = 1 if fix_vt else 0
-        self.fix_vmac = 1 if fix_vmac else 0
-        self.fix_vsini = 1 if fix_vsini else 0
-
-        # Setting up the bounds
-        if self.model.lower() == 'kurucz95':
-            self.bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 50, 0, 100]
-        if self.model.lower() == 'apogee_kurucz':
-            self.bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 50, 0, 100]
-        if self.model.lower() == 'marcs':
-            self.bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 50, 0, 100]
-
-        # Setting up PARINFO for mpfit
-        teff_info  = {'limited': [1, 1], 'limits': self.bounds[0:2],   'step': 30,   'mpside': 2, 'fixed': fix_teff}
-        feh_info   = {'limited': [1, 1], 'limits': self.bounds[4:6],   'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
-        logg_info  = {'limited': [1, 1], 'limits': self.bounds[2:4],   'step': 0.2,  'mpside': 2, 'fixed': fix_logg}
-        vt_info    = {'limited': [1, 1], 'limits': self.bounds[6:8],   'step': 0.3,  'mpside': 2, 'fixed': fix_vt}
-        vmac_info  = {'limited': [1, 1], 'limits': self.bounds[8:10],  'step': 0.5,  'mpside': 2, 'fixed': fix_vmac}
-        vsini_info = {'limited': [1, 1], 'limits': self.bounds[10:12], 'step': 0.5,  'mpside': 2, 'fixed': fix_vsini}
-        self.parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
-
-        # Setting up keyword arguments for myfunct
-        self.fa = {'x_obs': x_obs, 'r': r, 'fout': fout, 'model': model,
-                   'y': y_obs, 'options': kwargs}
-
-    def bounds(self, i, p):
-        if p[int((i-1)/2)] < self.bounds[i-1]:
-            p[int((i-1)/2)] = self.bounds[i-1]
-        elif p[int((i-1)/2)] > self.bounds[i]:
-            p[int((i-1)/2)] = self.bounds[i]
-        return p
-
-    def myfunct(self, p, y=None, **kwargs):
-        '''Function that return the weighted deviates (to be minimized).
-
-        Input
-        ----
-        p : list
-          Parameters for the model atmosphere
-        x_obs : ndarray
-          Wavelength
-        r : ndarray
-          ranges of the intervals
-        fout : str
-          Line list file
-        model : str
-          Model atmosphere type
-        y : ndarray
-          Observed flux
-
-
-        Output
-        -----
-        (y-ymodel)/err : ndarray
-          Model deviation from observation
-        '''
-
-        options = kwargs['options']
-        for i in range(1, 12, 2):
-            p = self.bounds(i, p)
-
-        x_s, y_s = func(p, atmtype=model, driver='synth', r=self.r, fout=self.fout, **options)
-        sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
-        flux_s = sl(self.x_obs)
-        ymodel = flux_s
-        # Error on the flux #needs corrections
-        err = np.zeros(len(y)) + 0.01
-        status = 0
-        return([status, (y-ymodel)/err])
-
-    def minimize(self):
-        start_time = time.time()
-        m = mpfit(self.myfunct, xall=self.p0, parinfo=self.parinfo,
-                  ftol=1e-5, xtol=1e-5, gtol=1e-10, functkw=self.fa)
-        end_time = time.time()-start_time
-        print('status = %s' % m.status)
-        print('Iterations: %s' % m.niter)
-        print('Fitted pars:%s' % m.params)
-        print('Uncertainties: %s' % m.perror)  # TODO: We can use them we define a realistic error on the flux
-        print('Value of the summed squared residuals: %s' % m.fnorm)
-        print('Number of calls to the function: %s' % m.nfev)
-        print('Calculations finished in %s sec' % int(end_time))
-        x_s, y_s = func(m.params, atmtype=model, driver='synth', r=r, fout=fout, **kwargs)
-        sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
-        flux_final = sl(x_obs)
-        save_synth_spec(x_obs, flux_final, fname='final.spec')
-        chi = ((x_obs - flux_final)**2)
-        chi2 = np.sum(chi)
-        print('This is your chi2 value: '), chi2
-
-        return m.params, x_s, flux_final
-
-
 def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     '''Minimize a synthetic spectrum to an observed
 
@@ -177,7 +40,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     from utils import fun_moog_synth as func
     from mpfit import mpfit
     from scipy.interpolate import InterpolatedUnivariateSpline
-    from synthetic import save_synth_spec
 
 
     def wave_step(delta_l, step_wave=0.01):
@@ -206,20 +68,17 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         delta_y    = (np.subtract(ymodel,y_obs)/ymodel)
         y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
         x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
-        #Exclude points where flux is zero
-        #y_obs_lpts = y_obs_lpts[np.where(y_obs_lpts > 0.0)]
-        #x_obs_lpts = x_obs_lpts[np.where(y_obs_lpts > 0.0)]
         return x_obs_lpts, y_obs_lpts
 
 
     def bounds(i, p, model):
         '''Smart way to calculate the bounds of each of parameters'''
         if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 20, 0, 100]
+            bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 50, 0, 100]
         if model.lower() == 'apogee_kurucz':
-            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 20, 0, 100]
+            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 50, 0, 100]
         if model.lower() == 'marcs':
-            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 20, 0, 100]
+            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 50, 0, 100]
 
         if p[int((i-1)/2)] < bounds[i-1]:
             p[int((i-1)/2)] = bounds[i-1]
@@ -264,11 +123,11 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
             mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3)))
             + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
         # For subgiants and giants: Hekker & Melendez 2007
-        elif 2.0 <= logg <= 3.95:
+        elif 2.0 <= logg <= 3.95: #subgiants
             mac = -8.426 + (0.00241*teff)
-        elif 1.0 <= logg < 2.0:
+        elif 1.0 <= logg < 2.0: #giants
             mac = -3.953 + (0.00195*teff)
-        elif logg < 1.0:
+        elif logg < 1.0: #giants
             mac = -0.214 + (0.00158*teff)
 
         # For negative values, keep a minimum of 0.3 km/s
@@ -314,7 +173,10 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         if res.status == 8:
             print('status = %s : gtol is too small.' % res.status)
 
+        x_red = round((res.fnorm / dof),4)
         print('Iterations: %s' % res.niter)
+        print('Value of the summed squared residuals: %s' % res.fnorm)
+        print('Reduced chi squared: %s' % x_red)
         print('Fitted parameters with uncertainties:')
         # scaled uncertainties
         pcerror = res.perror * np.sqrt(res.fnorm / dof)
@@ -324,21 +186,22 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         vt = round(float(res.params[3]),2)
         vmac = round(float(res.params[4]),2)
         vsini = round(float(res.params[5]),1)
-
+        #scaled error
         erteff = round(float(pcerror[0]),0)
         erlogg = round(float(pcerror[1]),3)
         erfeh = round(float(pcerror[2]),3)
         ervt = round(float(pcerror[3]),2)
         ervmac = round(float(pcerror[4]),2)
         ervsini = round(float(pcerror[5]),1)
-        parameters = [teff, erteff, logg, erlogg, feh, erfeh, vt, ervt, vmac, ervmac, vsini, ervsini, res.status]
+        # Save only the scaled error
+        parameters = [teff, erteff, logg, erlogg, feh, erfeh, vt, ervt, vmac, ervmac, vsini, ervsini, x_red, res.status]
         for i, x in enumerate(res.params):
-                    print( "\t%s: %s +- %s (scaled error +- %s)" % (parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
-        print('Value of the summed squared residuals: %s' % res.fnorm)
+                    print( "\t%s: %s +- %s (scaled error)" % (parinfo[i]['parname'], round(x, 3), round(pcerror[i], 3)))
+                    #print( "\t%s: %s +- %s (scaled error +- %s)" % (parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
         return parameters
 
 
-    def myfunct(p, x_obs=None, ranges=None, model=None, y=None, y_obserr=0.01, **kwargs):
+    def myfunct(p, x_obs=None, ranges=None, model=None, y=None, y_obserr=0.1, **kwargs):
         '''Function that return the weighted deviates (to be minimized).
 
         Input
@@ -373,6 +236,11 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         p = bounds(9, p, model)
         p = bounds(11, p, model)
 
+        #Jumps for logg
+        #if round(p[1],2)>4.95:
+        #    p[1]=4.0
+        #if round(p[1],2)<0.6:
+        #    p[1]=1.0
         if options['fix_vt'] and options['flag_vt']:
             p[3] = _getMic(p[0], p[1], p[2])
         if options['fix_vmac'] and options['flag_vmac']:
@@ -387,14 +255,79 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         err = np.zeros(len(y)) + y_obserr
         status = 0
         #Print parameters at each function call
-        print('   Teff:{:8.1f}   logg: {:1.2f}   [Fe/H]: {:1.2f}   vt: {:1.2f}   vmac: {:1.2f}   vsini: {:1.2f}'.format(*p))
+        print('    Teff:{:8.1f}   logg: {:1.2f}   [Fe/H]: {:1.2f}   vt: {:1.2f}   vmac: {:1.2f}   vsini: {:1.2f}'.format(*p))
         return([status, (y-ymodel)/err])
+
+
+    def error_synth(p, **kwargs):
+        '''Function to calculate the errors.'''
+
+        teff_up    = p[0] + 100.0
+        teff_down  = p[0] - 100.0
+        logg_up    = p[1] + 0.1
+        logg_down  = p[1] - 0.1
+        feh_up     = p[2] + 0.05
+        feh_down   = p[2] - 0.05
+        vsini_up   = p[5] + 0.5
+        vsini_down = p[5] - 0.5
+        #teff
+        vt_info['fixed']    = 1
+        vmac_info['fixed']  = 1
+        teff_info['fixed']  = 1
+        logg_info['fixed']  = 0
+        feh_info['fixed']   = 0
+        vsini_info['fixed'] = 0
+        print('Calculation of the errors')
+        print('    Fix Teff +100K')
+        teff_up_fit = mpfit(myfunct, xall=(teff_up, p[1], p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        print('    Fix Teff -100K')
+        teff_down_fit = mpfit(myfunct, xall=(teff_down, p[1], p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        #logg
+        teff_info['fixed']  = 0
+        logg_info['fixed']  = 1
+        print('    Fix logg +0.1dex')
+        logg_up_fit = mpfit(myfunct, xall=(p[0], logg_up, p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        print('    Fix logg -0.1dex')
+        logg_down_fit = mpfit(myfunct, xall=(p[0], logg_down, p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        #feh
+        logg_info['fixed']  = 0
+        feh_info['fixed']   = 1
+        print('    Fix [Fe/H] +0.05dex')
+        feh_up_fit = mpfit(myfunct, xall=(p[0], p[1], feh_up, p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        print('    Fix [Fe/H] -0.05dex')
+        feh_down_fit = mpfit(myfunct, xall=(p[0], p[1], feh_down, p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        #vsini
+        feh_info['fixed']   = 0
+        vsini_info['fixed'] = 1
+        print('    Fix vsini +0.5km/s')
+        vsini_up_fit = mpfit(myfunct, xall=(p[0], p[1], p[2], p[3], p[4], vsini_up), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+        print('    Fix vsini -0.5km/s')
+        vsini_down_fit = mpfit(myfunct, xall=(p[0], p[1], p[2], p[3], p[4], vsini_down), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
+
+        teff = [logg_up_fit.params[0], logg_down_fit.params[0], feh_up_fit.params[0], feh_down_fit.params[0], vsini_up_fit.params[0], vsini_down_fit.params[0]]
+        logg = [teff_up_fit.params[1], teff_down_fit.params[1], feh_up_fit.params[1], feh_down_fit.params[1], vsini_up_fit.params[1], vsini_down_fit.params[1]]
+        feh = [teff_up_fit.params[2], teff_down_fit.params[2], logg_up_fit.params[2], logg_down_fit.params[2], vsini_up_fit.params[2], vsini_down_fit.params[2]]
+        vsini = [teff_up_fit.params[5], teff_down_fit.params[5], logg_up_fit.params[5], logg_down_fit.params[5], feh_up_fit.params[5], feh_down_fit.params[5]]
+
+        # errors
+        error_teff = (teff - p[0])**2
+        error_teff_std = np.sqrt(np.sum(error_teff)/len(teff))
+
+        error_logg = (logg - p[1])**2
+        error_logg_std = np.sqrt(np.sum(error_logg)/len(logg))
+
+        error_feh = (feh - p[2])**2
+        error_feh_std = np.sqrt(np.sum(error_feh)/len(feh))
+
+        error_vsini = (vsini - p[5])**2
+        error_vsini_std = np.sqrt(np.sum(error_vsini)/len(vsini))
+
+        return error_teff_std, error_logg_std, error_feh_std, error_vsini_std
 
 
     #Define step for synthesis according to observations
     kwargs['step_wave'] = wave_step(delta_l)
     model = kwargs['model']
-    #y_obserr = 1.0/(kwargs['snr']) #Gaussian noise
     y_obserr = 0.1 #arbitary value
     fix_teff = 1 if kwargs['fix_teff'] else 0
     fix_logg = 1 if kwargs['fix_logg'] else 0
@@ -411,7 +344,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     feh_info   = {'parname':'[Fe/H]', 'limited': [1, 1], 'limits': [parinfo_limit(model)[4], parinfo_limit(model)[5]], 'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
     vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99],  'step': 0.5,  'mpside': 2, 'fixed': fix_vt}
     vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0],  'step': 2.0,  'mpside': 2, 'fixed': fix_vmac}
-    vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.3, 100.0], 'step': 2.0,  'mpside': 2, 'fixed': fix_vsini}
+    vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.0, 100.0], 'step': 2.0,  'mpside': 2, 'fixed': fix_vsini}
 
     parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
 
@@ -424,43 +357,66 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     # Minimization starts here
     # Measure time
     start_time = time.time()
-    m = mpfit(myfunct, xall=p0, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa)
+    m = mpfit(myfunct, xall=p0, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa, maxiter=20)
     #Print results
     dof = len(y_obs)-len(m.params)
     if kwargs['refine']:
         print('Refining the parameters...')
         print('Patience is the key...')
-        kwargs['flag_vt']   = True
-        kwargs['flag_vmac'] = True
+        kwargs['flag_vt']   = False
+        kwargs['flag_vmac'] = False
+        vt_info['fixed']    = 0
+        vmac_info['fixed']  = 0
         vsini_info['fixed'] = 1
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
-        if m.params[2]>-1.0:
-            x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
-        else:
-            x_o, y_o = x_obs, y_obs
+        if m.params[1]==5.0:
+            m.params[1]=4.90
+            logg_info['fixed'] = 1
+        if round(m.params[1],2)<0.6:
+            m.params[1]=1.0
+            logg_info['fixed'] = 1
+        x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
         fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
-        f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa)
+        f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa, maxiter=20)
         dof = len(y_o)-len(f.params)
-        parameters = convergence_info(f, parinfo, dof)
-        end_time = time.time()-start_time
-        print('Minimization finished in %s sec' % int(end_time))
         #Final synthetic spectrum
         x_s, y_s = func(f.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
         flux_final = sl(x_o)
+        #error estimation
+        end_time1 = time.time()-start_time
+        parameters = convergence_info(f, parinfo, dof)
+        if kwargs['errors']:
+            kwargs['flag_vt']   = False
+            kwargs['flag_vmac'] = False
+            kwargs['refine']    = False
+            teff_error, logg_error, feh_error, vsini_error = error_synth(f.params, **kwargs)
+            end_time2 = time.time()-start_time
+            print('Minimization finished in %s sec' % int(end_time2))
+            parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time1)] + [int(end_time2)]
+        else:
+            end_time2 = 0
+            print('Minimization finished in %s sec' % int(end_time1))
+            parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time1)] + [int(end_time2)]
     else:
-        x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
+        x_o, y_o = x_obs, y_obs
         parameters = convergence_info(m, parinfo, dof)
-        end_time = time.time()-start_time
-        print('Minimization finished in %s sec' % int(end_time))
         #Final synthetic spectrum
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
         flux_final = sl(x_o)
+        end_time1 = time.time()-start_time
+        #error estimation
+        if kwargs['errors']:
+            kwargs['flag_vt']   = False
+            kwargs['flag_vmac'] = False
+            kwargs['refine']    = False
+            teff_error, logg_error, feh_error, vsini_error = error_synth(m.params, **kwargs)
+            end_time2 = time.time()-start_time
+            print('Minimization finished in %s sec' % int(end_time2))
+            parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time1)] + [int(end_time2)]
+        else:
+            print('Minimization finished in %s sec' % int(end_time1))
+            parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time1)] + [int(end_time2)]
 
-    err = np.zeros(len(y_o)) + y_obserr
-    chi = np.sum((y_o - flux_final)**2)
-    chi2 = chi/dof
-    print('This is your reduced chi2 value: '), chi2/(y_obserr**2)
-    parameters = parameters + [round(chi2,2)] + [int(end_time)]
     return parameters, x_o, flux_final

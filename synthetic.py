@@ -56,7 +56,7 @@ def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.s
         fname = options['observations'].split('/')[-1]
         fname = fname.split('.')[0] + '_output.spec'
     else:
-        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) + '.spec'
+        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) +  '_' + str(options['resolution']) + '.spec'
 
     tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
                                            fits.Column(name='flux', format='D', array=y),
@@ -341,7 +341,6 @@ def read_linelist(fname, intname='intervals.lst'):
 
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
-
     lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
     names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
     converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})

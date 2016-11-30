@@ -99,6 +99,7 @@ def _options(options=None):
                 'step_flux': 10.0,
                 'minimize': False,
                 'refine': False,
+                'errors': False,
                 'observations': False,
                 'inter_file': 'intervals.lst',
                 'snr': None,
@@ -125,7 +126,7 @@ def _options(options=None):
         if defaults['observations'] and (defaults['snr'] is None):
             if os.path.isfile('spectra/%s' % defaults['observations']):
                 defaults['snr'] = snr('spectra/%s' % defaults['observations'])
-            elif os.path.isfile(defaults['observations']):
+            elif os.path.isfile(str(defaults['observations'])):
                 defaults['snr'] = snr(defaults['observations'])
         if defaults['inter_file']:
             defaults['inter_file'] = str(defaults['inter_file'])
@@ -144,8 +145,8 @@ def _output(overwrite=None, header=None, parameters=None):
     """
     if header:
         hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr', 'feh', 'feherr',
-               'vt', 'vterr', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi2', 'time', 'fixteff', 'fixlogg',
-               'fixfeh', 'fixvt', 'fixvmac', 'fixvsini', 'flag_vt', 'flag_vmac', 'model', 'resolution', 'snr', 'status']
+               'vt', 'vterr', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi2', 'status', 'errteff', 'errlogg',
+               'errfeh', 'errvsini', 'time', 'time_err', 'model', 'resolution', 'snr']
         if overwrite:
             with open('synthresults.dat', 'w') as output:
                 output.write('\t'.join(hdr)+'\n')
@@ -276,8 +277,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                         logger.info('Starting the minimization procedure...')
                         params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
-                        tmp = [line[0]] + [options['observations']] + params + initial + [options['fix_teff'], options['fix_logg'], options['fix_feh'], options['fix_vt'], options['fix_vmac'],
-                        options['fix_vsini'], options['flag_vt'], options['flag_vmac'], options['model'], options['resolution'], options['snr']]
+                        tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
                         _output(parameters=tmp)
                         logger.info('Saved results to: synthresults.dat')
                         if options['save']:
@@ -353,11 +353,9 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                         if options['save']:
                             save_synth_spec(x_final, y_final, y_obs=y_obs, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
                             logger.info('Save final synthetic spectrum')
-                        tmp = [line[0]] + [options['observations']] + params + initial + [options['fix_teff'], options['fix_logg'], options['fix_feh'], options['fix_vt'], options['fix_vmac'],
-                        options['fix_vsini'], options['flag_vt'], options['flag_vmac'], options['model'], options['resolution'], options['snr']]
+                        tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
                         _output(parameters=tmp)
                         logger.info('Saved results to: synthresults.dat')
-
                 else:
                     x_obs, y_obs = (None, None)
                     x_final, y_final = (None, None)
@@ -386,8 +384,4 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
     return
 
 if __name__ == '__main__':
-    import time
-    start_time = time.time()
     synthdriver()
-    end_time = time.time()-start_time
-    print('Calculations finished in %s sec' % int(end_time))
