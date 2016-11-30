@@ -363,10 +363,8 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     if kwargs['refine']:
         print('Refining the parameters...')
         print('Patience is the key...')
-        kwargs['flag_vt']   = False
-        kwargs['flag_vmac'] = False
-        vt_info['fixed']    = 0
-        vmac_info['fixed']  = 0
+        kwargs['flag_vt']   = True
+        kwargs['flag_vmac'] = True
         vsini_info['fixed'] = 1
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         if m.params[1]==5.0:
