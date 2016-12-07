@@ -189,6 +189,8 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     def _broadening_macroturbulent(wave, flux, vmacro_rad, vmacro_tan=None,
                                    return_kernel=False):
         '''
+        From iSpec: http://www.blancocuaresma.com/s/iSpec
+        ----------
         Apply macroturbulent broadening.
         The macroturbulent kernel is defined as in [Gray2005]:
 
