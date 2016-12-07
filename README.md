@@ -3,8 +3,7 @@ Python code for stellar spectral analysis.
 
 Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
-**WARNING**: This code is still under development and not fully tested. For bugs please report to the authors. 
-Updates will be available soon!
+**WARNING**: Contact here for bugs: m.tsantaki@crya.unam.mx
 
 
 AUTHORS
