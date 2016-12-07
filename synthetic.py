@@ -125,32 +125,47 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         return y_inst
 
     def vsini_broadening(x, y, epsilon, vsini):
-        '''
-        Apply rotational broadening to a spectrum assuming a linear limb darkening
-        law. The adopted limb darkening law is the linear one, parameterize by the
-        linear limb darkening parameter: epsilon = 0.6.
-        The effect of rotational broadening on the spectrum is
-        wavelength dependent, because the Doppler shift depends
-        on wavelength. This function neglects this dependence, which
-        is weak if the wavelength range is not too large.
-        Code from: http://www.phoebe-project.org/2.0/
-        .. note:: numpy.convolve is used to carry out the convolution
-              and "mode = same" is used. Therefore, the output
-              will be of the same size as the input, but it
-              will show edge effects.
-        Input
-        -----
-        wvl : The wavelength
-        flux : The flux
-        epsilon : Linear limb-darkening coefficient (0-1).
-        vsini : Projected rotational velocity in km/s.
-        effWvl : The wavelength at which the broadening kernel is evaluated.
-        If not specified, the mean wavelength of the input will be used.
+        """
+        From PyAstronomy:
+        -----------------
+        Apply rotational broadening to a spectrum.
 
-        Output
-        ------
-        y_rot : convolved flux
-        '''
+        This function applies rotational broadening to a given
+        spectrum using the formulae given in Gray's "The Observation
+        and Analysis of Stellar Photospheres". It allows for
+        limb darkening parameterized by the linear limb-darkening law.
+
+        The `edgeHandling` parameter determines how the effects at
+        the edges of the input spectrum are handled. If the default
+        option, "firstlast", is used, the input spectrum is internally
+        extended on both sides; on the blue edge of the spectrum, the
+        first flux value is used and on the red edge, the last value
+        is used to extend the flux array. The extension is neglected
+        in the return array. If "None" is specified, no special care
+        will be taken to handle edge effects.
+
+        .. note:: Currently, the wavelength array as to be regularly spaced.
+
+        Parameters
+        ----------
+        wvl : array
+        The wavelength array [A]. Note that a
+        regularly spaced array is required.
+        flux : array
+        The flux array.
+        vsini : float
+        Projected rotational velocity [km/s].
+        epsilon : float
+        Linear limb-darkening coefficient (0-1).
+        edgeHandling : string, {"firstlast", "None"}
+        The method used to handle edge effects.
+
+        Returns
+        -------
+        Broadened spectrum : array
+        An array of the same size as the input flux array,
+        which contains the broadened spectrum.
+        """
         if vsini == 0:
             y_rot = y
         else:
@@ -341,6 +356,7 @@ def read_linelist(fname, intname='intervals.lst'):
 
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
+
     lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
     names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
     converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
