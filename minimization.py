@@ -414,6 +414,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
             print('Minimization finished in %s sec' % int(end_time2))
             parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time1)] + [int(end_time2)]
         else:
+            end_time2 = 0
             print('Minimization finished in %s sec' % int(end_time1))
             parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time1)] + [int(end_time2)]
 
