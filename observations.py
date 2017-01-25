@@ -22,7 +22,7 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
     new_flux : normalized flux
     '''
 
-    # Define the area of Normalization, 2A around each interval
+    # Define the area of Normalization
     start_norm = r[0]
     end_norm = r[1]
     #Transform SNR to noise
@@ -30,15 +30,15 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
         noise = 0.0
     else:
         snr = float(snr)
-        noise = 1.0/(2.0*snr)
+        noise = 1.0/(snr)
     #Read observations
     wave_obs, flux_obs, delta_l = read_observations(obs_fname, start_norm, end_norm)
 
     # Divide in 2 and find the maximum points
     y = np.array_split(flux_obs, 2)
     x = np.array_split(wave_obs, 2)
-    index_max1 = np.sort(np.argsort(y[0])[-5:])  # this can be done better
-    index_max2 = np.sort(np.argsort(y[1])[-5:])  # this can be done better
+    index_max1 = np.sort(np.argsort(y[0])[-8:])  # this can be done better
+    index_max2 = np.sort(np.argsort(y[1])[-8:])  # this can be done better
     f_max1 = y[0][index_max1]
     f_max2 = y[1][index_max2]
 
@@ -51,39 +51,43 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
     if method == 'scalar':
         # Divide with the median of maximum values.
         new_flux = flux_obs/np.median(f_max)
-        if snr<=55:
-            new_flux =  new_flux + (3.0*noise)
-        elif 55<snr<=150:
+        if snr<20:
             new_flux =  new_flux + (2.0*noise)
-        elif 150<snr<250:
+        elif 20<=snr<200:
+            new_flux =  new_flux + (1.5*noise)
+        elif 200<=snr<350:
             new_flux =  new_flux + (1.0*noise)
-        elif 250<=snr:
+        elif 350<=snr:
             new_flux =  new_flux + (0.0*noise)
-
     if method == 'linear':
         z = np.polyfit(w_max, f_max, 1)
         p = np.poly1d(z)
         new_flux = flux_obs/p(wave_obs)
-        if snr<=55:
-            new_flux =  new_flux + (3.0*noise)
-        elif 55<snr<=150:
+        if snr<20:
             new_flux =  new_flux + (2.0*noise)
-        elif 150<snr<250:
+        elif 20<=snr<200:
+            new_flux =  new_flux + (1.5*noise)
+        elif 200<=snr<350:
             new_flux =  new_flux + (1.0*noise)
-        elif 250<=snr:
+        elif 350<=snr:
             new_flux =  new_flux + (0.0*noise)
 
+    # Exclude some continuum points which differ 0.5% from continuum level
+    #wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
+    #new_flux = new_flux[np.where((1.0-new_flux)/new_flux > 0.005)]
     wave = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
     if plot:
         plt.plot(wave_obs, flux_obs)
-        x = [center, center]
+        x = [start_norm, end_norm]
         y = [np.median(f_max), np.median(f_max)]
         plt.plot(x, y)
         plt.plot(w_max, f_max, 'o')
         plt.show()
 
+        y = [1.0, 1.0]
+        plt.plot(x, y)
         plt.plot(wave, new_flux)
         plt.show()
     return wave, new_flux, delta_l
@@ -169,6 +173,7 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
         print('Warning: Flux contains 0 values.')
 
     delta_l = local_norm(obs_fname, r[0], snr, method)[2]
+    print('SNR: %s' % snr)
     return x_obs, y_obs, delta_l
 
 
@@ -226,8 +231,32 @@ def snr(fname, plot=False):
     from PyAstronomy import pyasl
 
     snr = []
-    wave_cut, flux_cut, l = read_observations(fname, 6681, 6690)
-    num_points = int(len(flux_cut)/3)
+    wave_cut, flux_cut, l = read_observations(fname, 5744, 5746)
+    num_points = int(len(flux_cut)/4)
+    if num_points != 0:
+        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
+        snr.append(snrEsti1["SNR-Estimate"])
+    else:
+        pass
+
+    wave_cut, flux_cut, l = read_observations(fname, 6048, 6052)
+    num_points = int(len(flux_cut)/4)
+    if num_points != 0:
+        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
+        snr.append(snrEsti1["SNR-Estimate"])
+    else:
+        pass
+
+    wave_cut, flux_cut, l = read_observations(fname, 6068, 6076)
+    num_points = int(len(flux_cut)/4)
+    if num_points != 0:
+        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
+        snr.append(snrEsti1["SNR-Estimate"])
+    else:
+        pass
+
+    wave_cut, flux_cut, l = read_observations(fname, 6682, 6686)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])
@@ -235,15 +264,15 @@ def snr(fname, plot=False):
         pass
 
     wave_cut, flux_cut, l = read_observations(fname, 6649, 6652)
-    num_points = int(len(flux_cut)/3)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti2 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti2["SNR-Estimate"])
     else:
         pass
 
-    wave_cut, flux_cut, l = read_observations(fname, 6614, 6623)
-    num_points = int(len(flux_cut)/3)
+    wave_cut, flux_cut, l = read_observations(fname, 6614, 6616)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti3 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti3["SNR-Estimate"])
@@ -251,15 +280,15 @@ def snr(fname, plot=False):
         pass
 
     wave_cut, flux_cut, l = read_observations(fname, 5374.5, 5376.5)
-    num_points = int(len(flux_cut)/3)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
+        #snr.append(snrEsti1["SNR-Estimate"])
     else:
         pass
 
-    wave_cut, flux_cut, l = read_observations(fname, 5438, 5440)
-    num_points = int(len(flux_cut)/3)
+    wave_cut, flux_cut, l = read_observations(fname, 5438.5, 5440)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])
@@ -267,15 +296,15 @@ def snr(fname, plot=False):
         pass
 
     wave_cut, flux_cut, l = read_observations(fname, 5449.5, 5051)
-    num_points = int(len(flux_cut)/3)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])
     else:
         pass
 
-    wave_cut, flux_cut, l = read_observations(fname, 5458, 5459.5)
-    num_points = int(len(flux_cut)/3)
+    wave_cut, flux_cut, l = read_observations(fname, 5458, 5459.25)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])
@@ -283,7 +312,7 @@ def snr(fname, plot=False):
         pass
 
     wave_cut, flux_cut, l = read_observations(fname, 5498.3, 5500)
-    num_points = int(len(flux_cut)/3)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])
@@ -291,7 +320,7 @@ def snr(fname, plot=False):
         pass
 
     wave_cut, flux_cut, l = read_observations(fname, 5541.5, 5542.5)
-    num_points = int(len(flux_cut)/3)
+    num_points = int(len(flux_cut)/4)
     if num_points != 0:
         snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
         snr.append(snrEsti1["SNR-Estimate"])

@@ -7,6 +7,143 @@ import numpy as np
 import time
 
 
+class Minimize_synth:
+    '''Minimize a synthetic spectrum to an observed
+
+    Input
+    -----
+    p0 : list
+      Initial parameters (teff, logg, feh, vt)
+    x_obs : ndarray
+      Observed wavelength
+    y_obs : ndarray
+      Observed flux
+    r : ndarray
+      ranges of the intervals
+    fout : str
+      Input line list files
+
+    Output
+    -----
+    params : list
+      Final parameters
+    x_final : ndarray
+      Final wavelength
+    y_final : ndarray
+      Final synthetic flux
+    '''
+
+    from utils import fun_moog_synth as func
+    from mpfit import mpfit
+    from scipy.interpolate import InterpolatedUnivariateSpline
+    from synthetic import save_synth_spec
+
+    def __init__(self, p0, x_obs, y_obs, r, fout, model='kurucz95',
+                 fix_teff=None, fix_logg=None, fix_feh=None, fix_vt=None,
+                 fix_vmac=None, fix_vsini=None, **kwargs):
+
+        self.p0 = p0
+        self.x_obs = x_obs
+        self.y_obs = y_obs
+        self.r = r
+        self.fout = fout
+        self.model = model
+        self.fix_teff = 1 if fix_teff else 0
+        self.fix_logg = 1 if fix_logg else 0
+        self.fix_feh = 1 if fix_feh else 0
+        self.fix_vt = 1 if fix_vt else 0
+        self.fix_vmac = 1 if fix_vmac else 0
+        self.fix_vsini = 1 if fix_vsini else 0
+
+        # Setting up the bounds
+        if self.model.lower() == 'kurucz95':
+            self.bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 50, 0, 100]
+        if self.model.lower() == 'apogee_kurucz':
+            self.bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 50, 0, 100]
+        if self.model.lower() == 'marcs':
+            self.bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 50, 0, 100]
+
+        # Setting up PARINFO for mpfit
+        teff_info  = {'limited': [1, 1], 'limits': self.bounds[0:2],   'step': 30,   'mpside': 2, 'fixed': fix_teff}
+        feh_info   = {'limited': [1, 1], 'limits': self.bounds[4:6],   'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
+        logg_info  = {'limited': [1, 1], 'limits': self.bounds[2:4],   'step': 0.2,  'mpside': 2, 'fixed': fix_logg}
+        vt_info    = {'limited': [1, 1], 'limits': self.bounds[6:8],   'step': 0.3,  'mpside': 2, 'fixed': fix_vt}
+        vmac_info  = {'limited': [1, 1], 'limits': self.bounds[8:10],  'step': 0.5,  'mpside': 2, 'fixed': fix_vmac}
+        vsini_info = {'limited': [1, 1], 'limits': self.bounds[10:12], 'step': 0.5,  'mpside': 2, 'fixed': fix_vsini}
+        self.parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
+
+        # Setting up keyword arguments for myfunct
+        self.fa = {'x_obs': x_obs, 'r': r, 'fout': fout, 'model': model,
+                   'y': y_obs, 'options': kwargs}
+
+    def bounds(self, i, p):
+        if p[int((i-1)/2)] < self.bounds[i-1]:
+            p[int((i-1)/2)] = self.bounds[i-1]
+        elif p[int((i-1)/2)] > self.bounds[i]:
+            p[int((i-1)/2)] = self.bounds[i]
+        return p
+
+    def myfunct(self, p, y=None, **kwargs):
+        '''Function that return the weighted deviates (to be minimized).
+
+        Input
+        ----
+        p : list
+          Parameters for the model atmosphere
+        x_obs : ndarray
+          Wavelength
+        r : ndarray
+          ranges of the intervals
+        fout : str
+          Line list file
+        model : str
+          Model atmosphere type
+        y : ndarray
+          Observed flux
+
+
+        Output
+        -----
+        (y-ymodel)/err : ndarray
+          Model deviation from observation
+        '''
+
+        options = kwargs['options']
+        for i in range(1, 12, 2):
+            p = self.bounds(i, p)
+
+        x_s, y_s = func(p, atmtype=model, driver='synth', r=self.r, fout=self.fout, **options)
+        sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
+        flux_s = sl(self.x_obs)
+        ymodel = flux_s
+        # Error on the flux #needs corrections
+        err = np.zeros(len(y)) + 0.01
+        status = 0
+        return([status, (y-ymodel)/err])
+
+    def minimize(self):
+        start_time = time.time()
+        m = mpfit(self.myfunct, xall=self.p0, parinfo=self.parinfo,
+                  ftol=1e-4, xtol=1e-4, gtol=1e-10, functkw=self.fa)
+        end_time = time.time()-start_time
+        print('status = %s' % m.status)
+        print('Iterations: %s' % m.niter)
+        print('Fitted pars:%s' % m.params)
+        print('Uncertainties: %s' % m.perror)  # TODO: We can use them we define a realistic error on the flux
+        print('Value of the summed squared residuals: %s' % m.fnorm)
+        print('Number of calls to the function: %s' % m.nfev)
+        print('Calculations finished in %s sec' % int(end_time))
+        x_s, y_s = func(m.params, atmtype=model, driver='synth', r=r, fout=fout, **kwargs)
+        sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
+        flux_final = sl(x_obs)
+        save_synth_spec(x_obs, flux_final, fname='final.spec')
+        chi = ((x_obs - flux_final)**2)
+        chi2 = np.sum(chi)
+        print('This is your chi2 value: '), chi2
+
+        return m.params, x_s, flux_final
+
+
 def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     '''Minimize a synthetic spectrum to an observed
 
@@ -40,6 +177,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     from utils import fun_moog_synth as func
     from mpfit import mpfit
     from scipy.interpolate import InterpolatedUnivariateSpline
+    from synthetic import save_synth_spec
 
 
     def wave_step(delta_l, step_wave=0.01):
@@ -65,9 +203,12 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         # Check if interpolation is done correctly
         if np.isnan(ymodel).any():
             print('Warning: Check overlapping intervals.')
-        delta_y    = (np.subtract(ymodel,y_obs)/ymodel)
-        y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
-        x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel<0.98))]
+        delta_y    = abs(np.subtract(ymodel,y_obs)/ymodel)
+        y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
+        x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
+        #Exclude points where flux is zero
+        #y_obs_lpts = y_obs_lpts[np.where(y_obs_lpts > 0.0)]
+        #x_obs_lpts = x_obs_lpts[np.where(y_obs_lpts > 0.0)]
         return x_obs_lpts, y_obs_lpts
 
 
@@ -100,8 +241,10 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
     def _getMic(teff, logg, feh):
         """Calculate micro turbulence."""
-        if logg >= 3.95:  # Dwarfs Tsantaki 2013
+
+        if logg >= 3.50:  # Dwarfs Tsantaki 2013
             mic = 6.932 * teff * (10**(-4)) - 0.348 * logg - 1.437
+            #mic = 1.163 + (7.808 * (10**(-4)) * (teff - 5800.0)) - (0.494*(logg - 4.30)) - (0.050*feh)
             # Take care of negative values
             if mic < 0:
                 return 0.3
@@ -116,18 +259,19 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
     def _getMac(teff, logg):
         """Calculate macro turbulence."""
+
         # For Dwarfs: Doyle et al. 2014
         # 5200 < teff < 6400
         # 4.0 < logg < 4.6
-        if logg > 3.95:
+        if logg > 3.90:
             mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3)))
             + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
         # For subgiants and giants: Hekker & Melendez 2007
-        elif 2.0 <= logg <= 3.95: #subgiants
+        elif 2.5 <= logg <= 3.90: #subgiants
             mac = -8.426 + (0.00241*teff)
-        elif 1.0 <= logg < 2.0: #giants
+        elif 2.0 <= logg < 2.5: #giants
             mac = -3.953 + (0.00195*teff)
-        elif logg < 1.0: #giants
+        if logg < 2.0: #very giants
             mac = -0.214 + (0.00158*teff)
 
         # For negative values, keep a minimum of 0.3 km/s
@@ -236,11 +380,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         p = bounds(9, p, model)
         p = bounds(11, p, model)
 
-        #Jumps for logg
-        #if round(p[1],2)>4.95:
-        #    p[1]=4.0
-        #if round(p[1],2)<0.6:
-        #    p[1]=1.0
         if options['fix_vt'] and options['flag_vt']:
             p[3] = _getMic(p[0], p[1], p[2])
         if options['fix_vmac'] and options['flag_vmac']:
@@ -321,7 +460,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
         error_vsini = (vsini - p[5])**2
         error_vsini_std = np.sqrt(np.sum(error_vsini)/len(vsini))
-
         return error_teff_std, error_logg_std, error_feh_std, error_vsini_std
 
 
@@ -329,6 +467,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     kwargs['step_wave'] = wave_step(delta_l)
     model = kwargs['model']
     y_obserr = 0.1 #arbitary value
+    #y_obserr = 1.0/float(kwargs['snr']) #Gaussian noise
     fix_teff = 1 if kwargs['fix_teff'] else 0
     fix_logg = 1 if kwargs['fix_logg'] else 0
     fix_feh = 1 if kwargs['fix_feh'] else 0
@@ -344,7 +483,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     feh_info   = {'parname':'[Fe/H]', 'limited': [1, 1], 'limits': [parinfo_limit(model)[4], parinfo_limit(model)[5]], 'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
     vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99],  'step': 0.5,  'mpside': 2, 'fixed': fix_vt}
     vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0],  'step': 2.0,  'mpside': 2, 'fixed': fix_vmac}
-    vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.0, 100.0], 'step': 2.0,  'mpside': 2, 'fixed': fix_vsini}
+    vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.3, 100.0], 'step': 2.0,  'mpside': 2, 'fixed': fix_vsini}
 
     parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
 
@@ -367,16 +506,27 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         kwargs['flag_vmac'] = True
         vsini_info['fixed'] = 1
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
-        if m.params[1]==5.0:
-            m.params[1]=4.90
+        if m.params[1] == 5.0:
+            m.params[1] = 4.90
             logg_info['fixed'] = 1
         if round(m.params[1],2)<0.6:
-            m.params[1]=1.0
+            m.params[1] = 1.0
             logg_info['fixed'] = 1
+        if m.params[0] < 5200.0 and m.params[1]>4.0:
+            kwargs['flag_vt']   = False
+            kwargs['flag_vmac'] = False
+            # fix vt vmac
+            m.params[3] = _getMic(m.params[0], m.params[1], m.params[2])
+            m.params[4] = _getMac(m.params[0], m.params[1])
+
+        if m.params[0] > 6000.0:
+            teff_info['fixed'] = 1
+
         x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
         fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
         f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-5, xtol=1e-5, gtol=1e-4, functkw=fa, maxiter=20)
         dof = len(y_o)-len(f.params)
+
         #Final synthetic spectrum
         x_s, y_s = func(f.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
@@ -414,7 +564,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
             print('Minimization finished in %s sec' % int(end_time2))
             parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time1)] + [int(end_time2)]
         else:
-            end_time2 = 0
+            end_time2 = time.time()-start_time
             print('Minimization finished in %s sec' % int(end_time1))
             parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time1)] + [int(end_time2)]
 

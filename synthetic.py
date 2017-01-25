@@ -125,54 +125,39 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         return y_inst
 
     def vsini_broadening(x, y, epsilon, vsini):
-        """
-        From PyAstronomy:
-        -----------------
-        Apply rotational broadening to a spectrum.
+        '''
+        Apply rotational broadening to a spectrum assuming a linear limb darkening
+        law. The adopted limb darkening law is the linear one, parameterize by the
+        linear limb darkening parameter: epsilon = 0.6.
+        The effect of rotational broadening on the spectrum is
+        wavelength dependent, because the Doppler shift depends
+        on wavelength. This function neglects this dependence, which
+        is weak if the wavelength range is not too large.
+        Code from: http://www.phoebe-project.org/2.0/
+        .. note:: numpy.convolve is used to carry out the convolution
+              and "mode = same" is used. Therefore, the output
+              will be of the same size as the input, but it
+              will show edge effects.
+        Input
+        -----
+        wvl : The wavelength
+        flux : The flux
+        epsilon : Linear limb-darkening coefficient (0-1).
+        vsini : Projected rotational velocity in km/s.
+        effWvl : The wavelength at which the broadening kernel is evaluated.
+        If not specified, the mean wavelength of the input will be used.
 
-        This function applies rotational broadening to a given
-        spectrum using the formulae given in Gray's "The Observation
-        and Analysis of Stellar Photospheres". It allows for
-        limb darkening parameterized by the linear limb-darkening law.
-
-        The `edgeHandling` parameter determines how the effects at
-        the edges of the input spectrum are handled. If the default
-        option, "firstlast", is used, the input spectrum is internally
-        extended on both sides; on the blue edge of the spectrum, the
-        first flux value is used and on the red edge, the last value
-        is used to extend the flux array. The extension is neglected
-        in the return array. If "None" is specified, no special care
-        will be taken to handle edge effects.
-
-        .. note:: Currently, the wavelength array as to be regularly spaced.
-
-        Parameters
-        ----------
-        wvl : array
-        The wavelength array [A]. Note that a
-        regularly spaced array is required.
-        flux : array
-        The flux array.
-        vsini : float
-        Projected rotational velocity [km/s].
-        epsilon : float
-        Linear limb-darkening coefficient (0-1).
-        edgeHandling : string, {"firstlast", "None"}
-        The method used to handle edge effects.
-
-        Returns
-        -------
-        Broadened spectrum : array
-        An array of the same size as the input flux array,
-        which contains the broadened spectrum.
-        """
+        Output
+        ------
+        y_rot : convolved flux
+        '''
         if vsini == 0:
             y_rot = y
         else:
             y_rot = pyasl.rotBroad(x, y, epsilon, vsini, edgeHandling='firstlast')
         return y_rot
 
-    def _vmacro_kernel(dlam, Ar, At, Zr, Zt):
+    def vmacro_kernel(dlam, Ar, At, Zr, Zt):
         '''
         Macroturbulent velocity kernel.
         '''
@@ -186,42 +171,25 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
                              quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
                              for idlam in dlam])
 
-    def _broadening_macroturbulent(wave, flux, vmacro_rad, vmacro_tan=None,
-                                   return_kernel=False):
+    def vmac_broadening(wave, flux, vmacro_rad):
         '''
-        From iSpec: http://www.blancocuaresma.com/s/iSpec
-        ----------
         Apply macroturbulent broadening.
-        The macroturbulent kernel is defined as in [Gray2005]:
-
-        .. math::
-            K_\mathrm{macro}(\Delta\lambda) = \frac{2A_R\Delta\lambda}{\sqrt{\pi}\zeta_R^2}\int_0^{\zeta_R/\Delta\lambda}e^{-1/u^2}du
-
-             & + \frac{2A_T\Delta\lambda}{\sqrt{\pi}\zeta_T^2}\int_0^{\zeta_T/\Delta\lambda}e^{-1/u^2}du
-
-        If :envvar:`vmacro_tan` is :envvar:`None`, then the value will be put equal
-        to the radial component :envvar:`vmacro_rad`.
+        The macroturbulent kernel is defined as in [Gray2005].
+        Same functions are used in iSpec (Blanco-Cuaresma et al. 2014)
 
         Input
         -----
         :parameter wave: Wavelength of the spectrum
-        :type wave: array
         :parameter flux: Flux of the spectrum
-        :type flux: array
         :parameter vmacro_rad: macroturbulent broadening, radial component
-        :type vmacro_rad: float
-        :parameter vmacro_tan: macroturbulent broadening, tangential component
-        :type vmacro_tan: float
-        :parameter return_kernel: return kernel
-        :type return_kernel: bool
 
         Output
         ------
-        y_mac : broadened flux [, (wavelength, kernel)]
+        y_mac : broadened flux
         '''
 
-        if vmacro_tan is None:
-            vmacro_tan = vmacro_rad
+        # radial component is equal to the tangential component
+        vmacro_tan = vmacro_rad
 
         if vmacro_rad == vmacro_tan == 0:
             return flux
@@ -229,7 +197,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         # Define central wavelength
         lambda0 = (wave[0] + wave[-1]) / 2.0
         vmac_rad = vmacro_rad/(299792458.*1e-3)*lambda0
-        vmac_tan = vmacro_tan/(299792458.*1e-3)*lambda0
+        vmac_tan   = vmac_rad
 
         # Make sure the wavelength range is equidistant before applying the
         # convolution
@@ -251,7 +219,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         # Construct the broadening kernel
         wave_k = np.arange(n_kernel)*dwave
         wave_k -= wave_k[-1]/2.
-        kernel = _vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
+        kernel = vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
         kernel /= sum(kernel)
 
         flux_conv = fftconvolve(1-flux_, kernel, mode='same')
@@ -263,19 +231,14 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
             offset = dwave / 2.0
         flux = np.interp(wave+offset, wave_, 1-flux_conv)
 
-        # Return the results.
-        if return_kernel:
-            return flux, (wave_k, kernel)
-        else:
-            return flux
+        return flux
 
     # Instrumental broadening
     y_inst = instrumental_profile(x, y, resolution)
     # vsini broadening
     y_rot = vsini_broadening(x, y_inst, epsilon, vsini)
     # vmac broadening
-    y_broad = _broadening_macroturbulent(x, y_rot, vmacro_rad=vmac,
-                                         vmacro_tan=None, return_kernel=False)
+    y_broad = vmac_broadening(x, y_rot, vmacro_rad=vmac)
     return x, y_broad
 
 
@@ -358,7 +321,6 @@ def read_linelist(fname, intname='intervals.lst'):
 
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
-
     lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
     names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
     converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})

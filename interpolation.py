@@ -77,7 +77,6 @@ def interpolator(params, save=True, atmtype='kurucz95', result=None):
 
     layers = range(min([model.shape[0] for model in models]))
     columns = range(6)
-
     newatm = np.zeros((len(layers), len(columns)))
     for layer in layers:
         for column in columns:
@@ -85,7 +84,6 @@ def interpolator(params, save=True, atmtype='kurucz95', result=None):
             newatm[layer, column] = griddata(gridpoints, tlayer, (teff, logg, feh), **options)
     vt_array = np.zeros(len(layers))+params[-1]*1e5
     newatm = np.hstack((newatm, vt_array[:, np.newaxis]))
-
     if save:
         save_model(newatm, params, type=atmtype)
     if result:
@@ -124,9 +122,29 @@ def save_model(model, params, type='kurucz95', fout='out.atm'):
              'NMOL      19\n'\
              '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
              '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
-             '         8.1    822.0     22.1' % (vt*1e5, feh, 7.45+feh)
+             '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh)
 
     _fmt = ('%15.8E', '%8.1f', '%.3E', '%.3E', '%.3E', '%.3E', '%.3E')
     while model.shape[1] < len(_fmt):
         model = np.column_stack((model, np.zeros_like(model[:, 0])))
     np.savetxt(fout, model, header=header, footer=footer, comments='', delimiter=' ', fmt=_fmt)
+
+
+if __name__ == '__main__':
+    import argparse
+    args = argparse.ArgumentParser(description='Get a model atmosphere.')
+    args.add_argument('teff', type=int, help='Effective temperature')
+    args.add_argument('logg', type=float, help='Surface gravity')
+    args.add_argument('feh', type=float, help='Metallicity, [Fe/H]')
+    args.add_argument('vt', type=float, help='Microturbulence')
+    args.add_argument('-o', '--out', help='Output atmosphere', default='out.atm')
+    args.add_argument('-a', '--atmosphere', help='Model atmosphere', choices=['kurucz95', 'apogee_kurucz', 'marcs'], default='kurucz95')
+
+    args = args.parse_args()
+
+    params = [args.teff, args.logg, args.feh, args.vt]
+
+    atmosphere, p = interpolator(params, save=False, atmtype=args.atmosphere, result=True)
+    save_model(atmosphere, params, type=args.atmosphere, fout=args.out)
+
+    print 'Atmosphere model sucessfully saved in: %s' % args.out
