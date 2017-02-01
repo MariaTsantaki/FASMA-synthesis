@@ -221,115 +221,53 @@ def snr(fname, plot=False):
     """Calculate SNR using intervals depending on giraffe mode.
     Input
     ----
-    fname : spectrum
-    plot : plot snr fit
+    fname : str
+      Name of the spectrum
+    plot : bool
+      Plot snr fit
+
     Output
     -----
-    snr : snr value averaged from the continuum intervals
+    snr : float
+      snr value averaged from the continuum intervals
     """
-    # I know I know, there is a better way to do this!
     from PyAstronomy import pyasl
+    def sub_snr(interval):
+        '''Measure the SNR on a small interval
+
+        Input
+        -----
+        interval : list
+          Upper and lower limit on wavelength
+
+        Output
+        ------
+        SNR : float
+          The SNR in the small interval
+        '''
+        w1, w2 = interval
+        wave_cut, flux_cut, l = read_observations(fname, w1, w2)
+        num_points = int(len(flux_cut)/4)
+        if num_points != 0:
+            snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
+            return snrEsti1["SNR-Estimate"]
+        else:
+            return 0
+
+
+    intervals = [[5744, 5746], [6048, 6052], [6068, 6076], [6682, 6686],
+                 [6649, 6652], [6614, 6616], [5374.5, 5376.5], [5438.5, 5440],
+                 [5449.5, 5051], [5458, 5459.25], [5498.3, 5500], [5541.5, 5542.5]]
 
     snr = []
-    wave_cut, flux_cut, l = read_observations(fname, 5744, 5746)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
+    for interval in intervals:
+        snr.append(sub_snr(interval))
 
-    wave_cut, flux_cut, l = read_observations(fname, 6048, 6052)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 6068, 6076)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 6682, 6686)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 6649, 6652)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti2 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti2["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 6614, 6616)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti3 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti3["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5374.5, 5376.5)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        #snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5438.5, 5440)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5449.5, 5051)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5458, 5459.25)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5498.3, 5500)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
-
-    wave_cut, flux_cut, l = read_observations(fname, 5541.5, 5542.5)
-    num_points = int(len(flux_cut)/4)
-    if num_points != 0:
-        snrEsti1 = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
-        snr.append(snrEsti1["SNR-Estimate"])
-    else:
-        pass
     if not len(snr):
         snr = None
     else:
+        snr = [value for value in snr if value != 0]
         snr_clean = [value for value in snr if not np.isnan(value)]
-        snr_total = sum(snr_clean)/len(snr_clean)
-        snr = round(snr_total,1)
+        snr_total = np.average(snr_clean)
+        snr = round(snr_total, 1)
     return snr
