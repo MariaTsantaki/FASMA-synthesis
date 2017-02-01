@@ -180,28 +180,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
     from synthetic import save_synth_spec
 
 
-    def wave_step(delta_l, step_wave=0.01):
-        '''Find the step of synthesis in wavelength depending the observations
-
-        Input
-        -----
-        delta_l : float
-          Step in wavelength
-        step_wave : float
-          Step in wavelength
-        '''
-
-        # TODO: If you want minimum value, then do:
-        # step_wave = round(min([delta_l, step_wave]), 3)
-        if delta_l < step_wave:
-            step_wave = delta_l  #FIXME: This can not both be true.
-        elif delta_l > step_wave:
-            step_wave = delta_l  #FIXME: This can not both be true.
-        else:
-            step_wave
-        return round(step_wave,3)
-
-
     def exclude_bad_points(x_obs, y_obs, x_s, y_s):
         '''Exclude points from the spectrum as continuum or bad points.
         Points between 3% and 98% are removed.
@@ -488,7 +466,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
 
     #Define step for synthesis according to observations
-    kwargs['step_wave'] = wave_step(delta_l)
+    kwargs['step_wave'] = round(delta_l, 3)
     model = kwargs['model']
     y_obserr = 0.1 #arbitary value
     #y_obserr = 1.0/float(kwargs['snr']) #Gaussian noise
