@@ -17,14 +17,22 @@ def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.s
       Wavelength
     y : ndarray
       Flux
+    y_obs : ndarray
+      Observed wavelength
+    initial : list
+      Initial parameters (Teff, logg, [Fe/H], vt, vmac, vsini)
+    final : list
+      Final parameters (after convergence)
     fname : str
       Filename of fits file
+    options : dict
+      Dictionary with all options
 
     Output
     -----
     fname fits file
     '''
-    #Create header
+    # Create header
     header = fits.Header()
     header['CRVAL1']   = x[0]
     header['CDELT1']   = x[1] - x[0]
@@ -56,14 +64,13 @@ def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.s
         fname = options['observations'].split('/')[-1]
         fname = fname.split('.')[0] + '_output.spec'
     else:
-        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) +  '_' + str(options['resolution']) + '.spec'
+        fname = '_'.join(map(str, initial)) +  '_' + str(options['resolution']) + '.spec'
 
     tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
                                            fits.Column(name='flux', format='D', array=y),
                                            fits.Column(name='y_obs', format='D', array=y_obs)], header=header)
     tbhdu.writeto('results/%s' % fname, clobber=True)
     print('Synthetic spectrum saved: results/%s' % fname)
-    return
 
 
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
@@ -73,15 +80,17 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     Input
     ----
     x : ndarray
-      wavelength
+      Wavelength
     y : ndarray
-      flux
-    resolution : float
-      Instrumental resolution (lambda /delta lambda)
+      Flux
     vsini : float
       vsini in km/s
     vmac : float
       vmac in km/s
+    resolution : float
+      Instrumental resolution (lambda/delta lambda)
+    epsilon : float
+      Linear limb-darkening coefficient (0-1)
 
     Output
     -----
@@ -322,19 +331,18 @@ def read_linelist(fname, intname='intervals.lst'):
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
     lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
-    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
-    converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
+                        names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
+                        converters={'Do': lambda x : x.replace('nan', ' '),
+                                    'vdwaals': lambda x : float(x)})
     lines.sort_values(by='wl', inplace=True)
 
     intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t')
     ranges = intervals.values
-    atomic = []
-    N = []
-    for i, ri in enumerate(intervals.values):
+    atomic, N = [], []
+    for ri in ranges:
         a = lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]
-        a = a.as_matrix()
-        atomic.append(a)
-        N.append(len(lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]))
+        atomic.append(a.as_matrix())
+        N.append(len(a))
     N = sum(N)
     atomic = np.vstack(atomic)
     print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
