@@ -9,9 +9,9 @@ Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 AUTHORS
 -------
 
+    M. Tsantaki
     D. Andreasen
     G. Teixeira
-    M. Tsantaki
 
 LICENCE
 -------
