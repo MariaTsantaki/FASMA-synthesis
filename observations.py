@@ -7,6 +7,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import os
 from astropy.io import fits
 import matplotlib.pyplot as plt
+plt.style.use('ggplot')
 
 
 def local_norm(obs_fname, r, snr=None, method='linear', plot=False):
