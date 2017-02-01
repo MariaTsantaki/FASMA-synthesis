@@ -150,7 +150,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
      Input
      -----
      p0 : list
-       Initial parameters (teff, logg, feh, vt)
+       Initial parameters (teff, logg, feh, vt, vmac, vsini)
      x_obs : ndarray
        Observed wavelength
      y_obs : ndarray
@@ -182,33 +182,58 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
     def wave_step(delta_l, step_wave=0.01):
         '''Find the step of synthesis in wavelength depending the observations
+
+        Input
+        -----
+        delta_l : float
+          Step in wavelength
+        step_wave : float
+          Step in wavelength
         '''
 
+        # TODO: If you want minimum value, then do:
+        # step_wave = round(min([delta_l, step_wave]), 3)
         if delta_l < step_wave:
-            step_wave = delta_l
+            step_wave = delta_l  #FIXME: This can not both be true.
         elif delta_l > step_wave:
-            step_wave = delta_l
+            step_wave = delta_l  #FIXME: This can not both be true.
         else:
             step_wave
         return round(step_wave,3)
 
 
     def exclude_bad_points(x_obs, y_obs, x_s, y_s):
-        '''Exclude points from the spectrum as continuum or bad points
+        '''Exclude points from the spectrum as continuum or bad points.
+        Points between 3% and 98% are removed.
+
+        Input
+        -----
+        x_obs : ndarray
+          Observed wavelength
+        y_obs : ndarray
+          Observed flux
+        x_s : ndarray
+          Synthetic wavelength
+        y_s : ndarray
+          Synthetic flux
+
+        Output
+        ------
+        x_obs_lpts : ndarray
+          Cleaned wavelength
+        y_obs_lpts : ndarray
+          Cleaned flux
         '''
 
-        # Exclude some bad points
+        # Put on same wavelength
         sl = InterpolatedUnivariateSpline(x_s, y_s, k=1)
         ymodel = sl(x_obs)
         # Check if interpolation is done correctly
         if np.isnan(ymodel).any():
             print('Warning: Check overlapping intervals.')
-        delta_y    = abs(np.subtract(ymodel,y_obs)/ymodel)
+        delta_y    = abs(np.subtract(ymodel, y_obs)/ymodel)
         y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
         x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
-        #Exclude points where flux is zero
-        #y_obs_lpts = y_obs_lpts[np.where(y_obs_lpts > 0.0)]
-        #x_obs_lpts = x_obs_lpts[np.where(y_obs_lpts > 0.0)]
         return x_obs_lpts, y_obs_lpts
 
 
@@ -240,11 +265,10 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
 
     def _getMic(teff, logg, feh):
-        """Calculate micro turbulence."""
+        '''Calculate micro turbulence.'''
 
         if logg >= 3.50:  # Dwarfs Tsantaki 2013
             mic = 6.932 * teff * (10**(-4)) - 0.348 * logg - 1.437
-            #mic = 1.163 + (7.808 * (10**(-4)) * (teff - 5800.0)) - (0.494*(logg - 4.30)) - (0.050*feh)
             # Take care of negative values
             if mic < 0:
                 return 0.3
@@ -258,20 +282,22 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
 
     def _getMac(teff, logg):
-        """Calculate macro turbulence."""
+        '''Calculate macro turbulence.'''
 
         # For Dwarfs: Doyle et al. 2014
         # 5200 < teff < 6400
         # 4.0 < logg < 4.6
         if logg > 3.90:
-            mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3)))
-            + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
+            ts = teff - 5777.
+            mac = 3.21 + (2.33 * ts      * (10**(-3)))
+                       + (2.00 * (ts**2) * (10**(-6)))
+                       - (2.00 * (logg - 4.44))
         # For subgiants and giants: Hekker & Melendez 2007
-        elif 2.5 <= logg <= 3.90: #subgiants
+        elif 2.5 <= logg <= 3.90:  # subgiants
             mac = -8.426 + (0.00241*teff)
-        elif 2.0 <= logg < 2.5: #giants
+        elif 2.0 <= logg < 2.5:  # giants
             mac = -3.953 + (0.00195*teff)
-        if logg < 2.0: #very giants
+        if logg < 2.0:  # very giants
             mac = -0.214 + (0.00158*teff)
 
         # For negative values, keep a minimum of 0.3 km/s
@@ -281,7 +307,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
 
 
     def convergence_info(res, parinfo, dof):
-        """
+        '''
         Information on convergence. All values greater than zero can
         represent success (however status == 5 may indicate failure to
         converge).
@@ -292,7 +318,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         meaning that the fit is implicitly assumed to be of good quality --
         then the estimated parameter uncertainties can be computed by scaling
         .perror by the measured chi-squared value.
-        """
+        '''
 
         if res.status == -16:
             print('status = %s : A parameter or function value has become infinite or an undefined number.' % res.status)
@@ -341,7 +367,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         parameters = [teff, erteff, logg, erlogg, feh, erfeh, vt, ervt, vmac, ervmac, vsini, ervsini, x_red, res.status]
         for i, x in enumerate(res.params):
                     print( "\t%s: %s +- %s (scaled error)" % (parinfo[i]['parname'], round(x, 3), round(pcerror[i], 3)))
-                    #print( "\t%s: %s +- %s (scaled error +- %s)" % (parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
         return parameters
 
 
@@ -356,13 +381,12 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
           Wavelength
         ranges : ndarray
           ranges of the intervals
-        atomic_data : ndarray
-          Atomic data
         model : str
           Model atmosphere type
         y : ndarray
           Observed flux
-
+        y_obserr : float
+          The flux error
 
         Output
         -----
@@ -390,10 +414,10 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         # Check if interpolation is done correctly
         if np.isnan(ymodel).any():
             print('Warning: Check overlapping intervals.')
-        # Error on the flux #needs corrections
+        # Error on the flux
         err = np.zeros(len(y)) + y_obserr
         status = 0
-        #Print parameters at each function call
+        # Print parameters at each function call
         print('    Teff:{:8.1f}   logg: {:1.2f}   [Fe/H]: {:1.2f}   vt: {:1.2f}   vmac: {:1.2f}   vsini: {:1.2f}'.format(*p))
         return([status, (y-ymodel)/err])
 
@@ -409,7 +433,7 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         feh_down   = p[2] - 0.05
         vsini_up   = p[5] + 0.5
         vsini_down = p[5] - 0.5
-        #teff
+        # Teff
         vt_info['fixed']    = 1
         vmac_info['fixed']  = 1
         teff_info['fixed']  = 1
@@ -421,21 +445,21 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         teff_up_fit = mpfit(myfunct, xall=(teff_up, p[1], p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
         print('    Fix Teff -100K')
         teff_down_fit = mpfit(myfunct, xall=(teff_down, p[1], p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
-        #logg
+        # logg
         teff_info['fixed']  = 0
         logg_info['fixed']  = 1
         print('    Fix logg +0.1dex')
         logg_up_fit = mpfit(myfunct, xall=(p[0], logg_up, p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
         print('    Fix logg -0.1dex')
         logg_down_fit = mpfit(myfunct, xall=(p[0], logg_down, p[2], p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
-        #feh
+        # [Fe/H]
         logg_info['fixed']  = 0
         feh_info['fixed']   = 1
         print('    Fix [Fe/H] +0.05dex')
         feh_up_fit = mpfit(myfunct, xall=(p[0], p[1], feh_up, p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
         print('    Fix [Fe/H] -0.05dex')
         feh_down_fit = mpfit(myfunct, xall=(p[0], p[1], feh_down, p[3], p[4], p[5]), parinfo=parinfo, ftol=1e-2, xtol=1e-2, gtol=1e-2, functkw=fa, maxiter=2, nocovar=1, quiet=1, iterfunct=None)
-        #vsini
+        # vsini
         feh_info['fixed']   = 0
         vsini_info['fixed'] = 1
         print('    Fix vsini +0.5km/s')
@@ -566,6 +590,6 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         else:
             end_time2 = time.time()-start_time
             print('Minimization finished in %s sec' % int(end_time1))
-            parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time1)] + [int(end_time2)]
+            parameters = parameters + [0, 0, 0, 0, int(end_time1), int(end_time2)]
 
     return parameters, x_o, flux_final
