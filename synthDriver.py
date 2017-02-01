@@ -56,19 +56,22 @@ def _getMic(teff, logg, feh):
 
 
 def _getMac(teff, logg):
-    """Calculate macro turbulence."""
+    '''Calculate macro turbulence.'''
+
     # For Dwarfs: Doyle et al. 2014
     # 5200 < teff < 6400
     # 4.0 < logg < 4.6
-    if logg > 3.95:
-        mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3)))
-        + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
+    if logg > 3.90:
+        ts = teff - 5777.
+        mac = 3.21 + (2.33 * ts      * (10**(-3))) + \
+                     (2.00 * (ts**2) * (10**(-6))) - \
+                     (2.00 * (logg - 4.44))
     # For subgiants and giants: Hekker & Melendez 2007
-    elif 2.0 <= logg <= 3.95:
+    elif 2.5 <= logg <= 3.90:  # subgiants
         mac = -8.426 + (0.00241*teff)
-    elif 1.0 <= logg < 2.0:
+    elif 2.0 <= logg < 2.5:  # giants
         mac = -3.953 + (0.00195*teff)
-    elif logg < 1.0:
+    if logg < 2.0:  # very giants
         mac = -0.214 + (0.00158*teff)
 
     # For negative values, keep a minimum of 0.3 km/s
@@ -140,13 +143,18 @@ def _output(overwrite=None, header=None, parameters=None):
 
     Input
     -----
-    overwrite - Overwrite the file
-    header    - Only use True if this is for the file to be created
+    overwrite : bool
+      Overwrite the file
+    header : bool
+      Only use True if this is for the file to be created
+    parameters : list
+      The parameters to be written to the file
     """
     if header:
-        hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr', 'feh', 'feherr',
-               'vt', 'vterr', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi2', 'status', 'errteff', 'errlogg',
-               'errfeh', 'errvsini', 'time', 'time_err', 'model', 'resolution', 'snr']
+        hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr',
+               'feh', 'feherr', 'vt', 'vterr', 'vmac', 'ervmac', 'vsini',
+               'ervsini', 'chi2', 'status', 'errteff', 'errlogg', 'errfeh',
+               'errvsini', 'time', 'time_err', 'model', 'resolution', 'snr']
         if overwrite:
             with open('synthresults.dat', 'w') as output:
                 output.write('\t'.join(hdr)+'\n')
@@ -164,7 +172,10 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
 
     Input
     -----
-    starLines   -   Configuration file (default: StarMe.cfg)
+    starLines : str
+      Name of configuration file (default: StarMe_synth.cfg)
+    overwrite : bool
+      If True, then overwrite the output file
 
     Output
     -----
@@ -188,11 +199,6 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
     # Check if models exist
     if not os.path.isdir('models'):
         logger.error('Model folder is missing.')
-
-    # Create results directory
-    if not os.path.isdir('results'):
-        os.mkdir('results')
-        logger.info('results directory was created')
 
     # Creating the output file
     _output(overwrite=overwrite, header=True)
@@ -228,10 +234,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 x_initial, y_initial = func(initial, atmtype=options['model'],
                 ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
-                if options['save']:
-                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
-                    logger.info('Save initial synthetic spectrum')
+                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
             # Create synthetic spectrum with solar values and the options defined by the user
@@ -250,23 +253,26 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 # Create initial synthetic model
                 logger.info('Getting initial model grid')
                 x_initial, y_initial = func(initial, atmtype=options['model'],
-                ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                                            ranges=ranges, driver='synth',
+                                            version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
+                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
                 if options['save']:
-                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
+                    save_synth_spec(x_initial, y_initial, y_obs=None,
+                                    initial=initial, final=None,
+                                    fname='initial.spec', **options)
                     logger.info('Save initial synthetic spectrum')
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
                 if options['observations']:
                     # Check if observations exit, if not pass another line
                     if os.path.isfile('spectra/%s' % options['observations']):
-                        x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
                         print('This is your observed spectrum: %s' % options['observations'])
+                        x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     elif os.path.isfile(options['observations']):
-                        x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
                         print('This is your observed spectrum: %s' % options['observations'])
+                        x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     else:
                         logger.error('Error: %s not found.' % options['observations'])
@@ -275,7 +281,10 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
+                        params, x_final, y_final = minimize_synth(initial,
+                                                                  x_obs, y_obs,
+                                                                  x_initial, y_initial,
+                                                                  delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
                         _output(parameters=tmp)
@@ -307,11 +316,8 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.info('Getting initial model grid')
                 x_initial, y_initial = func(initial, atmtype=options['model'],
                 ranges=ranges, driver='synth', version=options['MOOGv'], **options)
-                if options['save']:
-                    logger.info('Save initial synthetic spectrum')
-                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
+                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
             # Create synthetic spectra with values set by the user and options altered.
@@ -319,7 +325,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.info('Initial parameters given by user.')
                 initial = map(float, line[1:-1])
                 initial[0] = int(initial[0])
-                logger.info('Initial parameters: {0}, {1}, {2}, {3}'.format(*initial))
+                logger.info('Initial parameters: {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
                 options = _options(line[-1])
                 ranges, atomic_data = read_linelist(line[0], intname=options['inter_file'])
                 # Create initial synthetic model
@@ -370,18 +376,11 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.error('Could not process information for this line list: %s' % line)
                 continue
 
-            if options['model'] != 'kurucz95' and options['model'] != 'apogee_kurucz' and options['model'] != 'marcs':
-                logger.error('Your request for type: %s is not available' % options['model'])
-                continue
-
-            # Options not in use will be removed
-            if __name__ == '__main__':
-                options['GUI'] = False  # Running batch mode
-            else:
-                options['GUI'] = True  # Running GUI mode
-            options.pop('spt')
-
-    return
 
 if __name__ == '__main__':
-    synthdriver()
+    import sys
+    if len(sys.argv) > 1:
+        cfgfile = sys.argv[1]
+    else:
+        cfgfile = 'StarMe_synth.cfg'
+    synthdriver(starLines=cfgfile)
