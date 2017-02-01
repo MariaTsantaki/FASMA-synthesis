@@ -289,9 +289,9 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
         # 4.0 < logg < 4.6
         if logg > 3.90:
             ts = teff - 5777.
-            mac = 3.21 + (2.33 * ts      * (10**(-3)))
-                       + (2.00 * (ts**2) * (10**(-6)))
-                       - (2.00 * (logg - 4.44))
+            mac = 3.21 + (2.33 * ts      * (10**(-3))) + \
+                         (2.00 * (ts**2) * (10**(-6))) - \
+                         (2.00 * (logg - 4.44))
         # For subgiants and giants: Hekker & Melendez 2007
         elif 2.5 <= logg <= 3.90:  # subgiants
             mac = -8.426 + (0.00241*teff)
