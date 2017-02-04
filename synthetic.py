@@ -137,7 +137,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
         Apply rotational broadening to a spectrum.
         From PyAstronomy:
-        
+
         This function applies rotational broadening to a given
         spectrum using the formulae given in Gray's "The Observation
         and Analysis of Stellar Photospheres". It allows for
@@ -225,19 +225,14 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
             return flux
 
         # Define central wavelength
-        lambda0 = (wave[0] + wave[-1]) / 2.0
+        lambda0  = (wave[0] + wave[-1]) / 2.0
         vmac_rad = vmacro/(299792458.*1e-3)*lambda0
         # radial component is equal to the tangential component
-        vmacro_tan = vmacro_rad
+        vmac_tan = vmac_rad
 
-        # Make sure the wavelength range is equidistant before applying the
-        # convolution
-        delta_wave = np.diff(wave).min()
-        range_wave = wave.ptp()
-        n_wave = int(range_wave/delta_wave)+1
-        wave_ = np.linspace(wave[0], wave[-1], n_wave)
-        flux_ = np.interp(wave_, wave, flux)
-        dwave = wave_[1]-wave_[0]
+        # We assume the wavelength range is equidistant
+        n_wave = len(wave)
+        dwave = wave[1]-wave[0]
         n_kernel = int(5*max(vmac_rad, vmac_tan)/dwave)
         if n_kernel % 2 == 0:
             n_kernel += 1
@@ -253,14 +248,14 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         kernel = vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
         kernel /= sum(kernel)
 
-        flux_conv = fftconvolve(1-flux_, kernel, mode='same')
+        flux_conv = fftconvolve(1-flux, kernel, mode='same')
         # And interpolate the results back on to the original wavelength array,
         # taking care of even vs. odd-length kernels
         if n_kernel % 2 == 1:
             offset = 0.0
         else:
             offset = dwave / 2.0
-        flux = np.interp(wave+offset, wave_, 1-flux_conv)
+        flux = np.interp(wave+offset, wave, 1-flux_conv)
         return flux
 
     # Instrumental broadening
@@ -268,7 +263,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     # vsini broadening
     y_rot = vsini_broadening(x, y_inst, epsilon, vsini)
     # vmac broadening
-    y_broad = vmac_broadening(x, y_rot, vmacro_rad=vmac)
+    y_broad = vmac_broadening(x, y_rot, vmac)
     return x, y_broad
 
 
