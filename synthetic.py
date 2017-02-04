@@ -76,7 +76,6 @@ def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.s
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     '''This function broadens the given data using velocity kernels,
     e.g. instrumental profile, vsini and vmac.
-    Based on http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html
     Input
     ----
     x : ndarray
@@ -108,6 +107,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
         Inputs
         -----
+        Based on http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html
         x, y : The abscissa and ordinate of the data.
         sigma : The width (i.e., standard deviation) of the Gaussian profile
         used in the convolution.
