@@ -271,11 +271,11 @@ def minimize_synth(p0, x_obs, y_obs, x_s, y_s, delta_l, ranges, **kwargs):
                          (2.00 * (ts**2) * (10**(-6))) - \
                          (2.00 * (logg - 4.44))
         # For subgiants and giants: Hekker & Melendez 2007
-        elif 2.5 <= logg <= 3.90:  # subgiants
+        elif 2.9 <= logg <= 3.9:  # subgiants
             mac = -8.426 + (0.00241*teff)
-        elif 2.0 <= logg < 2.5:  # giants
+        elif 1.5 <= logg < 2.9:  # giants
             mac = -3.953 + (0.00195*teff)
-        if logg < 2.0:  # very giants
+        if logg < 1.5:  # bright giants
             mac = -0.214 + (0.00158*teff)
 
         # For negative values, keep a minimum of 0.3 km/s
