@@ -3,6 +3,8 @@ Python code for stellar spectral analysis.
 
 Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
+To install, simply run the makefile file with make install. 
+
 **WARNING**: Contact here for bugs: m.tsantaki@crya.unam.mx
 
 
