@@ -4,8 +4,10 @@ install:
 	@./check_moog.sh
 	@mkdir -p linelist
 	@mkdir -p spectra
-	@tar zxf models/apogee_kurucz.tar.gz
-	@tar zxf models/marcs.tar.gz
+	@tar -zxvf models/apogee_kurucz.tar.gz
+	@mv apogee_kurucz models
+	@tar -zxvf models/marcs.tar.gz
+	@mv marcs models
 	@echo "Atmosphere models installed in dir: models"
 	@echo "Installing dependencies..."
 	@pip install -r requirements.txt
