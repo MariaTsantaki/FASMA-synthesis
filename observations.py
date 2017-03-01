@@ -151,6 +151,7 @@ def read_observations(fname, start_synth, end_synth):
             wave = x['wavelength']
         # Cut observations to the intervals of the synthesis
         delta_l = wave[1] - wave[0]
+        delta_l = round(delta_l, 3)
         wavelength_obs = wave[np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))]
         flux_obs = flux[np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))]
     else:
