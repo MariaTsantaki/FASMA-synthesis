@@ -177,19 +177,18 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
 
     # N : number of intervals
     N = len(r)
-    x_obs = []
-    y_obs = []
+    spec = []
     for i in range(N):
         # Obtain the normalized spectrum
-        x_obs.append(local_norm(obs_fname, r[i], snr, method)[0])
-        y_obs.append(local_norm(obs_fname, r[i], snr, method)[1])
+        spec.append(local_norm(obs_fname, r[i], snr, method))
 
-    x_obs = np.hstack(x_obs)
-    y_obs = np.hstack(y_obs)
+    x_obs = np.hstack(np.vstack(spec).T[0])
+    y_obs = np.hstack(np.vstack(spec).T[1])
+    delta_l = spec[0][2]
+
     if any(i == 0 for i in y_obs):
         print('Warning: Flux contains 0 values.')
 
-    delta_l = local_norm(obs_fname, r[0], snr, method)[2]
     print('SNR: %s' % snr)
     return x_obs, y_obs, delta_l
 
