@@ -175,13 +175,8 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
     flux_obs : observed flux
     '''
 
-    # N : number of intervals
-    N = len(r)
-    spec = []
-    for i in range(N):
-        # Obtain the normalized spectrum
-        spec.append(local_norm(obs_fname, r[i], snr, method))
-
+    # Obtain the normalized spectrum
+    spec = [local_norm(obs_fname, ri, snr, method) for ri in r]
     x_obs = np.hstack(np.vstack(spec).T[0])
     y_obs = np.hstack(np.vstack(spec).T[1])
     delta_l = spec[0][2]
