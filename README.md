@@ -1,4 +1,4 @@
-# fasma-synthesis
+# FASMA-synthesis
 Python code for stellar spectral analysis.
 
 Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
@@ -7,19 +7,32 @@ To install, simply run the makefile file with make install.
 
 **WARNING**: Contact here for bugs: m.tsantaki@crya.unam.mx
 
+# Installation
+Installing `FASMA-synthesis` requires a few simple steps. We highly recommend
+using [Anaconda](https://www.continuum.io/) to manage your python packages.
+If you do not have Anaconda installed, you need to change [line 13 - 14](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/makefile#L13-L14) in the `makefile`. Otherwise, just run `make`
+to install all dependencies.
 
-AUTHORS
--------
+# Usage
+Place your cleaned spectrum/spectra in the `spectra` folder and run `python FASMA.py`
+to open the GUI control. It is possible to create the `StarMe_synth.cfg` (can be
+called something else) manually and run the CLI version of FASMA with 
+`python synthDriver.py StarMe_synth.cfg`.
 
-    M. Tsantaki
-    D. Andreasen
-    G. Teixeira
+## Configuration file
+There are several options for the configuration file...
 
-LICENCE
--------
+
+# AUTHORS
+
+   * [M. Tsantaki](https://github.com/MariaTsantaki)
+   * [D. Andreasen](https://github.com/DanielAndreasen)
+   * [G. Teixeira](https://github.com/gdcteixeira)
+
+# LICENCE
 
 FASMA uses the MIT licence.
-Copyright © 2015 Daniel Andreasen, Guilherme Teixeira, and Maria Tsantaki.
+Copyright © 2015 Maria Tsantaki, Daniel Andreasen, and Guilherme Teixeira.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the "Software"),
