@@ -8,7 +8,7 @@ import os
 import yaml
 from utils import fun_moog_synth as func
 from observations import read_obs_intervals, plot, snr
-from minimization import minimize_synth
+from minimization import minimize_synth, _getMic,  _getMac
 from synthetic import read_linelist, save_synth_spec
 import numpy as np
 
@@ -39,75 +39,34 @@ def _getSpt(spt):
     return teff, logg
 
 
-def _getMic(teff, logg, feh):
-    """Calculate micro turbulence."""
-    if logg >= 3.95:  # Dwarfs Tsantaki 2013
-        mic = 6.932 * teff * (10**(-4)) - 0.348 * logg - 1.437
-        # Take care of negative values
-        if mic < 0:
-            return 0.3
-        return round(mic, 2)
-    else:  # Giants Adibekyan 2015
-        mic = 2.72 - (0.457 * logg) + (0.072 * feh)
-        # Take care of negative values
-        if mic < 0:
-            return 0.3
-        return round(mic, 2)
-
-
-def _getMac(teff, logg):
-    '''Calculate macro turbulence.'''
-
-    # For Dwarfs: Doyle et al. 2014
-    # 5200 < teff < 6400
-    # 4.0 < logg < 4.6
-    if logg > 3.90:
-        ts = teff - 5777.
-        mac = 3.21 + (2.33 * ts      * (10**(-3))) + \
-                     (2.00 * (ts**2) * (10**(-6))) - \
-                     (2.00 * (logg - 4.44))
-    # For subgiants and giants: Hekker & Melendez 2007
-    elif 2.5 <= logg <= 3.90:  # subgiants
-        mac = -8.426 + (0.00241*teff)
-    elif 2.0 <= logg < 2.5:  # giants
-        mac = -3.953 + (0.00195*teff)
-    if logg < 2.0:  # very giants
-        mac = -0.214 + (0.00158*teff)
-
-    # For negative values, keep a minimum of 0.3 km/s
-    if mac < 0:
-        mac = 0.30
-    return round(mac, 2)
-
-
 def _options(options=None):
     '''Reads the options inside the config file'''
-    defaults = {'spt': False,
-                'model': 'kurucz95',
-                'MOOGv': 2014,
-                'plotpars': 0,
-                'save': False,
-                'fix_teff': False,
-                'fix_logg': False,
-                'fix_feh': False,
-                'fix_vt': False,
-                'fix_vmac': False,
-                'fix_vsini': False,
-                'flag_vt': False,
-                'flag_vmac': False,
-                'plot': False,  # This is irrelevant with the batch.par value
-                'plot_res': False,
-                'damping': 1,
-                'step_wave': 0.01,
-                'step_flux': 10.0,
-                'minimize': False,
-                'refine': False,
-                'errors': False,
+    defaults = {'spt':          False,
+                'model':        'kurucz95',
+                'MOOGv':        2014,
+                'plotpars':     0,
+                'save':         False,
+                'fix_teff':     False,
+                'fix_logg':     False,
+                'fix_feh':      False,
+                'fix_vt':       False,
+                'fix_vmac':     False,
+                'fix_vsini':    False,
+                'flag_vt':      False,
+                'flag_vmac':    False,
+                'plot':         False,  # This is irrelevant with the batch.par value
+                'plot_res':     False,
+                'damping':      1,
+                'step_wave':    0.01,
+                'step_flux':    3.0,
+                'minimize':     False,
+                'refine':       False,
+                'errors':       False,
                 'observations': False,
-                'inter_file': 'intervals.lst',
-                'snr': None,
-                'resolution': None,
-                'limb': 0.6
+                'inter_file':   'intervals.lst',
+                'snr':          None,
+                'resolution':   None,
+                'limb':         0.6
                 }
     if not options:
         return defaults
@@ -121,11 +80,11 @@ def _options(options=None):
                 if option in ['teff', 'logg', 'feh', 'vt', 'vmac', 'vsini']:
                     option = 'fix_%s' % option
                 defaults[option] = False if defaults[option] else True
-        defaults['model'] = defaults['model'].lower()
+        defaults['model']     = defaults['model'].lower()
         defaults['step_wave'] = float(defaults['step_wave'])
         defaults['step_flux'] = float(defaults['step_flux'])
-        defaults['limb'] = float(defaults['limb'])
-        defaults['MOOGv'] = int(defaults['MOOGv'])
+        defaults['limb']      = float(defaults['limb'])
+        defaults['MOOGv']     = int(defaults['MOOGv'])
         if defaults['observations'] and (defaults['snr'] is None):
             if os.path.isfile('spectra/%s' % defaults['observations']):
                 defaults['snr'] = snr('spectra/%s' % defaults['observations'])
@@ -143,18 +102,13 @@ def _output(overwrite=None, header=None, parameters=None):
 
     Input
     -----
-    overwrite : bool
-      Overwrite the file
-    header : bool
-      Only use True if this is for the file to be created
-    parameters : list
-      The parameters to be written to the file
+    overwrite - Overwrite the file
+    header    - Only use True if this is for the file to be created
     """
     if header:
-        hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr',
-               'feh', 'feherr', 'vt', 'vterr', 'vmac', 'ervmac', 'vsini',
-               'ervsini', 'chi2', 'status', 'errteff', 'errlogg', 'errfeh',
-               'errvsini', 'time', 'time_err', 'model', 'resolution', 'snr']
+        hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr', 'feh', 'feherr',
+               'vt', 'vterr', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi2', 'status', 'errteff', 'errlogg',
+               'errfeh', 'errvsini', 'time', 'model', 'resolution', 'snr']
         if overwrite:
             with open('synthresults.dat', 'w') as output:
                 output.write('\t'.join(hdr)+'\n')
@@ -172,15 +126,10 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
 
     Input
     -----
-    starLines : str
-      Name of configuration file (default: StarMe_synth.cfg)
-    overwrite : bool
-      If True, then overwrite the output file
+    starLines   -   Configuration file (default: StarMe.cfg)
 
     Output
     -----
-    to be decided
-    <linelist>.(NC).out     -   NC=not converget.
     synthresults.dat             -   Easy readable table with results from many linelists
     """
 
@@ -199,6 +148,11 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
     # Check if models exist
     if not os.path.isdir('models'):
         logger.error('Model folder is missing.')
+
+    # Create results directory
+    if not os.path.isdir('results'):
+        os.mkdir('results')
+        logger.info('results directory was created')
 
     # Creating the output file
     _output(overwrite=overwrite, header=True)
@@ -234,7 +188,10 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 x_initial, y_initial = func(initial, atmtype=options['model'],
                 ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
+                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
+                if options['save']:
+                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
+                    logger.info('Save initial synthetic spectrum')
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
             # Create synthetic spectrum with solar values and the options defined by the user
@@ -253,26 +210,23 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 # Create initial synthetic model
                 logger.info('Getting initial model grid')
                 x_initial, y_initial = func(initial, atmtype=options['model'],
-                                            ranges=ranges, driver='synth',
-                                            version=options['MOOGv'], **options)
+                ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
+                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
                 if options['save']:
-                    save_synth_spec(x_initial, y_initial, y_obs=None,
-                                    initial=initial, final=None,
-                                    fname='initial.spec', **options)
+                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
                     logger.info('Save initial synthetic spectrum')
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
                 if options['observations']:
                     # Check if observations exit, if not pass another line
                     if os.path.isfile('spectra/%s' % options['observations']):
-                        print('This is your observed spectrum: %s' % options['observations'])
                         x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
+                        print('This is your observed spectrum: %s' % options['observations'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     elif os.path.isfile(options['observations']):
-                        print('This is your observed spectrum: %s' % options['observations'])
                         x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
+                        print('This is your observed spectrum: %s' % options['observations'])
                         print('Observed spectrum contains %s points' % len(x_obs))
                     else:
                         logger.error('Error: %s not found.' % options['observations'])
@@ -281,10 +235,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial,
-                                                                  x_obs, y_obs,
-                                                                  x_initial, y_initial,
-                                                                  delta_l, ranges=ranges, **options)
+                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
                         _output(parameters=tmp)
@@ -316,8 +267,11 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.info('Getting initial model grid')
                 x_initial, y_initial = func(initial, atmtype=options['model'],
                 ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                if options['save']:
+                    logger.info('Save initial synthetic spectrum')
+                    save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
                 logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
+                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
                 print('Synthetic spectrum contains %s points' % len(x_initial))
 
             # Create synthetic spectra with values set by the user and options altered.
@@ -325,28 +279,29 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.info('Initial parameters given by user.')
                 initial = map(float, line[1:-1])
                 initial[0] = int(initial[0])
-                logger.info('Initial parameters: {0}, {1}, {2}, {3}, {4}, {5}'.format(*initial))
+                logger.info('Initial parameters: {0}, {1}, {2}, {3}'.format(*initial))
                 options = _options(line[-1])
                 ranges, atomic_data = read_linelist(line[0], intname=options['inter_file'])
-                # Create initial synthetic model
                 logger.info('Getting initial model grid')
-                x_initial, y_initial = func(initial, atmtype=options['model'],
-                ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
+
                 if options['save']:
+                    # Create initial synthetic model
+                    x_initial, y_initial = func(initial, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                    print('Synthetic spectrum contains %s points' % len(x_initial))
                     logger.info('Save initial synthetic spectrum')
                     save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
-                logger.info('Interpolation successful.')
-                logger.info('Setting solar values {0}, {1}, {2}, {3}'.format(*initial))
-                print('Synthetic spectrum contains %s points' % len(x_initial))
                 if options['observations']:
                     print('This is your observed spectrum: %s' % options['observations'])
                     # Check if observations exit, if not pass another line
                     if os.path.isfile('spectra/%s' % options['observations']):
                         x_obs, y_obs, delta_l = read_obs_intervals('spectra/%s' % options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
+                        logger.info('Observed spectrum read.')
                     elif  os.path.isfile(options['observations']):
                         x_obs, y_obs, delta_l = read_obs_intervals(options['observations'], ranges, snr=options['snr'])
                         print('Observed spectrum contains %s points' % len(x_obs))
+                        logger.info('Observed spectrum read.')
                     else:
                         logger.error('Error: %s not found.' % options['observations'])
                         continue
@@ -354,33 +309,45 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, x_initial, y_initial, delta_l, ranges=ranges, **options)
+                        params, x_obs_final, y_obs_final = minimize_synth(initial, x_obs, y_obs, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         if options['save']:
-                            save_synth_spec(x_final, y_final, y_obs=y_obs, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
+                            parameters = [params[0], params[2], params[4], params[6], params[8], params[10]]
+                            x_final_synth, y_final_synth = func(parameter, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                            save_synth_spec(x_final_synth, y_final_synth, y_obs=None, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
                             logger.info('Save final synthetic spectrum')
                         tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
                         _output(parameters=tmp)
-                        logger.info('Saved results to: synthresults.dat')
+                        logger.info('Saved results to synthresults.dat')
                 else:
-                    x_obs, y_obs = (None, None)
+                    x_obs, y_obs     = (None, None)
                     x_final, y_final = (None, None)
 
                 if options['plot']:  # if there in no observed only the synthetic will be plotted
+                    x_initial, y_initial = func(initial, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                     plot(x_obs, y_obs, x_initial, y_initial, res=options['plot_res'])
                     if options['minimize']:
                         # Plot also final spectra
-                        plot(x_obs, y_obs, x_final, y_final, res=options['plot_res'])
+                        parameters = [params[0], params[2], params[4], params[6], params[8], params[10]]
+                        x_final_synth, y_final_synth = func(parameters, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                        plot(x_obs_final, y_obs_final, x_final_synth, y_final_synth, res=options['plot_res'])
 
             else:
                 logger.error('Could not process information for this line list: %s' % line)
                 continue
 
+            if options['model'] != 'kurucz95' and options['model'] != 'apogee_kurucz' and options['model'] != 'marcs':
+                logger.error('Your request for type: %s is not available' % options['model'])
+                continue
+
+            # Options not in use will be removed
+            if __name__ == '__main__':
+                options['GUI'] = False  # Running batch mode
+            else:
+                options['GUI'] = True  # Running GUI mode
+            options.pop('spt')
+
+    return
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1:
-        cfgfile = sys.argv[1]
-    else:
-        cfgfile = 'StarMe_synth.cfg'
-    synthdriver(starLines=cfgfile)
+    synthdriver()
