@@ -382,20 +382,20 @@ def _update_par_synth(start_wave, end_wave, **kwargs):
     '''
 
     default_kwargs = {
-        'atmosphere': 1,
-        'molecules': 1,
-        'lines': 1,
-        'trudamp': 1,
-        'strong': 0,
-        'units': 0,
-        'opacit': 0,
-        'terminal': 'x11',
-        'flux/int': 0,
-        'obspectrum': 0,
-        'model_in': 'out.atm',
-        'lines_in': 'linelist.moog',
+        'atmosphere':    1,
+        'molecules':     1,
+        'lines':         1,
+        'trudamp':       1,
+        'strong':        0,
+        'units':         0,
+        'opacit':        0,
+        'terminal':      'x11',
+        'flux/int':      0,
+        'obspectrum':    0,
+        'model_in':     'out.atm',
+        'lines_in':     'linelist.moog',
         'smoothed_out': 'smooth.out',
-        'summary': 'summary.out'}
+        'summary':      'summary.out'}
     # Fill the keyword arguments with the defaults if they don't exist already
 
     # Generate a MOOG-compatible run file
@@ -548,8 +548,23 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     '''
 
     from interpolation import interpolator
+
+    fnames = ['summary.out', 'result.out']
+    for i in fnames:
+        try:
+            os.remove(i)
+        except OSError:
+            pass
+
     # Create an atmosphere model from input parameters
     teff, logg, feh, _, vmac, vsini = x
+
+    teff  = int(teff)
+    logg  =  round(logg,4)
+    feh   = round(feh,4)
+    vsini = round(vsini, 3)
+    vmac  = round(vmac, 3)
+
     interpolator(x[0:4], atmtype=atmtype)
 
     # Create synthetic spectrum
@@ -559,6 +574,7 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     _run_moog(driver='synth')
     x, y = _read_raw_moog('summary.out')
 
+    spec = []
     for i, ri in enumerate(ranges):
         x_synth = x[(x > ri[0]) & (x < ri[1])]
         y_synth = y[(x > ri[0]) & (x < ri[1])]
@@ -592,11 +608,12 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
                 _update_par_synth(w_s, w_e, options=options)
                 _run_moog(driver='synth')
                 x_synth, y_synth = _read_raw_moog('summary.out')
-        spec = [broadening(x_synth, y_synth, vsini, vmac, resolution=options['resolution'], epsilon=options['limb'])]
+        spec.append(broadening(x_synth, y_synth, vsini, vmac, resolution=options['resolution'], epsilon=options['limb']))
 
     # Gather all individual spectra to one
     w = np.column_stack(spec)[0]
     f = np.column_stack(spec)[1]
+
     return w, f
 
 
