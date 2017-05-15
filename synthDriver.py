@@ -8,7 +8,7 @@ import os
 import yaml
 from utils import fun_moog_synth as func
 from observations import read_obs_intervals, plot, snr
-from minimization import minimize_synth, _getMic,  _getMac
+from minimization import minimize_synth, getMic,  getMac
 from synthetic import read_linelist, save_synth_spec
 import numpy as np
 
@@ -94,6 +94,8 @@ def _options(options=None):
             defaults['inter_file'] = str(defaults['inter_file'])
         else:
             defaults['inter_file'] = 'intervals.lst'
+        if defaults['resolution'] is not None:
+            defaults['resolution'] = int(defaults['resolution'])
         return defaults
 
 
@@ -201,8 +203,8 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 if options['spt']:
                     logger.info('Spectral type given: %s' % line[1])
                     Teff, logg = _getSpt(options['spt'])
-                    mic = _getMic(Teff, logg)
-                    mac = _getMac(Teff, logg)
+                    mic = getMic(Teff, logg)
+                    mac = getMac(Teff, logg)
                     initial = (Teff, logg, 0.00, mic, mac, 1.90)
                 else:
                     initial = [5777, 4.44, 0.00, 1.00, 3.21, 1.90]
