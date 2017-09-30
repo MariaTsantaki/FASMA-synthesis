@@ -1,3 +1,6 @@
+![My image](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/img/running_icon.png)
+
+
 # FASMA-synthesis
 Python code for stellar spectral analysis.
 
