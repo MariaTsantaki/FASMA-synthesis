@@ -25,63 +25,40 @@ manually and run the CLI version of FASMA with `python synthDriver.py`.
 
 A standard setting of the configuration file has this form:
 
-linelist teff logg [M/H] vt vmac vsini options
+`linelist teff logg [M/H] vt vmac vsini options`
 
-giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:sun.fits,resolution:115000,minimize,refine
+`giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:sun.fits,resolution:115000,minimize,refine`
 
 The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
+
+```
 'spt':          False
-
 'model':        'kurucz95'
-
 'MOOGv':        2014
-
 'plotpars':     0
-
 'save':         False
-
 'fix_teff':     False
-
 'fix_logg':     False
-
 'fix_feh':      False
-
 'fix_vt':       False
-
 'fix_vmac':     False
-
 'fix_vsini':    False
-
 'flag_vt':      False
-
 'flag_vmac':    False
-
 'plot':         False
-
 'plot_res':     False
-
 'damping':      1
-
 'step_wave':    0.01
-
 'step_flux':    3.0
-
 'minimize':     False
-
 'refine':       False
-
 'errors':       False
-
 'observations': False
-
 'inter_file':   'intervals_hr10_15n.lst'
-
 'snr':          None
-
 'resolution':   None
-
 'limb':         0.6
-
+```
 
 # AUTHORS
 
