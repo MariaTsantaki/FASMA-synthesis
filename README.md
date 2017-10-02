@@ -27,7 +27,9 @@ A standard setting of the configuration file has this form:
 
 `linelist teff logg [M/H] vt vmac vsini options`
 
-`giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:sun.fits,resolution:115000,minimize,refine`
+```
+giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:sun.fits,resolution:115000,minimize,refine
+```
 
 The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
 
