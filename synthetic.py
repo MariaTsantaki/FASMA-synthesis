@@ -161,16 +161,13 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     def vmacro_kernel(dlam, Ar, At, Zr, Zt):
         '''
         Macroturbulent velocity kernel.
+        Zr == Zt = vmac
+        Ar == At == 1.0
         '''
         dlam[dlam == 0] = 1e-8
-        if Zr != Zt:
-            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) * quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0] +
-                              2*At*idlam/(np.sqrt(np.pi)*Zt**2) * quad(lambda u: np.exp(-1/u**2), 0, Zt/idlam)[0])
-                             for idlam in dlam])
-        else:
-            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) + 2*At*idlam/(np.sqrt(np.pi)*Zt**2)) *
-                             quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
-                             for idlam in dlam])
+        return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) + 2*At*idlam/(np.sqrt(np.pi)*Zt**2)) *
+                         quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
+                         for idlam in dlam])
 
     def vmac_broadening(wave, flux, vmacro_rad):
         '''
@@ -200,8 +197,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         vmac_rad = vmacro_rad/(299792458.*1e-3)*lambda0
         vmac_tan = vmac_rad
 
-        # Make sure the wavelength range is equidistant before applying the
-        # convolution
+        # Make sure the wavelength range is equidistant before applying the convolution
         delta_wave = np.diff(wave).min()
         range_wave = wave.ptp()
         n_wave = int(range_wave/delta_wave)+1
@@ -223,15 +219,14 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         kernel = vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
         kernel /= sum(kernel)
 
-        flux_conv = fftconvolve(1-flux_, kernel, mode='same')
+        flux_conv = fftconvolve(1.0-flux_, kernel, mode='same')
         # And interpolate the results back on to the original wavelength array,
         # taking care of even vs. odd-length kernels
         if n_kernel % 2 == 1:
             offset = 0.0
         else:
             offset = dwave / 2.0
-        flux = np.interp(wave+offset, wave_, 1-flux_conv)
-
+        flux = np.interp(wave+offset, wave_, 1.0-flux_conv)
         return flux
 
     # Instrumental broadening
