@@ -148,13 +148,12 @@ def getMic(teff, logg, feh):
     """Calculate micro turbulence."""
     if logg >= 3.50:  # Dwarfs Tsantaki 2013
         mic = (6.932 * teff * (10**(-4))) - (0.348 * logg) - 1.437
-        #mic = 1.163 + (7.808 * (10**(-4)) * (teff - 5800.0)) - (0.494*(logg - 4.30)) - (0.050*feh)
     elif logg < 3.50:  # Giants Adibekyan 2015
         mic = 2.72 - (0.457 * logg) + (0.072 * feh)
 
     # Take care of negative values
-    if mic < 0.3:
-        mic = 0.3
+    if mic < 0.1:
+        mic = 0.1
     return round(mic, 2)
 
 
@@ -163,18 +162,17 @@ def getMac(teff, logg):
     # For Dwarfs: Doyle et al. 2014
     # 5200 < teff < 6400
     # 4.0 < logg < 4.6
-    if logg > 3.50:
+    if logg > 3.5:
         mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3))) + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
     # For subgiants and giants: Hekker & Melendez 2007
     elif 2.9 <= logg <= 3.5: # subgiants
-    # For negative values, keep a minimum of 0.3 km/s
         mac = -8.426 + (0.00241*teff)
     elif 1.5 <= logg < 2.9: # giants
         mac = -3.953 + (0.00195*teff)
     elif logg < 1.5: # bright giants
         mac = -0.214 + (0.00158*teff)
 
-    # Take care of negative values
+    # For negative values, keep a minimum of 0.3 km/s
     if mac < 0.30:
         mac = 0.30
     return round(mac, 2)
@@ -191,14 +189,8 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
        Observed wavelength
      y_obs : ndarray
        Observed flux
-     x_s : ndarray
-       Synthetic wavelength
-     y_s : ndarray
-       Synthetic flux
      ranges : ndarray
        ranges of the intervals
-     atomic_data : ndarray
-       Atomic data
 
      Output
      -----
@@ -229,20 +221,17 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
         delta_y    = abs(np.subtract(ymodel,y_obs)/ymodel)
         y_obs_lpts = y_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
         x_obs_lpts = x_obs[np.where((delta_y < 0.03) | (ymodel < 0.98))]
-        #Exclude points where flux is zero
-        #y_obs_lpts = y_obs_lpts[np.where(y_obs_lpts > 0.0)]
-        #x_obs_lpts = x_obs_lpts[np.where(y_obs_lpts > 0.0)]
         return x_obs_lpts, y_obs_lpts
 
 
     def bounds(i, p, model):
         '''Smart way to calculate the bounds of each of parameters'''
         if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3, 1, 0, 9.99, 0, 50, 0, 100]
+            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'apogee_kurucz':
-            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5, 0, 9.99, 0, 50, 0, 100]
+            bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'marcs':
-            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0, 0, 9.99, 0, 50, 0, 100]
+            bounds = [2500, 8000, 0.0, 5.0, -5.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
 
         if p[int((i-1)/2)] < bounds[i-1]:
             p[int((i-1)/2)] = bounds[i-1]
@@ -254,11 +243,11 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
     def parinfo_limit(model):
         '''Smart way to calculate the bounds of each of parameters'''
         if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3, 1]
+            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0]
         if model.lower() == 'apogee_kurucz':
-            bounds = [3500, 30000, 0.0, 5.0, -5, 1.5]
+            bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if model.lower() == 'marcs':
-            bounds = [2500, 8000, 0.0, 5.0, -5, 1.0]
+            bounds = [2500, 8000, 0.0, 5.0, -5.0, 1.0]
         return bounds
 
 
@@ -338,8 +327,6 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
           Wavelength
         ranges : ndarray
           ranges of the intervals
-        atomic_data : ndarray
-          Atomic data
         model : str
           Model atmosphere type
         y : ndarray
@@ -348,7 +335,7 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
         Output
         -----
         (y-ymodel)/err : ndarray
-          Model deviation from observation
+          Model deviation from observations
         '''
 
         # Definition of the Model spectrum to be iterated
@@ -446,7 +433,7 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
 
 
     #Define step for synthesis according to observations
-    kwargs['step_wave'] = round(float(delta_l),5)
+    kwargs['step_wave'] = round(float(delta_l),4)
     model = kwargs['model']
     y_obserr = 0.1 #arbitary value
 
@@ -464,7 +451,7 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
     logg_info  = {'parname':'logg',   'limited': [1, 1], 'limits': [parinfo_limit(model)[2], parinfo_limit(model)[3]], 'step': 0.1,  'mpside': 2, 'fixed': fix_logg}
     feh_info   = {'parname':'[Fe/H]', 'limited': [1, 1], 'limits': [parinfo_limit(model)[4], parinfo_limit(model)[5]], 'step': 0.05, 'mpside': 2, 'fixed': fix_feh}
     vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99], 'step': 0.5,  'mpside': 2, 'fixed': fix_vt}
-    vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0], 'step': 1.0,  'mpside': 2, 'fixed': fix_vmac}
+    vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0], 'step': 0.5,  'mpside': 2, 'fixed': fix_vmac}
     vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.0, 99.0], 'step': 1.0,  'mpside': 2, 'fixed': fix_vsini}
     parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
 
@@ -478,12 +465,16 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
     # Measure time
     start_time = time.time()
     m = mpfit(myfunct, xall=p0, parinfo=parinfo, ftol=1e-4, xtol=1e-4, gtol=1e-4, functkw=fa, maxiter=20)
+    dof = len(y_obs) - len(m.params)
+    parameters_1 = convergence_info(m, parinfo, dof)
 
     if kwargs['refine']:
         print('Refining the parameters...')
         print('Patience is the key...')
-        kwargs['flag_vt']   = True
-        kwargs['flag_vmac'] = True
+        #kwargs['flag_vt']   = True
+        #kwargs['flag_vmac'] = True
+        m.params[3] = getMic(m.params[0], m.params[1], m.params[2])
+        m.params[4] = getMac(m.params[0], m.params[1])
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
         if round(m.params[1],2) < 0.6:
@@ -491,11 +482,11 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
             logg_info['fixed'] = 1
 
         fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
-        f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-4, xtol=1e-4, gtol=1e-4, functkw=fa, maxiter=20)
+        f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-3, xtol=1e-3, gtol=1e-3, functkw=fa, maxiter=20)
 
         # Some statistics
         dof = len(y_o) - len(f.params)
-        parameters = convergence_info(f, parinfo, dof)
+        parameters_2 = convergence_info(f, parinfo, dof)
 
         #error estimation
         if kwargs['errors']:
@@ -505,11 +496,11 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
             teff_error, logg_error, feh_error, vsini_error = error_synth(f.params, **kwargs)
             end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
-            parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
+            parameters = parameters_2 + parameters_1 + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
         else:
             end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
-            parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time)]
+            parameters = parameters_2 + parameters_1 + [0] + [0] + [0] + [0] + [int(end_time)]
     else:
         dof = len(y_obs) - len(m.params)
         x_o, y_o = x_obs, y_obs

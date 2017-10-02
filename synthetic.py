@@ -175,7 +175,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     def vmac_broadening(wave, flux, vmacro_rad):
         '''
         Apply macroturbulent broadening.
-        The macroturbulent kernel is defined as in [Gray2005].
+        The macroturbulent kernel is defined in Gray 2005.
         Same functions are used in iSpec (Blanco-Cuaresma et al. 2014)
 
         Input
@@ -234,13 +234,13 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
 
         return flux
 
-    # vmac broadening
-    y_mac = vmac_broadening(x, y, vmacro_rad=vmac)
-    # vsini broadening
-    y_rot = vsini_broadening(x, y_mac, epsilon, vsini)
     # Instrumental broadening
-    y_inst = instrumental_profile(x, y_rot, resolution)
-    return x, y_inst
+    y_inst = instrumental_profile(x, y, resolution)
+    # vsini broadening
+    y_rot = vsini_broadening(x, y_inst, epsilon, vsini)
+    # vmac broadening
+    y_broad = vmac_broadening(x, y_rot, vmac)
+    return x, y_broad
 
 
 def _read_raw_moog(fname='summary.out'):
@@ -304,7 +304,7 @@ def _read_moog(fname='smooth.out'):
     return wavelength, flux
 
 
-def read_linelist(fname, intname='intervals.lst'):
+def read_linelist(fname, intname='intervals_hr10_15n.lst'):
     '''Read the line list return atomic data and ranges
 
     Input
@@ -322,6 +322,8 @@ def read_linelist(fname, intname='intervals.lst'):
 
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
+    if not os.path.isfile('rawLinelist/%s' % fname):
+        raise IOError('The line list is not in the correct place!')
     lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
     names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
     converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})

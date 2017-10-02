@@ -9,7 +9,11 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 
 
-def local_norm(obs_fname, r, snr, method='linear', plot=False):
+def mad(data, axis=None):
+    return np.median(np.absolute(data - np.median(data, axis)), axis)
+
+
+def local_norm(obs_fname, r, SNR, method='linear', plot=False):
     '''Local Normalisation function. Make a linear fit from the maximum points
     of each segment.
     Input
@@ -23,22 +27,35 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
     '''
 
     # Define the area of Normalization
-    start_norm = r[0]-1.0
-    end_norm = r[1]+1.0
+    start_norm = r[0] - 1.0
+    end_norm = r[1] + 1.0
+
     #Transform SNR to noise
-    if snr is None:
+    if SNR is None:
         noise = 0.0
     else:
-        snr = float(snr)
-        noise = 1.0/(snr)
+        SNR = float(SNR)
+        noise = 1.0/(SNR)
     #Read observations
     wave_obs, flux_obs, delta_l = read_observations(obs_fname, start_norm, end_norm)
+
+    # Clean for cosmic rays
+    med = np.median(flux_obs)
+    sigma = mad(flux_obs)
+    n = len(flux_obs)
+    fluxout = np.zeros(n)
+    for i in range(n):
+        if flux_obs[i] > (med + (sigma*3.0)):
+           fluxout[i] = med
+	else:
+	   fluxout[i] = flux_obs[i]
+    flux_obs = fluxout
 
     # Divide in 2 and find the maximum points
     y = np.array_split(flux_obs, 2)
     x = np.array_split(wave_obs, 2)
-    index_max1 = np.sort(np.argsort(y[0])[-8:])  # this can be done better
-    index_max2 = np.sort(np.argsort(y[1])[-8:])  # this can be done better
+    index_max1 = np.sort(np.argsort(y[0])[-10:])  # this can be done better
+    index_max2 = np.sort(np.argsort(y[1])[-10:])  # this can be done better
     f_max1 = y[0][index_max1]
     f_max2 = y[1][index_max2]
 
@@ -63,29 +80,19 @@ def local_norm(obs_fname, r, snr, method='linear', plot=False):
         z = np.polyfit(w_max, f_max, 1)
         p = np.poly1d(z)
         new_flux = flux_obs/p(wave_obs)
-        if snr<20:
-            new_flux =  new_flux + (2.0*noise)
-        elif 20<=snr<200:
-            new_flux =  new_flux + (1.5*noise)
-        elif 200<=snr<350:
-            new_flux =  new_flux + (1.0*noise)
-        elif 350<=snr:
-            new_flux =  new_flux + (0.0*noise)
+        new_flux = new_flux + 1.0*noise
 
-    # Exclude some continuum points which differ 0.5% from continuum level
-    #wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
-    #new_flux = new_flux[np.where((1.0-new_flux)/new_flux > 0.005)]
     wave = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
     if plot:
         plt.plot(wave_obs, flux_obs)
-        x = [start_norm, end_norm]
-        y = [np.median(f_max), np.median(f_max)]
-        plt.plot(x, y)
+        y = p(wave_obs)
+        plt.plot(wave_obs, y)
         plt.plot(w_max, f_max, 'o')
         plt.show()
 
+        x = [start_norm, end_norm]
         y = [1.0, 1.0]
         plt.plot(x, y)
         plt.plot(wave, new_flux)
@@ -166,7 +173,7 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
     if any(i == 0 for i in y_obs):
         print('Warning: Flux contains 0 values.')
 
-    print('SNR: %s' % snr)
+    print('SNR: %s' % int(snr))
     return x_obs, y_obs, delta_l
 
 
@@ -210,7 +217,7 @@ def plot(x_obs, y_obs, x, y, res=False):
     return
 
 
-def snr(fname, plot=False):
+def snr_pyastronomy(fname, plot=False):
     """Calculate SNR using intervals depending on giraffe mode.
     Input
     ----
