@@ -6,7 +6,7 @@ Python code for stellar spectral analysis.
 
 Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
-To install, simply run the makefile file with make install. 
+To install, simply run the makefile file with `make install`.
 
 **WARNING**: Contact here for bugs: m.tsantaki@crya.unam.mx
 
@@ -17,13 +17,70 @@ If you do not have Anaconda installed, you need to change [line 13 - 14](https:/
 to install all dependencies.
 
 # Usage
-Place your cleaned spectrum/spectra in the `spectra` folder and run `python FASMA.py`
-to open the GUI control. It is possible to create the `StarMe_synth.cfg` (can be
-called something else) manually and run the CLI version of FASMA with 
-`python synthDriver.py StarMe_synth.cfg`.
+Place your spectra in the `spectra` folder and run `python FASMA.py`
+to open the GUI control. It is possible to create the `StarMe_synth.cfg`
+manually and run the CLI version of FASMA with `python synthDriver.py`.
 
 ## Configuration file
-There are several options for the configuration file...
+
+A standard setting of the configuration file has this form:
+
+linelist teff logg [M/H] vt vmac vsini options
+
+giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:sun.fits,resolution:115000,minimize,refine
+
+The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
+'spt':          False
+
+'model':        'kurucz95'
+
+'MOOGv':        2014
+
+'plotpars':     0
+
+'save':         False
+
+'fix_teff':     False
+
+'fix_logg':     False
+
+'fix_feh':      False
+
+'fix_vt':       False
+
+'fix_vmac':     False
+
+'fix_vsini':    False
+
+'flag_vt':      False
+
+'flag_vmac':    False
+
+'plot':         False
+
+'plot_res':     False
+
+'damping':      1
+
+'step_wave':    0.01
+
+'step_flux':    3.0
+
+'minimize':     False
+
+'refine':       False
+
+'errors':       False
+
+'observations': False
+
+'inter_file':   'intervals_hr10_15n.lst'
+
+'snr':          None
+
+'resolution':   None
+
+'limb':         0.6
 
 
 # AUTHORS
