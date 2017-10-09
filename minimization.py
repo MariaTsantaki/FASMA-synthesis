@@ -38,7 +38,7 @@ class Minimize_synth:
     from scipy.interpolate import InterpolatedUnivariateSpline
     from synthetic import save_synth_spec
 
-    def __init__(self, p0, x_obs, y_obs, r, fout, model='kurucz95',
+    def __init__(self, p0, x_obs, y_obs, r, fout, model='marcs',
                  fix_teff=None, fix_logg=None, fix_feh=None, fix_vt=None,
                  fix_vmac=None, fix_vsini=None, **kwargs):
 

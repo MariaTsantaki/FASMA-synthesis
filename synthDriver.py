@@ -43,7 +43,7 @@ def _getSpt(spt):
 def _options(options=None):
     '''Reads the options inside the config file'''
     defaults = {'spt':          False,
-                'model':        'kurucz95',
+                'model':        'marcs',
                 'MOOGv':        2014,
                 'plotpars':     0,
                 'save':         False,

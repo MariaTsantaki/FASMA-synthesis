@@ -25,7 +25,7 @@ def read_model(fname):
     return model
 
 
-def interpolator(params, save=True, atmtype='kurucz95', result=None):
+def interpolator(params, save=True, atmtype='marcs', result=None):
     '''This is a new approach based on a scipy interpolator.
     Resembles the original interpolator we used but with a change
 
@@ -36,7 +36,7 @@ def interpolator(params, save=True, atmtype='kurucz95', result=None):
     save : bool
       Wether the new atmosphere should be saved. Default is True.
     atmtype : str
-      The atmosphere models being used. Default is Kurucz95.
+      The atmosphere models being used. Default is MARCS.
 
     Output
     ------
@@ -90,7 +90,7 @@ def interpolator(params, save=True, atmtype='kurucz95', result=None):
         return newatm, params
 
 
-def save_model(model, params, type='kurucz95', fout='out.atm'):
+def save_model(model, params, type='marcs', fout='out.atm'):
     '''Save the model atmosphere in the right format
 
     Input
@@ -100,7 +100,7 @@ def save_model(model, params, type='kurucz95', fout='out.atm'):
     params : list
       Teff, logg, [Fe/H], vt of the interpolated atmosphere.
     type : str
-      Type of atmospheric parameters. Default is Kurucz95
+      Type of atmospheric parameters. Default is MARCS
     fout : str
       Name of the saved atmosphere. Default is out.atm
 
