@@ -210,6 +210,8 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 else:
                     initial = [5777, 4.44, 0.00, 1.00, 3.21, 1.90]
 
+                x_initial, y_initial = func(initial, atmtype=options['model'],
+                        ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
                 logger.info('Setting stellar values {0}, {1}, {2}, {3}'.format(*initial))
                 if options['save']:
