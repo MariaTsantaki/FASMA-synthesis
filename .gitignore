@@ -11,9 +11,13 @@ manual/Manual_fasma.aux
 manual/Manual_fasma.log
 manual/Manual_fasma.tex.backup
 
-## Other stuff
-*.log
+## FASMA
+out.atm
 *.dat
 *.moog
 *.cfg
 !StarMe_synth.cfg
+
+
+## Other stuff
+*.log
