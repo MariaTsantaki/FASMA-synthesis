@@ -17,6 +17,8 @@ out.atm
 *.moog
 *.cfg
 !StarMe_synth.cfg
+batch.par
+*.out
 
 
 ## Other stuff
