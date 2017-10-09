@@ -1,1 +1,3 @@
 *.pyc
+models/apogee_kurucz
+models/marcs
