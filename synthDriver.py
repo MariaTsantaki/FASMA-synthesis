@@ -350,8 +350,13 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
             else:
                 options['GUI'] = True  # Running GUI mode
             options.pop('spt')
-
     return
 
+
 if __name__ == '__main__':
-    synthdriver()
+    import sys
+    if len(sys.argv) > 1:
+        cfgfile = sys.argv[1]
+    else:
+        cfgfile = 'StarMe_synth.cfg'
+    synthdriver(starLines=cfgfile)
