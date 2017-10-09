@@ -1,3 +1,11 @@
+## Python stuff
 *.pyc
+
+## Model stuff
 models/apogee_kurucz
 models/marcs
+
+## LaTeX stuff
+manual/Manual_fasma.aux
+manual/Manual_fasma.log
+manual/Manual_fasma.tex.backup
