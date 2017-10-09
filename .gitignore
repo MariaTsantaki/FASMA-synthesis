@@ -1,5 +1,6 @@
 ## Python stuff
 *.pyc
+venv
 
 ## Model stuff
 models/apogee_kurucz
@@ -9,3 +10,10 @@ models/marcs
 manual/Manual_fasma.aux
 manual/Manual_fasma.log
 manual/Manual_fasma.tex.backup
+
+## Other stuff
+*.log
+*.dat
+*.moog
+*.cfg
+!StarMe_synth.cfg
