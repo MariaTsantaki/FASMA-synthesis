@@ -352,7 +352,6 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
             else:
                 options['GUI'] = True  # Running GUI mode
             options.pop('spt')
-    return
 
 
 if __name__ == '__main__':

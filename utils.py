@@ -3,8 +3,8 @@
 
 from __future__ import division
 import os
-from itertools import islice
 import numpy as np
+from itertools import islice
 from synthetic import broadening, _read_raw_moog
 
 kurucz95 = {'teff': (3750, 4000, 4250, 4500, 4750, 5000, 5250, 5500, 5750, 6000,
@@ -370,8 +370,9 @@ def _run_moog(par='batch.par', driver='abfind'):
         os.remove('stupid.tmp')
 
 
-def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.out',
-                   driver='synth', version=2014, **options):
+def fun_moog_synth(x, atmtype, par='batch.par', ranges=None,
+                   results='summary.out', driver='synth', version=2014,
+                   **options):
     '''Run MOOG and create synthetic spectrum for the synth driver.
 
     :x: A tuple/list with values (teff, logg, [Fe/H], vt, vmic, vmac)
@@ -385,9 +386,9 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     from interpolation import interpolator
 
     fnames = ['summary.out', 'result.out']
-    for i in fnames:
+    for fname in fnames:
         try:
-            os.remove(i)
+            os.remove(fname)
         except OSError:
             pass
 
@@ -395,8 +396,8 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     teff, logg, feh, _, vmac, vsini = x
 
     teff  = int(teff)
-    logg  = round(logg,4)
-    feh   = round(feh,4)
+    logg  = round(logg, 4)
+    feh   = round(feh, 4)
     vsini = round(vsini, 3)
     vmac  = round(vmac, 3)
 
@@ -429,24 +430,16 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
             # Add extra points on both sides
             ex_points = n_kernel-n_wave
             print("Spectrum range too narrow for macroturbulent broadening. Adding %s points." % ex_points)
-            if ex_points % 2 == 0:
-                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
-                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
-                _update_par_synth(w_s, w_e, options=options)
-                _run_moog(driver='synth')
-                x_synth, y_synth = _read_raw_moog('summary.out')
-
-            else:
+            if ex_points % 2 == 1:
                 ex_points += 1
-                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
-                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
-                _update_par_synth(w_s, w_e, options=options)
-                _run_moog(driver='synth')
-                x_synth, y_synth = _read_raw_moog('summary.out')
+            w_s = x_synth[0] - (dwave*((ex_points+2)/2))
+            w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
+            _update_par_synth(w_s, w_e, options=options)
+            _run_moog(driver='synth')
+            x_synth, y_synth = _read_raw_moog('summary.out')
         spec.append(broadening(x_synth, y_synth, vsini, vmac, resolution=options['resolution'], epsilon=options['limb']))
 
     # Gather all individual spectra to one
     w = np.column_stack(spec)[0]
     f = np.column_stack(spec)[1]
-
     return w, f

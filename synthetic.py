@@ -2,29 +2,40 @@
 
 # My imports
 from __future__ import division
-import numpy as np
 import os
+import numpy as np
 import pandas as pd
 from astropy.io import fits
-
+from PyAstronomy import pyasl
+from scipy.integrate import quad
+from scipy.signal import fftconvolve
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.spec', **options):
     '''Save synthetic spectrum of all intervals
 
     Input
     ----
-    x : ndarray
+    x : np.ndarray
       Wavelength
-    y : ndarray
+    y : np.ndarray
       Flux
+    y_obs : np.ndarray
+      Observed flux
+    initial : list
+      Initial parameters
+    final : list
+      Final parameters
     fname : str
       Filename of fits file
+    options : dict
+      Option dictionary from 'synthDriver'
 
     Output
     -----
     fname fits file
     '''
-    #Create header
+    # Create header
     header = fits.Header()
     header['CRVAL1']   = x[0]
     header['CDELT1']   = x[1] - x[0]
@@ -63,7 +74,6 @@ def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.s
                                            fits.Column(name='y_obs', format='D', array=y_obs)], header=header)
     tbhdu.writeto('results/%s' % fname, clobber=True)
     print('Synthetic spectrum saved: results/%s' % fname)
-    return
 
 
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
@@ -72,28 +82,26 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     Based on http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html
     Input
     ----
-    x : ndarray
+    x : np.ndarray
       wavelength
-    y : ndarray
+    y : np.ndarray
       flux
-    resolution : float
-      Instrumental resolution (lambda /delta lambda)
     vsini : float
       vsini in km/s
     vmac : float
       vmac in km/s
+    resolution : float
+      Instrumental resolution (lambda /delta lambda)
+    epsilon : float
+      Linear limb-darkening coefficient (0-1).  Linear limb-darkening coefficient (0-1).
 
     Output
     -----
-    y_broad : ndarray
-      Broadened flux
-    x : ndarray
+    x : np.ndarray
       Same wavelength
+    y_broad : np.ndarray
+      Broadened flux
     '''
-
-    from PyAstronomy import pyasl
-    from scipy.signal import fftconvolve
-    from scipy.integrate import quad
 
     def instrumental_profile(x, y, resolution):
         '''
@@ -119,10 +127,10 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
 
         # Deal with zero or None values seperately
         if (resolution is None) or (resolution == 0):
-            y_inst = y
+            return y
         else:
             y_inst = pyasl.instrBroadGaussFast(x, y, resolution, edgeHandling="firstlast", fullout=False, maxsig=None)
-        return y_inst
+            return y_inst
 
     def vsini_broadening(x, y, epsilon, vsini):
         '''
@@ -153,10 +161,10 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
 
         if vsini == 0:
-            y_rot = y
+            return y
         else:
             y_rot = pyasl.rotBroad(x, y, epsilon, vsini, edgeHandling='firstlast')
-        return y_rot
+            return y_rot
 
     def vmacro_kernel(dlam, Ar, At, Zr, Zt):
         '''
@@ -210,9 +218,9 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         # The kernel might be of too low resolution, or the the wavelength range
         # might be too narrow. In both cases, raise an appropriate error
         if n_kernel == 0:
-            raise ValueError(("Spectrum resolution too low for macroturbulent broadening"))
+            raise ValueError("Spectrum resolution too low for macroturbulent broadening")
         elif n_kernel > n_wave:
-            raise ValueError(("Spectrum range too narrow for macroturbulent broadening"))
+            raise ValueError("Spectrum range too narrow for macroturbulent broadening")
         # Construct the broadening kernel
         wave_k = np.arange(n_kernel)*dwave
         wave_k -= wave_k[-1]/2.
@@ -253,25 +261,18 @@ def _read_raw_moog(fname='summary.out'):
     flux : ndarray
       The flux vector
     '''
-    import itertools
 
-    with open('summary.out', 'r') as f:
+    with open(fname, 'r') as f:
         f.readline()
         f.readline()
         start_wave, end_wave, step, flux_step = map(float, f.readline().split())
         lines = f.readlines()
 
-    data = []
-    for line in lines:
-        line = line.replace('-',' ')
-        line = line.replace('\n','').split(' ')
-        line = filter(None, line)
-        data.append(line)
-
-    flux = list(itertools.chain(*data))
-    flux = np.array(flux)
-    flux = flux.astype(np.float)
-    flux = 1.0 - flux
+    # Remove trailing '\n' from every line in lines
+    data = map(lambda s: s.strip(), lines)
+    # Convert every element to a float
+    flux = map(float, ' '.join(data).split(' '))
+    flux = 1.0 - np.array(flux)
 
     w0, dw, n = float(start_wave), float(step), len(flux)
     w = w0 + dw * n
@@ -289,9 +290,9 @@ def _read_moog(fname='smooth.out'):
 
     Output
     ------
-    wavelength : ndarray
+    wavelength : np.ndarray
       The wavelenth vector
-    flux : ndarray
+    flux : np.ndarray
       The flux vector
     '''
 
@@ -316,23 +317,28 @@ def read_linelist(fname, intname='intervals_hr10_15n.lst'):
     '''
 
     if not os.path.isfile('rawLinelist/%s' % intname):
-        raise IOError('The interval list is not in the correct place!')
+        raise IOError('The interval list is not in the correct place.')
     if not os.path.isfile('rawLinelist/%s' % fname):
-        raise IOError('The line list is not in the correct place!')
-    lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
-    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
-    converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
+        raise IOError('The line list is not in the correct place.')
+    lines = pd.read_csv('rawLinelist/%s' % fname,
+                skiprows=1, comment='#',
+                delimiter='\t', usecols=range(6),
+                names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
+                converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
     lines.sort_values(by='wl', inplace=True)
 
-    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t')
+    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#',
+                    names=['start', 'end'], delimiter='\t')
+
     ranges = intervals.values
     atomic = []
     N = []
-    for i, ri in enumerate(intervals.values):
-        a = lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]
+    for ri in intervals.values:
+        idx = (lines.wl > ri[0]) & (lines.wl < ri[1])
+        a = lines[idx]
+        N.append(len(a))
         a = a.as_matrix()
         atomic.append(a)
-        N.append(len(lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]))
     N = sum(N)
     atomic = np.vstack(atomic)
     print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
@@ -348,21 +354,18 @@ def interpol_synthetic(wave_obs, wave_synth, flux_synth):
     '''Interpolation of the synthetic flux to the observed wavelength.
     Input
     -----
-    wave_obs : ndarray
+    wave_obs : np.ndarray
       Observed wavelength
-    wave_synth : ndarray
+    wave_synth : np.ndarray
       Synthetic wavelength
-    flux_synth : ndarray
+    flux_synth : np.ndarray
       Synthetic flux
 
     Output
     ------
-    int_flux : ndarray
+    int_flux : np.ndarray
       Interpolated synthetic flux
     '''
-
-    from scipy.interpolate import InterpolatedUnivariateSpline
-
     sl = InterpolatedUnivariateSpline(wave_synth, flux_synth, k=1)
     int_flux = sl(wave_obs)
     return int_flux
