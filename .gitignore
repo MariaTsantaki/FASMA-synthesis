@@ -19,7 +19,7 @@ out.atm
 !StarMe_synth.cfg
 batch.par
 *.out
-
+*.spec
 
 ## Other stuff
 *.log
