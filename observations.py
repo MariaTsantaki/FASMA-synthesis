@@ -133,7 +133,7 @@ def read_observations(fname, start_synth, end_synth):
             w0, dw, n = start_wave, step, len(flux)
             w = start_wave + step * n
             wave = np.linspace(w0, w, n, endpoint=False)
-        # T hese types are produced by MOOGme (fits format).
+        # These types are produced by FASMA (fits format).
         elif fname[-5:] == '.spec':
             hdulist = fits.open(fname)
             x = hdulist[1].data
