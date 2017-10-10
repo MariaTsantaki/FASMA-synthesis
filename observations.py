@@ -42,14 +42,8 @@ def local_norm(obs_fname, r, SNR, method='linear', plot=False):
     # Clean for cosmic rays
     med = np.median(flux_obs)
     sigma = mad(flux_obs)
-    n = len(flux_obs)
-    fluxout = np.zeros(n)
-    for i in range(n):
-        if flux_obs[i] > (med + (sigma*3.0)):
-           fluxout[i] = med
-	else:
-	   fluxout[i] = flux_obs[i]
-    flux_obs = fluxout
+    idx = flux_obs > (med + 3.0*sigma)
+    flux_obs[idx] = med
 
     # Divide in 2 and find the maximum points
     y = np.array_split(flux_obs, 2)
