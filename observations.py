@@ -284,7 +284,7 @@ def snr_pyastronomy(fname, plot=False):
         snr = [value for value in snr if value != 0]
         snr_clean = [value for value in snr if not np.isnan(value)]
         snr_total = np.average(snr_clean)
-        snr = round(snr_total, 1)
+        snr = int(snr_total)
         return snr
     else:
         return None
