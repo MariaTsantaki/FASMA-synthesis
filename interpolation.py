@@ -109,7 +109,7 @@ def save_model(model, params, type='marcs', fout='out.atm'):
     Atmospheric model.
     '''
     teff, logg, feh, vt = params
-    if type in ['kurucz95', 'apogee_kurucz', 'marcs']:
+    if type in ['apogee_kurucz', 'marcs']:
         header = 'KURUCZ\n'\
                  'Teff= %i   log g= %.2f\n'\
                  'NTAU        %i' % (teff, logg, model.shape[0])
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     args.add_argument('feh', type=float, help='Metallicity, [Fe/H]')
     args.add_argument('vt', type=float, help='Microturbulence')
     args.add_argument('-o', '--out', help='Output atmosphere', default='out.atm')
-    args.add_argument('-a', '--atmosphere', help='Model atmosphere', choices=['kurucz95', 'apogee_kurucz', 'marcs'], default='kurucz95')
+    args.add_argument('-a', '--atmosphere', help='Model atmosphere', choices=['apogee_kurucz', 'marcs'], default='marcs')
 
     args = args.parse_args()
 

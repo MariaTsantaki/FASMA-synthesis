@@ -116,8 +116,6 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
 
     def bounds(i, p, model):
         '''Smart way to calculate the bounds of each of parameters'''
-        if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'marcs':
@@ -132,8 +130,6 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
 
     def parinfo_limit(model):
         '''Smart way to calculate the bounds of each of parameters'''
-        if model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0]
         if model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if model.lower() == 'marcs':

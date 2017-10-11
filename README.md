@@ -37,7 +37,7 @@ The default options of FASMA can be changed in the configuration file `StarMe_sy
 
 ```
 'spt':          False
-'model':        'kurucz95'
+'model':        'marcs'
 'MOOGv':        2014
 'save':         False
 'fix_teff':     False
