@@ -6,6 +6,10 @@ venv
 models/apogee_kurucz
 models/marcs
 
+## Data
+spectra/*
+!spectra/Sun_HARPS.fits
+
 ## LaTeX stuff
 manual/Manual_fasma.aux
 manual/Manual_fasma.log
