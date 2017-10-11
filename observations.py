@@ -8,6 +8,14 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline
 
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams['axes.spines.right'] = False
+plt.rcParams['axes.spines.top'] = False
+plt.rcParams['axes.linewidth'] = 2
+plt.rcParams['xtick.major.width'] = 2
+plt.rcParams['ytick.major.width'] = 2
+plt.rcParams['figure.figsize'] = [12, 6]
 
 def mad(data, axis=None):
     return np.median(np.absolute(data - np.median(data, axis)), axis)
@@ -96,12 +104,15 @@ def local_norm(obs_fname, r, snr=None, method='linear', plot=False):
         y = p(wave_obs)
         plt.plot(wave_obs, y)
         plt.plot(w_max, f_max, 'o')
+        plt.ylabel('Flux')
 
         x = [start_norm, end_norm]
         y = [1.0, 1.0]
         plt.subplot(212)
         plt.plot(x, y)
         plt.plot(wave, new_flux)
+        plt.xlabel(r'Wavelength $\AA{}$')
+        plt.ylabel('Normalized flux')
         plt.show()
     return wave, new_flux, delta_l
 
@@ -232,6 +243,8 @@ def plot(x_obs, y_obs, x, y, res=False):
             ymodel = sl(x_obs)
             plt.plot(x_obs, (y_obs-ymodel)*10, label=r'10$\times\;$residuals')
 
+    plt.xlabel(r'Wavelength $\AA{}$')
+    plt.ylabel('Normalized flux')
     plt.legend(loc='best', frameon=False)
     plt.show()
 
