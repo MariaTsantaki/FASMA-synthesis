@@ -241,7 +241,7 @@ def plot(x_obs, y_obs, x, y, res=False):
         if res:
             sl = InterpolatedUnivariateSpline(x, y, k=1)
             ymodel = sl(x_obs)
-            plt.plot(x_obs, (y_obs-ymodel)*10, label=r'10$\times\;$residuals')
+            plt.plot(x_obs, (y_obs-ymodel), label='residuals')
 
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
