@@ -85,12 +85,12 @@ def interpolator(params, save=True, atmtype='marcs', result=None):
     vt_array = np.zeros(len(layers))+params[-1]*1e5
     newatm = np.hstack((newatm, vt_array[:, np.newaxis]))
     if save:
-        save_model(newatm, params, type=atmtype)
+        save_model(newatm, params, atmtype=atmtype)
     if result:
         return newatm, params
 
 
-def save_model(model, params, type='marcs', fout='out.atm'):
+def save_model(model, params, atmtype='marcs', fout='out.atm'):
     '''Save the model atmosphere in the right format
 
     Input
@@ -99,7 +99,7 @@ def save_model(model, params, type='marcs', fout='out.atm'):
       The interpolated model atmosphere.
     params : list
       Teff, logg, [Fe/H], vt of the interpolated atmosphere.
-    type : str
+    atmtype : str
       Type of atmospheric parameters. Default is MARCS
     fout : str
       Name of the saved atmosphere. Default is out.atm
@@ -109,12 +109,12 @@ def save_model(model, params, type='marcs', fout='out.atm'):
     Atmospheric model.
     '''
     teff, logg, feh, vt = params
-    if type in ['apogee_kurucz', 'marcs']:
+    if atmtype in ['kurucz08', 'apogee_kurucz', 'marcs']:
         header = 'KURUCZ\n'\
                  'Teff= %i   log g= %.2f\n'\
                  'NTAU        %i' % (teff, logg, model.shape[0])
     else:
-        raise NameError('Could not find %s models' % type)
+        raise NameError('Could not find %s models' % atmtype)
 
     footer = '    %.3e\n'\
              'NATOMS     1  %.2f\n'\
@@ -138,13 +138,13 @@ if __name__ == '__main__':
     args.add_argument('feh', type=float, help='Metallicity, [Fe/H]')
     args.add_argument('vt', type=float, help='Microturbulence')
     args.add_argument('-o', '--out', help='Output atmosphere', default='out.atm')
-    args.add_argument('-a', '--atmosphere', help='Model atmosphere', choices=['apogee_kurucz', 'marcs'], default='marcs')
+    args.add_argument('-a', '--atmosphere', help='Model atmosphere', choices=['kurucz08', 'apogee_kurucz', 'marcs'], default='kurucz08')
 
     args = args.parse_args()
 
     params = [args.teff, args.logg, args.feh, args.vt]
 
     atmosphere, p = interpolator(params, save=False, atmtype=args.atmosphere, result=True)
-    save_model(atmosphere, params, type=args.atmosphere, fout=args.out)
+    save_model(atmosphere, params, atmtype=args.atmosphere, fout=args.out)
 
     print 'Atmosphere model sucessfully saved in: %s' % args.out

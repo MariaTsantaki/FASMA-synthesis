@@ -342,7 +342,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.error('Could not process information for this line list: %s' % line)
                 continue
 
-            if options['model'] not in ('apogee_kurucz', 'marcs'):
+            if options['model'] not in ('kurucz08', 'apogee_kurucz', 'marcs'):
                 logger.error('Your request for type: %s is not available' % options['model'])
                 continue
 

@@ -85,10 +85,10 @@ In case the initial parameters of the stars are not known, the user can input th
 
 \item
 \begin{lstlisting}[language=Python]
-model:        'marcs'
+model:        marcs
 \end{lstlisting}
 % \\*
-The model atmospheres included in FASMA are: apogee\_kurucz, and marcs.
+The model atmospheres included in FASMA are: kurucz08, apogee\_kurucz, and marcs.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -178,7 +178,7 @@ The name of the spectrum is given here. If the spectrum is at the spectra folder
 
 \item
 \begin{lstlisting}[language=Python]
-inter_file:   'intervals_hr10_15n.lst'
+inter_file:   intervals_hr10_15n.lst
 \end{lstlisting}
 % \\*
 This is the file which contains the intervals of the synthesis. FASMA already has specific intervals which correspond to the given line list. This file should be inside the rawLinelist folder.
