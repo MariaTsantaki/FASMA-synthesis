@@ -269,7 +269,7 @@ def _read_raw_moog(fname='summary.out'):
         lines = f.readlines()
 
     # Remove trailing '\n' from every line in lines
-    data = map(lambda s: s.strip(), lines)
+    data = map(lambda s: s.strip().replace('-', ' -'), lines)
     # Convert every element to a float
     flux = map(float, ' '.join(data).split(' '))
     flux = 1.0 - np.array(flux)
