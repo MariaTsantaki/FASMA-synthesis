@@ -215,7 +215,6 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 logger.info('Interpolation successful.')
                 logger.info('Setting stellar values {0}, {1}, {2}, {3}'.format(*initial))
                 if options['save']:
-                    x_initial, y_initial = func(initial, atmtype=options['model'], ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                     save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
                     logger.info('Save initial synthetic spectrum')
                     print('Synthetic spectrum contains %s points' % len(x_initial))
@@ -240,7 +239,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                         logger.info('Minimization done.')
                         if options['save']:
                             parameters = [params[0], params[2], params[4], params[6], params[8], params[10]]
-                            x_final_synth, y_final_synth = func(parameter, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                            x_final_synth, y_final_synth = func(parameters, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                             save_synth_spec(x_final_synth, y_final_synth, y_obs=None, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
                             logger.info('Save final synthetic spectrum')
                         tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]
@@ -319,7 +318,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                         logger.info('Minimization done.')
                         if options['save']:
                             parameters = [params[0], params[2], params[4], params[6], params[8], params[10]]
-                            x_final_synth, y_final_synth = func(parameter, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
+                            x_final_synth, y_final_synth = func(parameters, atmtype=options['model'],ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                             save_synth_spec(x_final_synth, y_final_synth, y_obs=None, initial=initial, final=(params[0],params[2],params[4],params[6],params[8],params[10]), fname='final.spec', **options)
                             logger.info('Save final synthetic spectrum')
                         tmp = [line[0]] + [options['observations']] + params + [options['model'], options['resolution'], options['snr']]

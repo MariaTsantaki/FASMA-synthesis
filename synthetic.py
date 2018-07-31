@@ -337,7 +337,7 @@ def read_linelist(fname, intname='intervals_hr10_15n.lst'):
         idx = (lines.wl > ri[0]) & (lines.wl < ri[1])
         a = lines[idx]
         N.append(len(a))
-        a = a.as_matrix()
+        a = a.values
         atomic.append(a)
     N = sum(N)
     atomic = np.vstack(atomic)
