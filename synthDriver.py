@@ -235,7 +235,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')
-                        params, x_final, y_final = minimize_synth(initial, x_obs, y_obs, delta_l, ranges=ranges, **options)
+                        params, x_obs_final, y_obs_final = minimize_synth(initial, x_obs, y_obs, delta_l, ranges=ranges, **options)
                         logger.info('Minimization done.')
                         if options['save']:
                             parameters = [params[0], params[2], params[4], params[6], params[8], params[10]]
