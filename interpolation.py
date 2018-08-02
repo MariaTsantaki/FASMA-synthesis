@@ -109,7 +109,7 @@ def save_model(model, params, atmtype='marcs', fout='out.atm'):
     Atmospheric model.
     '''
     teff, logg, feh, vt = params
-    if atmtype in ['kurucz08', 'apogee_kurucz', 'marcs']:
+    if atmtype in ['apogee_kurucz', 'marcs']:
         header = 'KURUCZ\n'\
                  'Teff= %i   log g= %.2f\n'\
                  'NTAU        %i' % (teff, logg, model.shape[0])

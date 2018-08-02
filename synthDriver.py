@@ -110,8 +110,9 @@ def _output(overwrite=None, header=None, parameters=None):
     """
     if header:
         hdr = ['linelist', 'observations', 'teff', 'tefferr', 'logg', 'loggerr', 'feh', 'feherr',
-               'vt', 'vterr', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi2', 'status', 'errteff', 'errlogg',
-               'errfeh', 'errvsini', 'time', 'model', 'resolution', 'snr']
+               'vt', 'vterr', 'teff', 'tefferr', 'logg', 'loggerr', 'feh', 'feherr', 'vt', 'vterr', 'vmac',
+               'ervmac', 'vsini', 'ervsini', 'chi2', 'status', 'errteff', 'errlogg', 'errfeh', 'errvsini', 'time',
+               'model', 'resolution', 'snr']
         if overwrite:
             with open('synthresults.dat', 'w') as output:
                 output.write('\t'.join(hdr)+'\n')
@@ -210,11 +211,11 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                 else:
                     initial = [5777, 4.44, 0.00, 1.00, 3.21, 1.90]
 
-                x_initial, y_initial = func(initial, atmtype=options['model'],
-                        ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                 logger.info('Interpolation successful.')
                 logger.info('Setting stellar values {0}, {1}, {2}, {3}'.format(*initial))
                 if options['save']:
+                    x_initial, y_initial = func(initial, atmtype=options['model'],
+                        ranges=ranges, driver='synth', version=options['MOOGv'], **options)
                     save_synth_spec(x_initial, y_initial, y_obs=None, initial=initial, final=None, fname='initial.spec', **options)
                     logger.info('Save initial synthetic spectrum')
                     print('Synthetic spectrum contains %s points' % len(x_initial))
@@ -231,7 +232,7 @@ def synthdriver(starLines='StarMe_synth.cfg', overwrite=False):
                     else:
                         logger.error('Error: %s not found.' % options['observations'])
                         continue
-                    # If observations exists, then why not, find best fit?
+                    # If observations exists, then why not find best fit?
                     if options['minimize']:
                         print('Starting minimization...')
                         logger.info('Starting the minimization procedure...')

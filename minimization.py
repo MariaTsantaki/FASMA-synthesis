@@ -50,12 +50,11 @@ def getMac(teff, logg):
     mac : float
       Macroturbulence"""
     # For Dwarfs: Doyle et al. 2014
-    # 5200 < teff < 6400
-    # 4.0 < logg < 4.6
-    if logg > 3.5:
+    # 5200 < teff < 6400, 4.0 < logg < 4.6
+    if logg > 3.9:
         mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3))) + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
     # For subgiants and giants: Hekker & Melendez 2007
-    elif 2.9 <= logg <= 3.5: # subgiants
+    elif 2.9 <= logg <= 3.9: # subgiants
         mac = -8.426 + (0.00241*teff)
     elif 1.5 <= logg < 2.9: # giants
         mac = -3.953 + (0.00195*teff)
@@ -63,8 +62,8 @@ def getMac(teff, logg):
         mac = -0.214 + (0.00158*teff)
 
     # For negative values, keep a minimum of 0.3 km/s
-    if mac < 0.30:
-        mac = 0.30
+    if mac < 0.10:
+        mac = 0.10
     return round(mac, 2)
 
 
@@ -116,8 +115,6 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
 
     def bounds(i, p, model):
         '''Smart way to calculate the bounds of each of parameters'''
-        if model.lower() == 'kurucz08':
-            bounds = [3750, 39000, 0.0, 5.0, -4.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if model.lower() == 'marcs':
@@ -132,8 +129,6 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
 
     def parinfo_limit(model):
         '''Smart way to calculate the bounds of each of parameters'''
-        if model.lower() == 'kurucz08':
-            bounds = [3750, 39000, 0.0, 5.0, -4.0, 1.0]
         if model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if model.lower() == 'marcs':
@@ -321,11 +316,10 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
         error_vsini_std = np.sqrt(np.sum(error_vsini)/len(vsini))
         return error_teff_std, error_logg_std, error_feh_std, error_vsini_std
 
-
     #Define step for synthesis according to observations
     kwargs['step_wave'] = round(float(delta_l),4)
     model = kwargs['model']
-    y_obserr = 0.1 #arbitary value
+    y_obserr = 0.01 #arbitary value
 
     fix_teff  = 1 if kwargs['fix_teff']  else 0
     fix_logg  = 1 if kwargs['fix_logg']  else 0
@@ -355,6 +349,7 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
     # Measure time
     start_time = time.time()
     m = mpfit(myfunct, xall=p0, parinfo=parinfo, ftol=1e-4, xtol=1e-4, gtol=1e-4, functkw=fa, maxiter=20)
+    # Output
     dof = len(y_obs) - len(m.params)
     parameters_1 = convergence_info(m, parinfo, dof)
 
@@ -367,14 +362,10 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
         m.params[4] = getMac(m.params[0], m.params[1])
         x_s, y_s = func(m.params, atmtype=model, driver='synth', ranges=ranges, **kwargs)
         x_o, y_o = exclude_bad_points(x_obs, y_obs, x_s, y_s)
-        if round(m.params[1],2) < 0.6:
-            m.params[1] = 1.0
-            logg_info['fixed'] = 1
 
         fa = {'x_obs': x_o, 'ranges': ranges, 'model': model, 'y': y_o, 'y_obserr': y_obserr, 'options': kwargs}
         f = mpfit(myfunct, xall=m.params, parinfo=parinfo, ftol=1e-3, xtol=1e-3, gtol=1e-3, functkw=fa, maxiter=20)
-
-        # Some statistics
+        # Output
         dof = len(y_o) - len(f.params)
         parameters_2 = convergence_info(f, parinfo, dof)
 
@@ -386,27 +377,25 @@ def minimize_synth(p0, x_obs, y_obs, delta_l, ranges, **kwargs):
             teff_error, logg_error, feh_error, vsini_error = error_synth(f.params, **kwargs)
             end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
-            parameters = parameters_2 + parameters_1 + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
+            parameters = parameters_2 + parameters_1 + [int(teff_error)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
         else:
             end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
             parameters = parameters_2 + parameters_1 + [0] + [0] + [0] + [0] + [int(end_time)]
     else:
-        dof = len(y_obs) - len(m.params)
-        x_o, y_o = x_obs, y_obs
-        parameters = convergence_info(m, parinfo, dof)
         #error estimation
         if kwargs['errors']:
             kwargs['flag_vt']   = False
             kwargs['flag_vmac'] = False
             kwargs['refine']    = False
             teff_error, logg_error, feh_error, vsini_error = error_synth(m.params, **kwargs)
-            end_time = time.time()-start_time
+            end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
-            parameters = parameters + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
+            parameters = parameters_1 + parameters_1 + [round(teff_error,1)] + [round(logg_error,2)] + [round(feh_error,3)] + [round(vsini_error,2)] + [int(end_time)]
         else:
-            end_time = time.time()-start_time
+            end_time = time.time() - start_time
             print('Minimization finished in %s sec' % int(end_time))
-            parameters = parameters + [0] + [0] + [0] + [0] + [int(end_time)]
+            parameters = parameters_1 + parameters_1 + [0] + [0] + [0] + [0] + [int(end_time)]
+        x_o, y_o = x_obs, y_obs
 
     return parameters, x_o, y_o

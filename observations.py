@@ -7,7 +7,6 @@ import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline
-
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
 plt.rcParams['axes.spines.right'] = False
@@ -67,8 +66,8 @@ def local_norm(obs_fname, r, snr=None, method='linear', plot=False):
     # Divide in 2 and find the maximum points
     x = np.array_split(wave_obs, 2)
     y = np.array_split(flux_obs, 2)
-    index_max1 = np.sort(np.argsort(y[0])[-10:])  #TODO: this can be done better
-    index_max2 = np.sort(np.argsort(y[1])[-10:])  #TODO: this can be done better
+    index_max1 = np.sort(np.argsort(y[0])[-8:])  #TODO: this can be done better
+    index_max2 = np.sort(np.argsort(y[1])[-8:])  #TODO: this can be done better
     w_max1 = x[0][index_max1]
     w_max2 = x[1][index_max2]
 
@@ -152,9 +151,8 @@ def read_observations(fname, start_synth, end_synth):
             start_wave = header['CRVAL1']  # initial wavelenght
             # step = header['CD1_1'] #step in wavelenght
             step = header['CDELT1']  # increment per pixel
-            w0, n = start_wave, len(flux)
-            w = start_wave + step * n
-            wave = np.linspace(w0, w, n, endpoint=False)
+            w = start_wave + step * len(flux)
+            wave = np.linspace(start_wave, w, len(flux), endpoint=False)
 
         # These types are produced by FASMA (fits format).
         elif fname[-5:] == '.spec':
@@ -246,6 +244,7 @@ def plot(x_obs, y_obs, x, y, res=False):
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
     plt.legend(loc='best', frameon=False)
+    plt.grid(True)
     plt.show()
 
 
