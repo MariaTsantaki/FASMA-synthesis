@@ -2,19 +2,20 @@
 
 
 # FASMA-synthesis
-Python code for stellar spectral analysis.
+Stellar spectral analysis package. 
 
-Spectral synthesis around [MOOG](http://www.as.utexas.edu/~chris/moog.html).
+The python code is wrapped around the spectral synthesis package: [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
 To install, simply run the makefile file with `make install`.
 
-**WARNING**: Contact here for bugs: m.tsantaki@crya.unam.mx
+**WARNING**: Contact here for bugs: tsantaki@arcetri.astro.it
 
 # Installation
 Installing `FASMA-synthesis` requires a few simple steps. We highly recommend
 using [Anaconda](https://www.continuum.io/) to manage your python packages.
 If you do not have Anaconda installed, you need to change [line 13 - 14](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/makefile#L13-L14) in the `makefile`. Otherwise, just run `make`
 to install all dependencies.
+Now FASMA runs with python 3.
 
 # Usage
 Place your spectra in the `spectra` folder and run `python FASMA.py`
@@ -38,7 +39,7 @@ The default options of FASMA can be changed in the configuration file `StarMe_sy
 ```
 spt:          False
 model:        marcs
-MOOGv:        2014
+MOOGv:        2017
 save:         False
 fix_teff:     False
 fix_logg:     False
