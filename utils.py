@@ -3,9 +3,20 @@
 
 from __future__ import division
 import os
-import numpy as np
 from itertools import islice
+import numpy as np
 from synthetic import broadening, _read_raw_moog
+
+kurucz95 = {'teff': (3750, 4000, 4250, 4500, 4750, 5000, 5250, 5500, 5750, 6000,
+                     6250, 6500, 6750, 7000, 7250, 7500, 7750, 8000, 8250, 8500,
+                     8750, 9000, 9250, 9500, 9750, 10000, 10250, 10500, 10750,
+                     11000, 11250, 11500, 11750, 12000, 12250, 12500, 12750, 13000,
+                     14000, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 22000,
+                     23000, 24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000,
+                     32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000),
+             'feh': (-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, -0.3, -0.2, -0.1, 0.0,
+                      0.1, 0.2, 0.3, 0.5, 1.0),
+             'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)}
 
 apogee_kurucz = {'teff': (3500, 3750, 4000, 4250, 4500, 4750, 5000, 5250, 5500, 5750, 6000,
                           6250, 6500, 6750, 7000, 7250, 7500, 7750, 8000, 8250, 8500,
@@ -17,11 +28,12 @@ apogee_kurucz = {'teff': (3500, 3750, 4000, 4250, 4500, 4750, 5000, 5250, 5500, 
                          -1.5, -1.25, -1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0, 1.5),
                  'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)}
 
-marcs = {'teff': (2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400,
-                  3500, 3600, 3700, 3800, 3900, 4000, 4250, 4500, 4750, 5000,
-                  5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7750, 8000),
-         'feh': (-5.0, -4.0, -3.0, -2.5, -2.0, -1.5, -1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0),
-         'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)}
+marcs =  {'teff': (2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400,
+                   3500, 3600, 3700, 3800, 3900, 4000, 4250, 4500, 4750, 5000,
+                   5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7750, 8000),
+          'feh': (-5.0, -4.0, -3.0, -2.5, -2.0, -1.5, -1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0),
+          'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)}
+
 
 class GetModels:
     '''
@@ -46,15 +58,14 @@ class GetModels:
         self.feh = feh
         self.atmtype = atmtype
 
-        atmmodels = {'apogee_kurucz': [apogee_kurucz, 'apogee_kurucz'],
-                     'marcs':         [marcs, 'marcs']}
+        atmmodels = {'kurucz95': [kurucz95, 'kurucz95'], 'apogee_kurucz': [apogee_kurucz, 'apogee_kurucz'], 'marcs': [marcs, 'marcs']}
         if atmtype in atmmodels.keys():
             self.grid = atmmodels[atmtype][0]
         else:
             raise NotImplementedError('You request for atmospheric models: %s is not available' % atmtype)
         self.grid['teff'] = np.asarray(self.grid['teff'])
         self.grid['logg'] = np.asarray(self.grid['logg'])
-        self.grid['feh'] = np.asarray(self.grid['feh'])
+        self.grid['feh']  = np.asarray(self.grid['feh'])
 
         # Checking for bounds in Teff, logg, and [Fe/H]
         if (self.teff < self.grid['teff'][0]) or (self.teff > self.grid['teff'][-1]):
@@ -81,7 +92,7 @@ class GetModels:
         name : str
           The path to the atmosphere model
         '''
-        name = 'models/%s/' % self.atmtype
+        name = '/home/paranoia/Software/models/%s/' % self.atmtype
         if feh_model < 0:
             name += 'm%s/' % str(abs(feh_model)).replace('.', '')
         else:
@@ -224,7 +235,6 @@ class GetModels:
         return {'models': models, 'teff': (self.teff, teff_model),
                 'logg': (self.logg, logg_model), 'feh': (self.feh, feh_model)}
 
-
 def _update_par_synth(start_wave, end_wave, **kwargs):
     '''Update the parameter file (batch.par) with new linelists, atmosphere
     models, or others.
@@ -266,6 +276,8 @@ def _update_par_synth(start_wave, end_wave, **kwargs):
     '''
 
     default_kwargs = {
+        'plotpars':      0,
+        'plot':          0,
         'atmosphere':    1,
         'molecules':     1,
         'lines':         1,
@@ -281,33 +293,26 @@ def _update_par_synth(start_wave, end_wave, **kwargs):
         'smoothed_out': 'smooth.out',
         'summary':      'summary.out'}
     # Fill the keyword arguments with the defaults if they don't exist already
-
-    # Generate a MOOG-compatible run file
-    # out = '%s.spec' % line_list.rpartition('/')[2]
-    out = 'smooth.out'
     moog_contents = "synth\n"\
-                    "terminal          %s\n"\
+                    "terminal           %s\n"\
                     "model_in          '%s'\n"\
                     "summary_out       '%s'\n"\
                     "smoothed_out      '%s'\n"\
                     "standard_out      'result.out'\n"\
                     "lines_in          'linelist.moog'\n"\
-                    "plot              %s\n"\
                     "synlimits\n"\
                     "      %s      %s       %s      %s\n"\
-                    "plotpars          %s\n"\
-                    "damping        %s\n" % (default_kwargs['terminal'],
-                                             default_kwargs['model_in'], default_kwargs['summary'], out,
-                                             kwargs['options']['plotpars'], start_wave, end_wave,
-                                             kwargs['options']['step_wave'], kwargs['options']['step_flux'],
-                                             kwargs['options']['plotpars'], kwargs['options']['damping'])
+                    "damping        %s\n" % (default_kwargs['terminal'], default_kwargs['model_in'],
+                                             default_kwargs['summary'], default_kwargs['smoothed_out'],
+                                             start_wave, end_wave, kwargs['options']['step_wave'],
+                                             kwargs['options']['step_flux'], kwargs['options']['damping'])
 
     # Fill the keyword arguments with the defaults if they don't exist already
-    for key, value in default_kwargs.iteritems():
+    for key, value in default_kwargs.items():
         if key not in kwargs.keys():
             kwargs[key] = value
 
-    settings = 'atmosphere,molecules,trudamp,lines,strong,flux/int,damping,'\
+    settings = 'plotpars,plot,atmosphere,molecules,trudamp,lines,strong,flux/int,damping,'\
                'units,iraf,opacit,freeform,observed_in,obspectrum,histogram,'\
                'synlimits'.split(',')
 
@@ -324,8 +329,7 @@ def _update_par_synth(start_wave, end_wave, **kwargs):
     with open('batch.par', 'w') as moog:
         moog.writelines(moog_contents)
 
-
-def _run_moog(par='batch.par', driver='abfind'):
+def _run_moog(par='batch.par', driver='synth'):
     '''Run MOOGSILENT with the given parameter file
 
     Inputs
@@ -333,7 +337,7 @@ def _run_moog(par='batch.par', driver='abfind'):
     par : str
       The input file for MOOG (default: batch.par)
     driver : str
-      Which driver to use MOOG in. Choices are: 'abfind', 'synth'. (Default: 'abfind')
+      Which driver to use MOOG in. Choices are: 'abfind', 'synth'. (Default: 'synth')
 
     Output
     ------
@@ -347,10 +351,8 @@ def _run_moog(par='batch.par', driver='abfind'):
         os.system('MOOGSILENT < stupid.tmp > /dev/null')
         os.remove('stupid.tmp')
 
-
-def fun_moog_synth(x, atmtype, par='batch.par', ranges=None,
-                   results='summary.out', driver='synth', version=2014,
-                   **options):
+def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.out',
+                   driver='synth', version=2014, **options):
     '''Run MOOG and create synthetic spectrum for the synth driver.
 
     :x: A tuple/list with values (teff, logg, [Fe/H], vt, vmic, vmac)
@@ -362,26 +364,25 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None,
     '''
 
     from interpolation import interpolator
-
     fnames = ['summary.out', 'result.out']
-    for fname in fnames:
+    for i in fnames:
         try:
-            os.remove(fname)
+            os.remove(i)
         except OSError:
             pass
 
     # Create an atmosphere model from input parameters
     teff, logg, feh, _, vmac, vsini = x
     teff  = int(teff)
-    logg  = round(logg, 4)
-    feh   = round(feh, 4)
+    logg  = round(logg,4)
+    feh   = round(feh,4)
     vsini = round(vsini, 3)
     vmac  = round(vmac, 3)
-    interpolator(x[0:4], atmtype=atmtype)
 
+    interpolator(x[0:4], atmtype=atmtype)
     # Create synthetic spectrum
     start = ranges[0][0]
-    end = ranges[-1][-1]
+    end   = ranges[-1][-1]
     _update_par_synth(start, end, options=options)
     _run_moog(driver='synth')
     x, y = _read_raw_moog('summary.out')
@@ -390,7 +391,6 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None,
     for i, ri in enumerate(ranges):
         x_synth = x[(x > ri[0]) & (x < ri[1])]
         y_synth = y[(x > ri[0]) & (x < ri[1])]
-
         # Check for enough points for vmac
         # Define central wavelength
         lambda0 = (x_synth[0] + x_synth[-1]) / 2.0
@@ -406,13 +406,19 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None,
             # Add extra points on both sides
             ex_points = n_kernel-n_wave
             print("Spectrum range too narrow for macroturbulent broadening. Adding %s points." % ex_points)
-            if ex_points % 2 == 1:
+            if ex_points % 2 == 0:
+                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
+                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
+                _update_par_synth(w_s, w_e, options=options)
+                _run_moog(driver='synth')
+                x_synth, y_synth = _read_raw_moog('summary.out')
+            else:
                 ex_points += 1
-            w_s = x_synth[0] - (dwave*((ex_points+2)/2))
-            w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
-            _update_par_synth(w_s, w_e, options=options)
-            _run_moog(driver='synth')
-            x_synth, y_synth = _read_raw_moog('summary.out')
+                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
+                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
+                _update_par_synth(w_s, w_e, options=options)
+                _run_moog(driver='synth')
+                x_synth, y_synth = _read_raw_moog('summary.out')
         spec.append(broadening(x_synth, y_synth, vsini, vmac, resolution=options['resolution'], epsilon=options['limb']))
     # Gather all individual spectra to one
     w = np.column_stack(spec)[0]

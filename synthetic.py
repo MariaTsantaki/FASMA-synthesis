@@ -2,79 +2,40 @@
 
 # My imports
 from __future__ import division
-import os
 import numpy as np
+import os
 import pandas as pd
 from astropy.io import fits
-from PyAstronomy import pyasl
-from scipy.integrate import quad
-from scipy.signal import fftconvolve
-from scipy.interpolate import InterpolatedUnivariateSpline
 
-def save_synth_spec(x, y, y_obs=None, initial=None, final=None, fname='initial.spec', **options):
+def save_synth_spec(x, y, initial=None, fname='initial.spec', **options):
     '''Save synthetic spectrum of all intervals
 
     Input
     ----
-    x : np.ndarray
+    x : ndarray
       Wavelength
-    y : np.ndarray
+    y : ndarray
       Flux
-    y_obs : np.ndarray
-      Observed flux
-    initial : list
-      Initial parameters
-    final : list
-      Final parameters
     fname : str
       Filename of fits file
-    options : dict
-      Option dictionary from 'synthDriver'
 
     Output
     -----
     fname fits file
     '''
-    # Create header
+    #Create header
     header = fits.Header()
     header['CRVAL1']   = x[0]
     header['CDELT1']   = x[1] - x[0]
-    header['Teff_in']  = initial[0]
-    header['logg_in']  = initial[1]
-    header['FeH_in']   = initial[2]
-    header['vt_in']    = initial[3]
-    header['vmac_in']  = initial[4]
-    header['vsini_in'] = initial[5]
-    header['Mod_atmo'] = options['model']
-    header['Damping']  = options['damping']
-    header['Interval'] = options['inter_file']
-    header['Resol']    = options['resolution']
 
-    if final:
-        header['Teff_f']  = final[0]
-        header['logg_f']  = final[1]
-        header['FeH_f']   = final[2]
-        header['vt_f']    = final[3]
-        header['vmac_f']  = final[4]
-        header['vsini_f'] = final[5]
-        header['Obs']     = options['observations']
-        header['SNR']     = options['snr']
-
-    if options['observations'] and (final is None):
-        fname = options['observations'].split('/')[-1]
-        fname = fname.split('.')[0] + '_input.spec'
-    elif final:
-        fname = options['observations'].split('/')[-1]
-        fname = fname.split('.')[0] + '_output.spec'
-    else:
-        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) +  '_' + str(options['resolution']) + '.spec'
+    if initial:
+        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) +  '_' + str(options['a']) + '_' + str(options['resolution']) + '.spec'
 
     tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
-                                           fits.Column(name='flux', format='D', array=y),
-                                           fits.Column(name='y_obs', format='D', array=y_obs)], header=header)
-    tbhdu.writeto('results/%s' % fname, clobber=True)
+                                           fits.Column(name='flux', format='D', array=y)], header=header)
+    tbhdu.writeto('results/%s' % fname, overwrite=True)
     print('Synthetic spectrum saved: results/%s' % fname)
-
+    return
 
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     '''This function broadens the given data using velocity kernels,
@@ -82,26 +43,28 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     Based on http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html
     Input
     ----
-    x : np.ndarray
+    x : ndarray
       wavelength
-    y : np.ndarray
+    y : ndarray
       flux
+    resolution : float
+      Instrumental resolution (lambda /delta lambda)
     vsini : float
       vsini in km/s
     vmac : float
       vmac in km/s
-    resolution : float
-      Instrumental resolution (lambda /delta lambda)
-    epsilon : float
-      Linear limb-darkening coefficient (0-1).  Linear limb-darkening coefficient (0-1).
 
     Output
     -----
-    x : np.ndarray
-      Same wavelength
-    y_broad : np.ndarray
+    y_broad : ndarray
       Broadened flux
+    x : ndarray
+      Same wavelength
     '''
+
+    from PyAstronomy import pyasl
+    from scipy.signal import fftconvolve
+    from scipy.integrate import quad
 
     def instrumental_profile(x, y, resolution):
         '''
@@ -127,10 +90,10 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
 
         # Deal with zero or None values seperately
         if (resolution is None) or (resolution == 0):
-            return y
+            y_inst = y
         else:
             y_inst = pyasl.instrBroadGaussFast(x, y, resolution, edgeHandling="firstlast", fullout=False, maxsig=None)
-            return y_inst
+        return y_inst
 
     def vsini_broadening(x, y, epsilon, vsini):
         '''
@@ -161,26 +124,29 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
 
         if vsini == 0:
-            return y
+            y_rot = y
         else:
             y_rot = pyasl.rotBroad(x, y, epsilon, vsini, edgeHandling='firstlast')
-            return y_rot
+        return y_rot
 
     def vmacro_kernel(dlam, Ar, At, Zr, Zt):
         '''
         Macroturbulent velocity kernel.
-        Zr == Zt = vmac
-        Ar == At == 1.0
         '''
         dlam[dlam == 0] = 1e-8
-        return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) + 2*At*idlam/(np.sqrt(np.pi)*Zt**2)) *
-                         quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
-                         for idlam in dlam])
+        if Zr != Zt:
+            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) * quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0] +
+                              2*At*idlam/(np.sqrt(np.pi)*Zt**2) * quad(lambda u: np.exp(-1/u**2), 0, Zt/idlam)[0])
+                             for idlam in dlam])
+        else:
+            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) + 2*At*idlam/(np.sqrt(np.pi)*Zt**2)) *
+                             quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
+                             for idlam in dlam])
 
     def vmac_broadening(wave, flux, vmacro_rad):
         '''
         Apply macroturbulent broadening.
-        The macroturbulent kernel is defined in Gray 2005.
+        The macroturbulent kernel is defined as in [Gray2005].
         Same functions are used in iSpec (Blanco-Cuaresma et al. 2014)
 
         Input
@@ -205,7 +171,8 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         vmac_rad = vmacro_rad/(299792458.*1e-3)*lambda0
         vmac_tan = vmac_rad
 
-        # Make sure the wavelength range is equidistant before applying the convolution
+        # Make sure the wavelength range is equidistant before applying the
+        # convolution
         delta_wave = np.diff(wave).min()
         range_wave = wave.ptp()
         n_wave = int(range_wave/delta_wave)+1
@@ -218,33 +185,33 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         # The kernel might be of too low resolution, or the the wavelength range
         # might be too narrow. In both cases, raise an appropriate error
         if n_kernel == 0:
-            raise ValueError("Spectrum resolution too low for macroturbulent broadening")
+            raise ValueError(("Spectrum resolution too low for macroturbulent broadening"))
         elif n_kernel > n_wave:
-            raise ValueError("Spectrum range too narrow for macroturbulent broadening")
+            raise ValueError(("Spectrum range too narrow for macroturbulent broadening"))
         # Construct the broadening kernel
         wave_k = np.arange(n_kernel)*dwave
         wave_k -= wave_k[-1]/2.
         kernel = vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
         kernel /= sum(kernel)
 
-        flux_conv = fftconvolve(1.0-flux_, kernel, mode='same')
+        flux_conv = fftconvolve(1-flux_, kernel, mode='same')
         # And interpolate the results back on to the original wavelength array,
         # taking care of even vs. odd-length kernels
         if n_kernel % 2 == 1:
             offset = 0.0
         else:
             offset = dwave / 2.0
-        flux = np.interp(wave+offset, wave_, 1.0-flux_conv)
+        flux = np.interp(wave+offset, wave_, 1-flux_conv)
+
         return flux
 
-    # Instrumental broadening
-    y_inst = instrumental_profile(x, y, resolution)
-    # vsini broadening
-    y_rot = vsini_broadening(x, y_inst, epsilon, vsini)
     # vmac broadening
-    y_broad = vmac_broadening(x, y_rot, vmac)
-    return x, y_broad
-
+    y_mac = vmac_broadening(x, y, vmacro_rad=vmac)
+    # vsini broadening
+    y_rot = vsini_broadening(x, y_mac, epsilon, vsini)
+    # Instrumental broadening
+    y_inst = instrumental_profile(x, y_rot, resolution)
+    return x, y_inst
 
 def _read_raw_moog(fname='summary.out'):
     '''Read the summary.out and return them
@@ -261,46 +228,32 @@ def _read_raw_moog(fname='summary.out'):
     flux : ndarray
       The flux vector
     '''
+    import itertools
 
-    with open(fname, 'r') as f:
+    with open('summary.out', 'r') as f:
         f.readline()
         f.readline()
-        start_wave, end_wave, step, flux_step = map(float, f.readline().split())
+        start_wave, end_wave, step, flux_step = list(map(float, f.readline().split()))
         lines = f.readlines()
 
-    # Remove trailing '\n' from every line in lines
-    data = map(lambda s: s.strip().replace('-', ' -'), lines)
-    # Convert every element to a float
-    flux = map(float, ' '.join(data).split(' '))
-    flux = 1.0 - np.array(flux)
+    data = []
+    for line in lines:
+        line = line.replace('-',' ')
+        line = line.replace('\n','').split(' ')
+        line = filter(None, line)
+        data.append(line)
+
+    flux = list(itertools.chain(*data))
+    flux = np.array(flux)
+    flux = flux.astype(np.float)
+    flux = 1.0 - flux
 
     w0, dw, n = float(start_wave), float(step), len(flux)
     w = w0 + dw * n
     wavelength = np.linspace(w0, w, n, endpoint=False)
     return wavelength, flux
 
-
-def _read_moog(fname='smooth.out'):
-    '''Read the output of moog - synthetic spectra.
-
-    Input
-    -----
-    fname : str (default: smooth.out)
-      The smoothed spectrum from MOOG
-
-    Output
-    ------
-    wavelength : np.ndarray
-      The wavelenth vector
-    flux : np.ndarray
-      The flux vector
-    '''
-
-    wavelength, flux = np.loadtxt(fname, skiprows=2, usecols=(0, 1), unpack=True)
-    return wavelength, flux
-
-
-def read_linelist(fname, intname='intervals_hr10_15n.lst'):
+def read_linelist(fname, intname='intervals.lst'):
     '''Read the line list return atomic data and ranges
 
     Input
@@ -317,55 +270,27 @@ def read_linelist(fname, intname='intervals_hr10_15n.lst'):
     '''
 
     if not os.path.isfile('rawLinelist/%s' % intname):
-        raise IOError('The interval list is not in the correct place.')
-    if not os.path.isfile('rawLinelist/%s' % fname):
-        raise IOError('The line list is not in the correct place.')
-    lines = pd.read_csv('rawLinelist/%s' % fname,
-                skiprows=1, comment='#',
-                delimiter='\t', usecols=range(6),
-                names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
-                converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
+        raise IOError('The interval list is not in the correct place!')
+    lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
+    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
+    converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
     lines.sort_values(by='wl', inplace=True)
 
-    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#',
-                    names=['start', 'end'], delimiter='\t')
-
+    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t')
     ranges = intervals.values
     atomic = []
     N = []
-    for ri in intervals.values:
-        idx = (lines.wl > ri[0]) & (lines.wl < ri[1])
-        a = lines[idx]
-        N.append(len(a))
+    for i, ri in enumerate(intervals.values):
+        a = lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]
         a = a.values
         atomic.append(a)
+        N.append(len(lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]))
     N = sum(N)
     atomic = np.vstack(atomic)
     print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
 
     # Create line list for MOOG
-    fmt = ["%8s", "%9s", "%10s", "%10s", "%6s", "%6s"]
+    fmt = ['%9.3f', '%10.1f', '%9.2f', '%9.3f', '%9.3f', '%7.4s']
     header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
     np.savetxt('linelist.moog', atomic, fmt=fmt, header=header)
     return ranges, atomic
-
-
-def interpol_synthetic(wave_obs, wave_synth, flux_synth):
-    '''Interpolation of the synthetic flux to the observed wavelength.
-    Input
-    -----
-    wave_obs : np.ndarray
-      Observed wavelength
-    wave_synth : np.ndarray
-      Synthetic wavelength
-    flux_synth : np.ndarray
-      Synthetic flux
-
-    Output
-    ------
-    int_flux : np.ndarray
-      Interpolated synthetic flux
-    '''
-    sl = InterpolatedUnivariateSpline(wave_synth, flux_synth, k=1)
-    int_flux = sl(wave_obs)
-    return int_flux
