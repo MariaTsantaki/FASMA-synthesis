@@ -34,7 +34,7 @@ def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
         noise = 0.0
     else:
         snr = float(snr)
-        noise = 1.0/(snr)
+        noise = 1.0/snr
     #Read observations
     wave_obs, flux_obs, delta_l = read_observations(obs_fname, start_norm, end_norm)
 
@@ -82,7 +82,7 @@ def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
         z = np.polyfit(w_max, f_max, 1)
         p = np.poly1d(z)
         new_flux = flux_obs/p(wave_obs)
-        new_flux = new_flux + 0.5*noise
+        new_flux = new_flux + noise
 
     # Exclude some continuum points which differ 0.5% from continuum level
     #wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
@@ -250,7 +250,7 @@ def snr(fname, plot=False):
 
         w1, w2 = snr_region
         wave_cut, flux_cut, l = read_observations(fname, w1, w2)
-        num_points = int(len(flux_cut)/4)
+        num_points = int(len(flux_cut)/3)
         if num_points != 0:
             snrEstimate = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
             return snrEstimate["SNR-Estimate"]
@@ -259,7 +259,7 @@ def snr(fname, plot=False):
 
     snr_regions = [[5744, 5746], [6048, 6052], [6068, 6076], [6682, 6686], [6649, 6652],
                 [6614, 6616], [5438.5, 5440], [5449.5, 5051], [5458, 5459.25],
-                [5498.3, 5500],   [5541.5, 5542.5]]
+                [5498.3, 5500], [5541.5, 5542.5]]
 
     snr = [sub_snr(snr_region) for snr_region in snr_regions]
 

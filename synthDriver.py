@@ -111,8 +111,7 @@ class synthMethod:
         defaults = {'model':        'kurucz95',
                     'MOOGv':        2014,
                     'save':         False,
-                    'fe':           False,
-                    'a':            0.0,
+                    'element':      False,
                     'fix_teff':     False,
                     'fix_logg':     False,
                     'fix_feh':      False,
@@ -123,14 +122,14 @@ class synthMethod:
                     'flag_vmac':    False,
                     'plot':         False,  # This is irrelevant with the batch.par value
                     'plot_res':     False,
-                    'damping':      1,
+                    'damping':      2,
                     'step_wave':    0.01,
                     'step_flux':    3.0,
                     'minimize':     False,
                     'refine':       False,
                     'errors':       False,
                     'observations': False,
-                    'inter_file':   'intervals.lst',
+                    'inter_file':   'intervals_hr10_15n.lst',
                     'snr':          None,
                     'resolution':   None,
                     'limb':         0.6
@@ -155,6 +154,8 @@ class synthMethod:
             if defaults['observations'] and (defaults['snr'] is None):
                 if os.path.isfile(str(defaults['observations'])):
                     defaults['snr'] = snr(defaults['observations'])
+                elif os.path.isfile('spectra/' + str(defaults['observations'])):
+                    defaults['snr'] = snr('spectra/' + str(defaults['observations']))
                 else:
                     self.logger.error('Error: %s not found.' % defaults['observations'])
             if defaults['inter_file']:
@@ -224,6 +225,31 @@ class synthMethod:
         status = 1
         return status
 
+    def minizationElementRunner(self, p=None):
+        """A function to run the minimization routine
+
+        Output
+        ------
+        params : output parameters
+        """
+
+        print('Starting Li minimization...')
+        self.logger.info('Starting the Li minimization procedure...')
+        start_time = time.time()
+        # Run the minimization routine first time
+        if p is not None:
+            function = MinimizeSynth(p, self.xobs, self.yobs, self.ranges, **self.options)
+            self.elemabund, self.xo, self.yo = function.minimizeElement()
+        else:
+            function = MinimizeSynth(self.initial, self.xobs, self.yobs, self.ranges, **self.options)
+            self.elemabund, self.xo, self.yo = function.minimizeElement()
+
+        self.logger.info('Minimization done.')
+        self.end_time = int(time.time() - start_time)
+        print('Minimization finished in %s sec' % int(self.end_time))
+        status = 1
+        return status
+
     def plotRunner(self, x=None, y=None, xs=None, ys=None, res=False):
         """A function to plot spectra with or without residuals.
         """
@@ -257,7 +283,11 @@ class synthMethod:
             self._prepare()
             if self.options is None:
                 self.logger.error('The line list does not exists!\n')
-                continue  # The line list does not exists
+                continue
+            if self.options['minimize'] and self.options['element']:
+                print('I am confused! First derive parameters and then abundances')
+                self.logger.error('Minimization of parameters and abundances at the same time!\n')
+                continue
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
@@ -265,8 +295,12 @@ class synthMethod:
 
             if self.options['observations']:
                 if os.path.isfile(self.options['observations']):
-                    print('This is your observed spectrum: %s' % self.options['observations'])
                     self.xobs, self.yobs, self.delta_l = read_obs_intervals(self.options['observations'], self.ranges, snr=self.options['snr'])
+                    print('Observed spectrum contains %s points' % len(self.xobs))
+                    self.logger.info('Observed spectrum read.')
+                elif os.path.isfile('spectra/' + self.options['observations']):
+                    print('This is your observed spectrum: %s' % self.options['observations'])
+                    self.xobs, self.yobs, self.delta_l = read_obs_intervals('spectra/' + self.options['observations'], self.ranges, snr=self.options['snr'])
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')
                 else:
@@ -287,6 +321,17 @@ class synthMethod:
                 self.parameters = [self.linelist] + [self.options['observations']] + self.params + [self.end_time] + [self.options['model'], self.options['resolution'], self.options['snr']]
                 self._output()
                 self.xobs, self.yobs = self.xo, self.yo
+
+            if self.options['element']:
+                self.logger.info('Starting the minimization routine...')
+                status = self.minizationElementRunner()
+                if status is None:
+                    self.logger.error('The minimization routine did not finish succesfully.')
+                    continue  # Problem with the minimization routine
+                else:
+                    self.logger.info('The minimization routine finished succesfully.')
+                self.parameters = [self.linelist] + [self.options['observations']] + self.initial + self.elemabund + [self.end_time] + [self.options['model'], self.options['resolution'], self.options['snr']]
+                self._output()
 
             if self.options['plot']:
                 self.logger.info('Plotting results.')

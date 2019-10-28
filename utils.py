@@ -351,7 +351,7 @@ def _run_moog(par='batch.par', driver='synth'):
         os.system('MOOGSILENT < stupid.tmp > /dev/null')
         os.remove('stupid.tmp')
 
-def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.out',
+def fun_moog_synth(x, atmtype, abund=0.0, par='batch.par', ranges=None, results='summary.out',
                    driver='synth', version=2014, **options):
     '''Run MOOG and create synthetic spectrum for the synth driver.
 
@@ -364,6 +364,7 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     '''
 
     from interpolation import interpolator
+
     fnames = ['summary.out', 'result.out']
     for i in fnames:
         try:
@@ -379,7 +380,7 @@ def fun_moog_synth(x, atmtype, par='batch.par', ranges=None, results='summary.ou
     vsini = round(vsini, 3)
     vmac  = round(vmac, 3)
 
-    interpolator(x[0:4], atmtype=atmtype)
+    interpolator(x[0:4], atmtype=atmtype, abund=abund, elem=options['element'])
     # Create synthetic spectrum
     start = ranges[0][0]
     end   = ranges[-1][-1]

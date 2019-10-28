@@ -23,6 +23,48 @@ def read_model(fname):
     model = np.loadtxt(data[23:-2])
     return model
 
+def solar_abundance(elem):
+    '''Give atomic number and return solar abundance from Asplund et al. 2009
+
+    Input
+    -----
+    atom : int
+      The atomic number
+
+    Output
+    ------
+    abundance : float
+      The solar abundance of the atom
+    '''
+    element = ['H',  'He', 'Li', 'Be', 'B',  'C',  'N',  'O',  'F',  'Ne' ,
+    'Na', 'Mg', 'Al', 'Si', 'P',  'S',  'Cl', 'Ar', 'K',  'Ca', 'Sc', 'Ti',
+    'V',  'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se',
+    'Br', 'Kr', 'Rb', 'Sr', 'Y',  'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd',
+    'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I',  'Xe', 'Cs', 'Ba', 'La', 'Ce',
+    'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
+    'Lu', 'Hf', 'Ta', 'W',  'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+    'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U',  'Np', 'Pu',
+    'Am', 'Cm', 'Bk', 'Cf', 'Es'] #periodic table
+
+    solar = [12.00, 10.93, 0.96, 1.38, 2.70, 8.43, 7.83, 8.69, 4.56, 7.93,
+             6.24, 7.60, 6.45, 7.51, 5.41, 7.12, 5.50, 6.40, 5.03, 6.34,
+             3.15, 4.95, 3.93, 5.64, 5.43, 7.47, 4.99, 6.22, 4.19, 4.56,
+             3.04, 3.65, 2.30, 3.34, 2.54, 3.25, 2.52, 2.87, 2.21, 2.58,
+             1.46, 1.88, -5.00, 1.75, 0.91, 1.57, 0.94, 1.71, 0.80, 2.04,
+             1.01, 2.18, 1.55, 2.24, 1.08, 2.18, 1.10, 1.58, 0.72, 1.42,
+             -5.00, 0.96, 0.52, 1.07, 0.30, 1.10, 0.48, 0.92, 0.10, 0.84,
+             0.10, 0.85, -0.12, 0.85, 0.26, 1.40, 1.38, 1.62, 0.92, 1.17,
+             0.90, 1.75, 0.65, -5.00, -5.00, -5.00, -5.00, -5.00, -5.00,
+             0.02, -5.00, -0.54, -5.00, -5.00, -5.00]
+
+    if elem in element:
+        ind = element.index(str(elem))
+    else:
+        print('Element does not exist in the periodic table.')
+        ind, solar[ind] = None, None
+
+    return ind+1, solar[ind]
+
 def interpolator_kurucz(params, atmtype='kurucz95'):
     '''Interpolation for Kurucz'''
 
@@ -127,7 +169,7 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
     else:
         return False
 
-def interpolator(params, save=True, atmtype='kurucz95', result=None):
+def interpolator(params, abund=0.0, elem=False, save=True, atmtype='kurucz95', result=None):
     '''This is a new approach based on a scipy interpolator.
     Re1sembles the original interpolator we used but with a change
 
@@ -157,11 +199,11 @@ def interpolator(params, save=True, atmtype='kurucz95', result=None):
         raise NameError('Could not find %s models' % atmtype)
 
     if save:
-            save_model(newatm, params, type=atmtype)
+            save_model(newatm, params, abund=abund, elem=elem, type=atmtype)
     if result:
         return newatm, params
 
-def save_model(model, params, type='kurucz95', fout='out.atm'):
+def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.atm'):
     '''Save the model atmosphere in the right format
 
     Input
@@ -187,7 +229,18 @@ def save_model(model, params, type='kurucz95', fout='out.atm'):
     else:
         raise NameError('Could not find %s models' % type)
 
-    footer = '    %.3e\n'\
+    if elem:
+        num, solabund = solar_abundance(elem)
+        footer = '    %.3e\n'\
+             'NATOMS     2  %.2f\n'\
+             '      26.0    %.2f\n'\
+             '      %.1f    %.2f\n'\
+             'NMOL      19\n'\
+             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
+             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
+             '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh, num, solabund+abund)
+    else:
+        footer = '    %.3e\n'\
              'NATOMS     1  %.2f\n'\
              '      26.0    %.2f\n'\
              'NMOL      19\n'\
@@ -203,15 +256,17 @@ def save_model(model, params, type='kurucz95', fout='out.atm'):
 if __name__ == '__main__':
     import argparse
     args = argparse.ArgumentParser(description='Get a model atmosphere.')
-    args.add_argument('teff', type=int,       help='Effective temperature')
-    args.add_argument('logg', type=float,     help='Surface gravity')
-    args.add_argument('feh',  type=float,     help='Metallicity, [Fe/H]')
-    args.add_argument('vt',   type=float,     help='Microturbulence')
-    args.add_argument('-o',   '--out',        help='Output atmosphere', default='out.atm')
-    args.add_argument('-a',   '--atmosphere', help='Model atmosphere', choices=['kurucz95', 'apogee_kurucz', 'marcs'], default='kurucz95')
+    args.add_argument('teff',   type=int,       help='Effective temperature')
+    args.add_argument('logg',   type=float,     help='Surface gravity')
+    args.add_argument('feh',    type=float,     help='Metallicity, [Fe/H]')
+    args.add_argument('vt',     type=float,     help='Microturbulence')
+    args.add_argument('-elem',  type=str,       help='Element', default=False)
+    args.add_argument('-abund', type=float,     help='Abundance', default=0.0)
+    args.add_argument('-o',     '--out',        help='Output atmosphere', default='out.atm')
+    args.add_argument('-a',     '--atmosphere', help='Model atmosphere', choices=['kurucz95', 'apogee_kurucz', 'marcs'], default='kurucz95')
     args = args.parse_args()
 
     params = [args.teff, args.logg, args.feh, args.vt]
-    atmosphere, p = interpolator(params, save=False, atmtype=args.atmosphere, result=True)
-    save_model(atmosphere, params, type=args.atmosphere, fout=args.out)
+    atmosphere, p = interpolator(params, elem=args.elem, abund=args.abund, save=False, atmtype=args.atmosphere, result=True)
+    save_model(atmosphere, params, elem=args.elem, abund=args.abund, type=args.atmosphere, fout=args.out)
     print('Atmosphere model sucessfully saved in: %s' % args.out)

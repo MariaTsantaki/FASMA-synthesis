@@ -37,6 +37,7 @@ class MinimizeSynth:
         self.yobs      = yobs
         self.ranges    = ranges
         self.model     = kwargs['model']
+        self.elem      = kwargs['element']
         self.kwargs    = kwargs
         self.y_obserr  = 0.01 #arbitary value
         self.fix_teff  = 1 if kwargs['fix_teff']  else 0
@@ -119,23 +120,32 @@ class MinimizeSynth:
         print('Fitted parameters with uncertainties:')
         # scaled uncertainties
         pcerror = res.perror * np.sqrt(res.fnorm / self.dof)
-        teff  = round(float(res.params[0]), 0)
-        logg  = round(float(res.params[1]), 3)
-        feh   = round(float(res.params[2]), 3)
-        vt    = round(float(res.params[3]), 2)
-        vmac  = round(float(res.params[4]), 2)
-        vsini = round(float(res.params[5]), 1)
-        #scaled error
-        erteff  = round(float(res.perror[0]), 0)
-        erlogg  = round(float(res.perror[1]), 3)
-        erfeh   = round(float(res.perror[2]), 3)
-        ervt    = round(float(res.perror[3]), 2)
-        ervmac  = round(float(res.perror[4]), 2)
-        ervsini = round(float(res.perror[5]), 1)
-        # Save only the scaled error
-        parameters = [teff, erteff, logg, erlogg, feh, erfeh, vt, ervt, vmac, ervmac, vsini, ervsini, x_red]
-        for i, x in enumerate(res.params):
-                    print( "\t%s: %s +- %s (scaled error +- %s)" % (self.parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
+        if len(res.params) > 1:
+            teff  = round(float(res.params[0]), 0)
+            logg  = round(float(res.params[1]), 3)
+            feh   = round(float(res.params[2]), 3)
+            vt    = round(float(res.params[3]), 2)
+            vmac  = round(float(res.params[4]), 2)
+            vsini = round(float(res.params[5]), 1)
+            #scaled error
+            erteff  = round(float(res.perror[0]), 0)
+            erlogg  = round(float(res.perror[1]), 3)
+            erfeh   = round(float(res.perror[2]), 3)
+            ervt    = round(float(res.perror[3]), 2)
+            ervmac  = round(float(res.perror[4]), 2)
+            ervsini = round(float(res.perror[5]), 1)
+            # Save only the scaled error
+            parameters = [teff, erteff, logg, erlogg, feh, erfeh, vt, ervt, vmac, ervmac, vsini, ervsini, x_red]
+            for i, x in enumerate(res.params):
+                print( "\t%s: %s +- %s (scaled error +- %s)" % (self.parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
+        # This should separate elements from parameters
+        else:
+            Li   = round(float(res.params), 3)
+            erLi = round(float(res.perror), 3)
+            # Save only the scaled error
+            parameters = [Li, erLi, x_red]
+            for i, x in enumerate(res.params):
+                print( "\t%s: %s +- %s (scaled error +- %s)" % (self.parinfo[i]['parname'], round(x, 3), round(res.perror[i], 3), round(pcerror[i], 3)))
         return parameters
 
     def myfunct(self, p, **kwargs):
@@ -166,15 +176,20 @@ class MinimizeSynth:
 
         # Definition of the Model spectrum to be iterated
         options = kwargs['options']
-        for i in range(1, 12, 2):
-            p = self.bounds(i, p)
 
-        if options['fix_vt'] and options['flag_vt']:
-            p[3] = self.getMic()
-        if options['fix_vmac'] and options['flag_vmac']:
-            p[4] = self.getMac()
+        if options['element']:
+            xs, ys = func(self.p0, abund=p, elem=self.elem, atmtype=self.model, driver='synth', ranges=self.ranges, **options)
+            print('    [' + self.elem + '/H]: {:1.2f}'.format(*p))
+        else:
+            for i in range(1, 12, 2):
+                p = self.bounds(i, p)
+            if options['fix_vt'] and options['flag_vt']:
+                p[3] = self.getMic()
+            if options['fix_vmac'] and options['flag_vmac']:
+                p[4] = self.getMac()
+            print('    Teff:{:8.1f}   logg: {:1.2f}   [Fe/H]: {:1.2f}   vt: {:1.2f}   vmac: {:1.2f}   vsini: {:1.2f}'.format(*p))
+            xs, ys = func(p, atmtype=self.model, driver='synth', ranges=self.ranges, **options)
 
-        xs, ys = func(p, atmtype=self.model, driver='synth', ranges=self.ranges, **options)
         sl = InterpolatedUnivariateSpline(xs, ys, k=1)
         self.ymodel = sl(self.xobs)
         # Check if interpolation is done correctly
@@ -184,7 +199,6 @@ class MinimizeSynth:
         err = np.zeros(len(self.yobs)) + self.y_obserr
         status = 0
         #Print parameters at each function call
-        print('    Teff:{:8.1f}   logg: {:1.2f}   [Fe/H]: {:1.2f}   vt: {:1.2f}   vmac: {:1.2f}   vsini: {:1.2f}'.format(*p))
         return([status, (self.yobs-self.ymodel)/err])
 
     def exclude_bad_points(self):
@@ -228,6 +242,27 @@ class MinimizeSynth:
         else:
             self.xobs_lpts, self.yobs_lpts = self.xobs, self.yobs
         return self.parameters, self.xobs_lpts, self.yobs_lpts
+
+    def minimizeElement(self):
+
+        from mpfit import mpfit
+
+        # Set PARINFO structure for all free parameters for mpfit
+        # The limits are also cheched by the bounds function
+        elem_info   = {'parname':self.elem, 'step': 0.15, 'limits': [-4, 5], 'mpside': 2}
+        self.parinfo = [elem_info]
+
+        self.yobs = self.yobs[np.where((self.xobs >= 6707.0) & (self.xobs <= 6709))]
+        self.xobs = self.xobs[np.where((self.xobs >= 6707.0) & (self.xobs <= 6709))]
+
+        pelem = 0.0
+        # A dictionary which contains the parameters to be passed to the user-supplied function specified by myfunct via the standard Python
+        # keyword dictionary mechanism. This is the way you can pass additional data to your user-supplied function without using global variables.
+        self.fa = {'xobs': self.xobs, 'ranges': self.ranges, 'model': self.model, 'yobs': self.yobs, 'y_obserr': self.y_obserr, 'params': self.p0, 'element': self.elem, 'options': self.kwargs}
+        m = mpfit(self.myfunct, xall=[pelem], parinfo=self.parinfo, ftol=1e-4, xtol=1e-4, gtol=1e-4, functkw=self.fa, maxiter=20)
+        self.dof = len(self.yobs) - len(m.params)
+        self.parameters = self.convergence_info(m)
+        return self.parameters, self.xobs, self.yobs
 
 def getMic(teff, logg, feh):
     """Calculate micro turbulence."""

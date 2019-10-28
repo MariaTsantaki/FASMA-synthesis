@@ -29,7 +29,7 @@ def save_synth_spec(x, y, initial=None, fname='initial.spec', **options):
     header['CDELT1']   = x[1] - x[0]
 
     if initial:
-        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) +  '_' + str(options['a']) + '_' + str(options['resolution']) + '.spec'
+        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) + '_' + str(options['resolution']) + '.spec'
 
     tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
                                            fits.Column(name='flux', format='D', array=y)], header=header)
