@@ -38,72 +38,38 @@ def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
     #Read observations
     wave_obs, flux_obs, delta_l = read_observations(obs_fname, start_norm, end_norm)
 
+    flux_obs = flux_obs/np.median(flux_obs)
     # Clean for cosmic rays
     med = np.median(flux_obs)
-    sigma = mad(flux_obs)
-    n = len(flux_obs)
-    fluxout = np.zeros(n)
-    for i in range(n):
-        if flux_obs[i] > (med + (sigma*3.0)):
-            fluxout[i] = med
-        else:
-            fluxout[i] = flux_obs[i]
-    flux_obs = fluxout
+    sig = mad(flux_obs)
+    flux_clean = np.where(flux_obs < (med + (sig*3.0)), flux_obs, med)
+    flux_obs = flux_clean
 
-    # Divide in 2 and find the maximum points
-    y = np.array_split(flux_obs, 2)
-    x = np.array_split(wave_obs, 2)
-    index_max1 = np.sort(np.argsort(y[0])[-8:])  # this can be done better
-    index_max2 = np.sort(np.argsort(y[1])[-8:])  # this can be done better
-    f_max1 = y[0][index_max1]
-    f_max2 = y[1][index_max2]
+    pol_fit = np.polyfit(wave_obs, flux_obs, 1)
+    fit_line = np.poly1d(pol_fit)
+    for i in range(5):
+        condition = flux_obs - fit_line(wave_obs) + noise > 0
+        cont_points_wl = wave_obs[condition]
+        cont_points_fl = flux_obs[condition]
+        pol_fit_new = np.polyfit(cont_points_wl, cont_points_fl, 1)
+        fit_line = np.poly1d(pol_fit_new)
 
-    w_max1 = x[0][index_max1]
-    w_max2 = x[1][index_max2]
-
-    f_max = np.concatenate((f_max1, f_max2))
-    w_max = np.concatenate((w_max1, w_max2))
-
-    if method == 'scalar':
-        # Divide with the median of maximum values.
-        new_flux = flux_obs/np.median(f_max)
-        if snr<20:
-            new_flux =  new_flux + (2.0*noise)
-        elif 20<=snr<200:
-            new_flux =  new_flux + (2.0*noise)
-        elif 200<=snr<350:
-            new_flux =  new_flux + (1.0*noise)
-        elif 350<=snr:
-            new_flux =  new_flux + (0.5*noise)
-    if method == 'linear':
-        #z = np.polyfit(w_max, f_max-(lol*f_max*noise), 1)
-        #p = np.poly1d(z)
-        #new_flux = flux_obs/p(wave_obs)
-        z = np.polyfit(w_max, f_max, 1)
-        p = np.poly1d(z)
-        new_flux = flux_obs/p(wave_obs)
-        new_flux = new_flux + noise
-
-    # Exclude some continuum points which differ 0.5% from continuum level
-    #wave_obs = wave_obs[np.where((1.0-new_flux)/new_flux > 0.005)]
-    #new_flux = new_flux[np.where((1.0-new_flux)/new_flux > 0.005)]
-    wave = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
+    new_flux = flux_obs/fit_line(wave_obs)
+    wave     = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
     if plot:
         plt.plot(wave_obs, flux_obs, label='raw spectrum')
-        xx = [start_norm, end_norm]
-        yy = [np.median(f_max), np.median(f_max)]
-        plt.plot(xx, yy)
-        plt.plot(w_max, f_max, 'o', label='max points')
+        plt.plot(cont_points_wl, cont_points_fl, 'o')
         plt.xlabel(r'Wavelength $\AA{}$')
         plt.ylabel('Normalized flux')
         plt.legend(loc='best', frameon=False)
         plt.grid(True)
         plt.show()
 
-        yy = [1.0, 1.0]
-        plt.plot(xx, yy)
+        x = [start_norm, end_norm]
+        y = [1.0, 1.0]
+        plt.plot(x, y)
         plt.plot(wave, new_flux, label='normalized')
         plt.xlabel(r'Wavelength $\AA{}$')
         plt.ylabel('Normalized flux')
@@ -250,9 +216,21 @@ def snr(fname, plot=False):
 
         w1, w2 = snr_region
         wave_cut, flux_cut, l = read_observations(fname, w1, w2)
-        num_points = int(len(flux_cut)/3)
+
+        # Clean for cosmic rays
+        med = np.median(flux_cut)
+        sig = mad(flux_cut)
+        flux_obs = np.where(flux_cut < (med + (sig*3.0)), flux_cut, med)
+        pol_fit = np.polyfit(wave_cut, flux_obs, 1)
+        fit_line = np.poly1d(pol_fit)
+        for i in range(10):
+            condition = abs(flux_obs - fit_line(wave_cut)) < 3*sig
+            cont_points_wl = wave_cut[condition]
+            cont_points_fl = flux_obs[condition]
+
+        num_points = int(len(cont_points_fl)/2.0)
         if num_points != 0:
-            snrEstimate = pyasl.estimateSNR(wave_cut, flux_cut, num_points, deg=2, controlPlot=plot)
+            snrEstimate = pyasl.estimateSNR(cont_points_wl, cont_points_fl, num_points, deg=2, controlPlot=plot)
             return snrEstimate["SNR-Estimate"]
         else:
             return 0
