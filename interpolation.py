@@ -113,7 +113,7 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
 
     import _pickle as pic
 
-    gridMODS = open("/home/mtsantaki/Programs/models/marcs/MARCS1M.bin","rb")
+    gridMODS = open("models/marcs/MARCS1M.bin","rb")
     tmod     = pic.load(gridMODS)
     gmod     = pic.load(gridMODS)
     mmod     = pic.load(gridMODS)

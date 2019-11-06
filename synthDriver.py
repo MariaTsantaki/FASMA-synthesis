@@ -215,7 +215,7 @@ class synthMethod:
             if round(params2[1], 2) == 5.0:
                 params2[1] = 4.9
                 self.options['fix_logg'] = True
-            self.options['fix_vmic'] = True
+            self.options['fix_vt'] = True
             self.options['fix_vmac'] = True
             function = MinimizeSynth(params2, self.xo, self.yo, self.ranges, **self.options)
             self.params, xxo, yyo = function.minimize()
