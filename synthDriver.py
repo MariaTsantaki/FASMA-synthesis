@@ -122,7 +122,7 @@ class synthMethod:
                     'flag_vmac':    False,
                     'plot':         False,  # This is irrelevant with the batch.par value
                     'plot_res':     False,
-                    'damping':      2,
+                    'damping':      1,
                     'step_wave':    0.01,
                     'step_flux':    3.0,
                     'minimize':     False,
@@ -215,7 +215,8 @@ class synthMethod:
             if round(params2[1], 2) == 5.0:
                 params2[1] = 4.9
                 self.options['fix_logg'] = True
-            self.options['fix_vsini'] = True
+            self.options['fix_vmic'] = True
+            self.options['fix_vmac'] = True
             function = MinimizeSynth(params2, self.xo, self.yo, self.ranges, **self.options)
             self.params, xxo, yyo = function.minimize()
 

@@ -216,19 +216,22 @@ def snr(fname, plot=False):
 
         w1, w2 = snr_region
         wave_cut, flux_cut, l = read_observations(fname, w1, w2)
+        if len(wave_cut) == 0:
+            num_points = 0
+        else:
+            # Clean for cosmic rays
+            med = np.median(flux_cut)
+            sig = mad(flux_cut)
+            flux_obs = np.where(flux_cut < (med + (sig*3.0)), flux_cut, med)
+            pol_fit = np.polyfit(wave_cut, flux_obs, 1)
+            fit_line = np.poly1d(pol_fit)
+            for i in range(10):
+                condition = abs(flux_obs - fit_line(wave_cut)) < 3*sig
+                cont_points_wl = wave_cut[condition]
+                cont_points_fl = flux_obs[condition]
 
-        # Clean for cosmic rays
-        med = np.median(flux_cut)
-        sig = mad(flux_cut)
-        flux_obs = np.where(flux_cut < (med + (sig*3.0)), flux_cut, med)
-        pol_fit = np.polyfit(wave_cut, flux_obs, 1)
-        fit_line = np.poly1d(pol_fit)
-        for i in range(10):
-            condition = abs(flux_obs - fit_line(wave_cut)) < 3*sig
-            cont_points_wl = wave_cut[condition]
-            cont_points_fl = flux_obs[condition]
+            num_points = int(len(cont_points_fl)/2.0)
 
-        num_points = int(len(cont_points_fl)/2.0)
         if num_points != 0:
             snrEstimate = pyasl.estimateSNR(cont_points_wl, cont_points_fl, num_points, deg=2, controlPlot=plot)
             return snrEstimate["SNR-Estimate"]
