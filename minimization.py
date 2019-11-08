@@ -54,7 +54,7 @@ class MinimizeSynth:
         if self.model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if self.model.lower() == 'marcs':
-            bounds = [3900, 6700,  1.0, 4.9, -5.0, 1.0]
+            bounds = [3800, 6900,  0.5, 5.0, -5.0, 1.0]
         return bounds
 
     def bounds(self, i, p):
