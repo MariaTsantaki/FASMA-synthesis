@@ -18,9 +18,14 @@ to install all dependencies.
 Now FASMA runs with python 3.
 
 # Usage
-Place your spectra in the `spectra` folder and run `python FASMA.py`
-to open the GUI control. It is possible to create the `StarMe_synth.cfg`
-manually and run the CLI version of FASMA with `python synthDriver.py`.
+Place your spectra in the `spectra` folder and run: 
+
+```
+python FASMA.py
+```
+
+to open the GUI control. It is also possible to create the `StarMe_synth.cfg`
+manually and run the CLI version of FASMA from the terminal with `python synthDriver.py`.
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
 
