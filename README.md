@@ -20,15 +20,14 @@ Now FASMA runs with python 3.
 # Usage
 FASMA is so easy. You can run FASMA 1) either with the GUI or 2) from the terminal. 
 
-1) Run with the GUI:
+1) Run to open the GUI control:
 
 ```
 python FASMA.py
 ```
 
-to open the GUI control. 
+2) Run the CLI version.
 
-2) Run the CLI version:
 Add the options in the `StarMe_synth.cfg` file manually and then:
 
 `python synthDriver.py`.
