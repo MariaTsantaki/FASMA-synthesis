@@ -153,7 +153,7 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
     print('SNR: %s' % snr)
     return xobs, yobs, delta_l
 
-def plot(xobs, yobs, x, y, res=False):
+def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     """Function to plot synthetic spectrum.
     Input
     -----
@@ -168,17 +168,19 @@ def plot(xobs, yobs, x, y, res=False):
     """
 
     # if nothing exists, pass
-    if (xobs is None) and (x is None):
+    if (xobs is None) and (xinit is None):
         pass
     # if there is not observed spectrum, plot only synthetic (case 1, 3)
     if xobs is None:
-        plt.plot(x, y, label='synthetic')
-    # if both exist
+        plt.plot(xinit, yinit, label='synthetic')
+    # if all exist
     else:
-        plt.plot(x, y, label='synthetic')
+        plt.plot(xinit, yinit, label='initial synthetic')
         plt.plot(xobs, yobs, label='observed')
+        if len(xfinal) > 0:
+            plt.plot(xfinal, yfinal, label='final synthetic')
         if res:
-            sl = InterpolatedUnivariateSpline(x, y, k=1)
+            sl = InterpolatedUnivariateSpline(xfinal, yfinal, k=1)
             ymodel = sl(xobs)
             plt.plot(xobs, (yobs-ymodel)*10, label='residuals')
     plt.xlabel(r'Wavelength $\AA{}$')

@@ -251,14 +251,19 @@ class synthMethod:
         status = 1
         return status
 
-    def plotRunner(self, x=None, y=None, xs=None, ys=None, res=False):
+    def plotRunner(self, x=None, y=None, xs=None, ys=None, xf=None, yf=None, res=False):
         """A function to plot spectra with or without residuals.
         """
 
-        if self.options['plot_res']:
-            plot(x, y, xs, ys, res=True)
+        if self.options['minimize']:
+            p1 = [self.params[0], self.params[2], self.params[4], self.params[6], self.params[8], self.params[10]]
+            xf, yf = func(p1, atmtype=self.options['model'], ranges=self.ranges, driver='synth', version=self.options['MOOGv'], **self.options)
         else:
-            plot(x, y, xs, ys)
+            xf, yf = (None, None)
+        if self.options['plot_res']:
+            plot(x, y, xs, ys, xf, yf, res=True)
+        else:
+            plot(x, y, xs, ys, xf, yf, res=False)
 
     def saveRunner(self):
         """A function to save spectra.
