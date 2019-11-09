@@ -18,7 +18,7 @@ to install all dependencies.
 Now FASMA runs with python 3.
 
 # Usage
-Place your spectra in the `spectra` folder and run: 
+FASMA is so easy. Run:
 
 ```
 python FASMA.py
