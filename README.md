@@ -18,14 +18,20 @@ to install all dependencies.
 Now FASMA runs with python 3.
 
 # Usage
-FASMA is so easy. Run:
+FASMA is so easy. You can run FASMA 1) either with the GUI or 2) from the terminal. 
+
+1) Run with the GUI:
 
 ```
 python FASMA.py
 ```
 
-to open the GUI control. It is also possible to create the `StarMe_synth.cfg`
-manually and run the CLI version of FASMA from the terminal with `python synthDriver.py`.
+to open the GUI control. 
+
+2) Run the CLI version:
+Add the options in the `StarMe_synth.cfg` file manually and then:
+
+`python synthDriver.py`.
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
 
@@ -36,7 +42,7 @@ A standard setting of the configuration file has this form:
 `linelist teff logg [M/H] vt vmac vsini options`
 
 ```
-giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:Sun_HARPS.fits,resolution:115000,minimize,refine
+linelist.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:Sun_HARPS.fits,resolution:115000,minimize,refine
 ```
 
 The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
