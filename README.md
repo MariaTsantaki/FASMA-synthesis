@@ -30,7 +30,10 @@ python FASMA.py
 
 Add the options in the `StarMe_synth.cfg` file manually and then:
 
-`python synthDriver.py`.
+```
+python synthDriver.py
+```
+
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
 
