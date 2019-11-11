@@ -212,7 +212,7 @@ class synthMethod:
             params2 = [self.params[0], self.params[2], self.params[4], self.params[6], self.params[8], self.params[10]]
             params2[3] = getMic(self.params[0], self.params[2], self.params[4])
             params2[4] = getMac(self.params[0], self.params[2])
-            if round(params2[1], 2) == 5.0:
+            if round(params2[1], 2) > 4.99:
                 params2[1] = 4.9
                 self.options['fix_logg'] = True
             self.options['fix_vt'] = True

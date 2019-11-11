@@ -225,8 +225,8 @@ class MinimizeSynth:
         teff_info  = {'parname':'Teff',   'limited': [1, 1], 'limits': [self.parinfo_limit()[0], self.parinfo_limit()[1]], 'step': 100,  'mpside': 2, 'fixed': self.fix_teff}
         logg_info  = {'parname':'logg',   'limited': [1, 1], 'limits': [self.parinfo_limit()[2], self.parinfo_limit()[3]], 'step': 0.15, 'mpside': 2, 'fixed': self.fix_logg}
         feh_info   = {'parname':'[Fe/H]', 'limited': [1, 1], 'limits': [self.parinfo_limit()[4], self.parinfo_limit()[5]], 'step': 0.10, 'mpside': 2, 'fixed': self.fix_feh}
-        vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99], 'step': 0.5,  'mpside': 2, 'fixed': self.fix_vt}
-        vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0], 'step': 0.5,  'mpside': 2, 'fixed': self.fix_vmac}
+        vt_info    = {'parname':'vt',     'limited': [1, 1], 'limits': [0.0, 9.99], 'step': 0.2,  'mpside': 2, 'fixed': self.fix_vt}
+        vmac_info  = {'parname':'vmac',   'limited': [1, 1], 'limits': [0.0, 20.0], 'step': 0.2,  'mpside': 2, 'fixed': self.fix_vmac}
         vsini_info = {'parname':'vsini',  'limited': [1, 1], 'limits': [0.0, 99.0], 'step': 1.5,  'mpside': 2, 'fixed': self.fix_vsini}
         self.parinfo = [teff_info, logg_info, feh_info, vt_info, vmac_info, vsini_info]
 
@@ -282,9 +282,12 @@ def getMac(teff, logg):
     # For Dwarfs: Doyle et al. 2014
     # 5200 < teff < 6400
     # 4.0 < logg < 4.6
+    # For cooler dwarfs, Valenti et al. 2005s
     if logg > 3.90:
-        mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3))) + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
-        #mac = 3.98 + ((teff - 5770.)/650.)
+        if teff > 5200:
+            mac = 3.21 + (2.33 * (teff - 5777.) * (10**(-3))) + (2.00 * ((teff - 5777.)**2) * (10**(-6))) - (2.00 * (logg - 4.44))
+        else:
+            mac = 3.98 + ((teff - 5770.)/650.)
         #mac = (2.202 * np.exp(0.0019 * (teff - 5777.))) + 1.30
     # For subgiants and giants: Hekker & Melendez 2007
     elif 2.90 <= logg <= 3.90: # subgiants
