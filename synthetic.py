@@ -7,7 +7,7 @@ import os
 import pandas as pd
 from astropy.io import fits
 
-def save_synth_spec(x, y, initial=None, fname='initial.spec', **options):
+def save_synth_spec(x, y, initial=None, **options):
     '''Save synthetic spectrum of all intervals
 
     Input
@@ -16,8 +16,8 @@ def save_synth_spec(x, y, initial=None, fname='initial.spec', **options):
       Wavelength
     y : ndarray
       Flux
-    fname : str
-      Filename of fits file
+    initial : list
+      Set of parameters to name the new file, else it is named 'synthetic.spec'.
 
     Output
     -----
@@ -30,6 +30,8 @@ def save_synth_spec(x, y, initial=None, fname='initial.spec', **options):
 
     if initial:
         fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) + '_' + str(options['resolution']) + '.spec'
+    else:
+        fname = 'synthetic.spec'
 
     tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
                                            fits.Column(name='flux', format='D', array=y)], header=header)
@@ -53,6 +55,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
       vsini in km/s
     vmac : float
       vmac in km/s
+    epsilon : limb-darkening parameter
 
     Output
     -----
@@ -147,7 +150,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
         Apply macroturbulent broadening.
         The macroturbulent kernel is defined as in [Gray2005].
-        Same functions are used in iSpec (Blanco-Cuaresma et al. 2014)
+        These functions are taken from iSpec (Blanco-Cuaresma et al. 2014)
 
         Input
         -----
@@ -162,7 +165,6 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
 
         # radial component is equal to the tangential component
         vmacro_tan = vmacro_rad
-
         if vmacro_rad == vmacro_tan == 0:
             return flux
 
@@ -202,7 +204,6 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         else:
             offset = dwave / 2.0
         flux = np.interp(wave+offset, wave_, 1-flux_conv)
-
         return flux
 
     # vmac broadening
@@ -254,7 +255,8 @@ def _read_raw_moog(fname='summary.out'):
     return wavelength, flux
 
 def read_linelist(fname, intname='intervals.lst'):
-    '''Read the line list return atomic data and ranges
+    '''Read the line list (atomic data) and the file which includes the ranges
+    where the synthesis will happen.
 
     Input
     -----
@@ -282,9 +284,8 @@ def read_linelist(fname, intname='intervals.lst'):
     N = []
     for i, ri in enumerate(intervals.values):
         a = lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]
-        a = a.values
-        atomic.append(a)
-        N.append(len(lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]))
+        atomic.append(a.values)
+        N.append(len(a))
     N = sum(N)
     atomic = np.vstack(atomic)
     print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
@@ -293,4 +294,59 @@ def read_linelist(fname, intname='intervals.lst'):
     fmt = ['%9.3f', '%10.1f', '%9.2f', '%9.3f', '%9.3f', '%7.4s']
     header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
     np.savetxt('linelist.moog', atomic, fmt=fmt, header=header)
+    return ranges, atomic
+
+def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
+    '''Read the line list (atomic data) and the file which includes the ranges
+    where the synthesis will happen for the element abundances.
+
+    Input
+    -----
+    fname : str
+      File that contains the linelist
+    element : str
+      The element to be searched in the line list
+    intname : str
+      File that contains the central line where -+2.0 \AA{} are added to create
+      the interval around each line.
+
+    Output
+    ------
+    ranges : wavelength ranges of the linelist
+    atomic : atomic data
+    '''
+
+    if not os.path.isfile('rawLinelist/%s' % intname):
+        raise IOError('The interval list is not in the correct place!')
+    print('Line list:', fname)
+    print('Intervals list:', intname)
+    lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
+    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'])
+    lines.sort_values(by='wl', inplace=True)
+    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', usecols=(0,1), names=['El', 'wave'], delimiter='\t')
+    intervals['El'] = intervals['El'].map(lambda x: x.strip().strip("I"))
+    intervals = intervals[intervals['El']==element]
+    intervals.sort_values(by='wave', inplace=True)
+
+    N = []
+    ranges = []
+    atomic = pd.DataFrame([])
+    for i, ri in enumerate(intervals.wave):
+        r1 = float(ri) - 2.0
+        r2 = float(ri) + 2.0
+        ranges.append([r1, r2])
+        a = lines[(lines.wl>r1) & (lines.wl<r2)]
+        atomic = atomic.append(a)
+        N.append(len(a))
+
+    atomic = atomic.fillna(' ')
+    atomic = atomic.drop_duplicates()
+    atomic.sort_values(by='wl', inplace=True)
+    N = sum(N)
+    print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
+
+    # Create line list for MOOG
+    fmt = ['%9.3f', '%10.1f', '%9.2f', '%9.3f', '%9.3f', '%7.4s']
+    header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
+    np.savetxt('linelist.moog', atomic.values, fmt=fmt, header=header)
     return ranges, atomic

@@ -11,19 +11,25 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 def mad(data, axis=None):
+    '''Function to calculate the median average deviation.
+    '''
+
     return np.median(np.absolute(data - np.median(data, axis)), axis)
 
-def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
-    '''Local Normalisation function. Make a linear fit from the maximum points
+def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
+    '''Very local Normalization function. Makes a linear fit from the maximum points
     of each segment.
     Input
     -----
     obs_fname : observations file
     r : range of the interval
+    plot: True to visual check if normalization is correct, default: False
 
     Output
     ------
+    wave : wavelength
     new_flux : normalized flux
+    delta_l : wavelenghth spacing
     '''
 
     # Define the area of Normalization
@@ -45,19 +51,22 @@ def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
     flux_clean = np.where(flux_obs < (med + (sig*3.0)), flux_obs, med)
     flux_obs = flux_clean
 
+    # Normalization process
     pol_fit = np.polyfit(wave_obs, flux_obs, 1)
     fit_line = np.poly1d(pol_fit)
     for i in range(5):
         condition = flux_obs - fit_line(wave_obs) + noise > 0
-        cont_points_wl = wave_obs[condition]
-        cont_points_fl = flux_obs[condition]
-        pol_fit_new = np.polyfit(cont_points_wl, cont_points_fl, 1)
+        cont_wl = wave_obs[condition]
+        cont_fl = flux_obs[condition]
+        pol_fit_new = np.polyfit(cont_wl, cont_fl, 1)
         fit_line = np.poly1d(pol_fit_new)
 
     new_flux = flux_obs/fit_line(wave_obs)
+    # Cut to original region
     wave     = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
+    # This plot is silent
     if plot:
         plt.plot(wave_obs, flux_obs, label='raw spectrum')
         plt.plot(cont_points_wl, cont_points_fl, 'o')
@@ -76,10 +85,11 @@ def local_norm(obs_fname, r, snr, method='linear', lol=1.0, plot=False):
         plt.legend(loc='best', frameon=False)
         plt.grid(True)
         plt.show()
+
     return wave, new_flux, delta_l
 
 def read_observations(fname, start_synth, end_synth):
-    """Read observed spectrum of different types and return wavelength and flux.
+    '''Read observed spectrum of different types and return wavelength and flux.
     Input
     -----
     fname : filename of the spectrum. These are the approved formats: '.dat', '.txt',
@@ -91,7 +101,7 @@ def read_observations(fname, start_synth, end_synth):
     -----
     wave_obs : raw observed wavelength
     flux_obs : raw observed flux
-    """
+    '''
 
     extension = ('.dat', '.txt', '.spec', '.fits')
     if fname.endswith(extension):
@@ -126,24 +136,26 @@ def read_observations(fname, start_synth, end_synth):
         wave_obs, flux_obs, delta_l = (None, None, None)
     return wave_obs, flux_obs, delta_l
 
-def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
-    """Read only the spectral chunks from the observed spectrum
-    This function does the same as read_observations but for the whole linelist.
+def read_obs_intervals(obs_fname, r, snr=None):
+    '''Read only the spectral chunks from the observed spectrum and normalize
+    the regions.
     Input
     -----
     fname : filename of the spectrum.
     r : ranges of wavelength intervals where the observed spectrum is cut
     (starting and ending wavelength)
+    snr: signal-to-noise
 
     Output
     -----
     xobs : observed normalized wavelength
     yobs : observed normalized flux
-    """
+    delta_l : wavelenghth spacing
+    '''
 
-    lol = 1.0 # This is here for no reason.
-    # Obtain the normalized spectrum
-    spec = [local_norm(obs_fname, ri, snr, method, lol) for ri in r]
+    lol = 1.0 # This is here for no reason. Just for fun
+    # Obtain the normalized spectrum for all regions
+    spec = [local_norm(obs_fname, ri, snr, lol) for ri in r]
     xobs = np.hstack(np.vstack(spec).T[0])
     yobs = np.hstack(np.vstack(spec).T[1])
     delta_l = spec[0][2]
@@ -154,18 +166,21 @@ def read_obs_intervals(obs_fname, r, snr=100, method='linear'):
     return xobs, yobs, delta_l
 
 def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
-    """Function to plot synthetic spectrum.
+    '''Function to plot synthetic and observed spectra.
     Input
     -----
     xobs : observed wavelength
     yobs : observed flux
-    x : synthetic wavelength
-    y : synthetic flux
+    xinit : synthetic wavelength with initial parameters
+    yinit : synthetic flux with initial parameters
+    xfinal : synthetic wavelength with final parameters
+    yfinal : synthetic flux with final parameters
+    res: Flag to plot residuals
 
     Output
     ------
     plots
-    """
+    '''
 
     # if nothing exists, pass
     if (xobs is None) and (xinit is None):
@@ -177,7 +192,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     else:
         plt.plot(xinit, yinit, label='initial synthetic')
         plt.plot(xobs, yobs, label='observed')
-        if len(xfinal) > 0:
+        if xfinal is not None:
             plt.plot(xfinal, yfinal, label='final synthetic')
         if res:
             sl = InterpolatedUnivariateSpline(xfinal, yfinal, k=1)
@@ -191,15 +206,16 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     return
 
 def snr(fname, plot=False):
-    """Calculate SNR using for various intervals.
+    '''Calculate SNR using for various intervals.
     Input
     ----
     fname : spectrum
     plot : plot snr fit
+
     Output
     -----
     snr : snr value averaged from the continuum intervals
-    """
+    '''
 
     from PyAstronomy import pyasl
 
@@ -227,11 +243,10 @@ def snr(fname, plot=False):
             flux_obs = np.where(flux_cut < (med + (sig*3.0)), flux_cut, med)
             pol_fit = np.polyfit(wave_cut, flux_obs, 1)
             fit_line = np.poly1d(pol_fit)
-            for i in range(10):
+            for i in range(5):
                 condition = abs(flux_obs - fit_line(wave_cut)) < 3*sig
                 cont_points_wl = wave_cut[condition]
                 cont_points_fl = flux_obs[condition]
-
             num_points = int(len(cont_points_fl)/2.0)
 
         if num_points != 0:
@@ -240,6 +255,7 @@ def snr(fname, plot=False):
         else:
             return 0
 
+    # These regions are relatively free from absorption.
     snr_regions = [[5744, 5746], [6048, 6052], [6068, 6076], [6682, 6686], [6649, 6652],
                 [6614, 6616], [5438.5, 5440], [5449.5, 5051], [5458, 5459.25],
                 [5498.3, 5500], [5541.5, 5542.5]]
@@ -249,7 +265,7 @@ def snr(fname, plot=False):
     if len(snr):
         snr = [value for value in snr if value != 0]
         snr_clean = [value for value in snr if not np.isnan(value)]
-        snr_total = np.average(snr_clean)
+        snr_total = np.median(snr_clean)
         snr = int(snr_total)
         return snr
     else:
