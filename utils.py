@@ -92,7 +92,6 @@ class GetModels:
         name : str
           The path to the atmosphere model
         '''
-        name = '/home/paranoia/Software/models/%s/' % self.atmtype
         name = 'models/%s/' % self.atmtype
         if feh_model < 0:
             name += 'm%s/' % str(abs(feh_model)).replace('.', '')

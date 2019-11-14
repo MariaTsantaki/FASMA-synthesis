@@ -138,7 +138,7 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
     import _pickle as pic
     import os
 
-    fname = "/home/paranoia/Software/models/marcs/MARCS1M.bin"
+    fname = "models/marcs/MARCS1M.bin"
     if not os.path.isfile(fname):
         return False
 
