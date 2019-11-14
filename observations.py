@@ -197,7 +197,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
         if res:
             sl = InterpolatedUnivariateSpline(xfinal, yfinal, k=1)
             ymodel = sl(xobs)
-            plt.plot(xobs, (yobs-ymodel)*10, label='residuals')
+            plt.plot(xobs, (yobs-ymodel)*10, label='residuals x10')
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
     plt.legend(loc='best', frameon=False)

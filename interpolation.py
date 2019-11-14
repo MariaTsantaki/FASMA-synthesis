@@ -6,7 +6,7 @@ from scipy.interpolate import griddata
 from utils import GetModels
 
 def read_model(fname):
-    '''Read the model atmosphere
+    '''Read the KURUCZ model atmosphere.
 
     Input
     -----
@@ -18,13 +18,14 @@ def read_model(fname):
     model : ndarray
       The correct atmosphere, the columns and tauross in a tuple
     '''
+
     f = gzip.open(fname, compresslevel=1)
     data = f.readlines()
     model = np.loadtxt(data[23:-2])
     return model
 
 def solar_abundance(elem):
-    '''Give atomic number and return solar abundance from Asplund et al. 2009
+    '''For a given atomic number, return solar abundance from Asplund et al. 2009.
 
     Input
     -----
@@ -34,8 +35,9 @@ def solar_abundance(elem):
     Output
     ------
     abundance : float
-      The solar abundance of the atom
+      The solar abundance of the atom in dex
     '''
+
     element = ['H',  'He', 'Li', 'Be', 'B',  'C',  'N',  'O',  'F',  'Ne' ,
     'Na', 'Mg', 'Al', 'Si', 'P',  'S',  'Cl', 'Ar', 'K',  'Ca', 'Sc', 'Ti',
     'V',  'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se',
@@ -55,21 +57,33 @@ def solar_abundance(elem):
              -5.00, 0.96, 0.52, 1.07, 0.30, 1.10, 0.48, 0.92, 0.10, 0.84,
              0.10, 0.85, -0.12, 0.85, 0.26, 1.40, 1.38, 1.62, 0.92, 1.17,
              0.90, 1.75, 0.65, -5.00, -5.00, -5.00, -5.00, -5.00, -5.00,
-             0.02, -5.00, -0.54, -5.00, -5.00, -5.00]
+             0.02, -5.00, -0.54, -5.00, -5.00, -5.00] #solar abundances
 
     if elem in element:
         ind = element.index(str(elem))
     else:
         print('Element does not exist in the periodic table.')
         ind, solar[ind] = None, None
-
     return ind+1, solar[ind]
 
 def interpolator_kurucz(params, atmtype='kurucz95'):
-    '''Interpolation for Kurucz'''
+    '''Interpolation for Kurucz model atmospheres.
+    Input
+    -----
+    params : ndarray
+      Stellar parameters for the Interpolation.
+
+    Output
+    ------
+    newatm : ndarray
+      The interpolated atmosphere, the columns and tauross in a tuple
+    '''
 
     m = GetModels(params[0], params[1], params[2], atmtype=atmtype)
     mdict = m.getmodels()
+    if mdict is False:
+        return False
+
     params[0] = mdict['teff'][0]
     params[1] = mdict['logg'][0]
     params[2] = mdict['feh'][0]
@@ -108,12 +122,27 @@ def interpolator_kurucz(params, atmtype='kurucz95'):
     return newatm
 
 def interpolator_marcs(params, fesun=7.47, microlim=3.0):
-    '''Interpolation for marcs. The function is taken from STEPAR
-    (Tabernero et al. 2019) to deal the gaps in the grid.'''
+    '''Interpolation for marcs models. The function is taken from STEPAR
+    (Tabernero et al. 2019) to deal the gaps in the grid.
+    Input
+    -----
+    params : ndarray
+      Stellar parameters for the Interpolation.
+
+    Output
+    ------
+    newatm : ndarray
+      The interpolated atmosphere, the columns and tauross in a tuple
+    '''
 
     import _pickle as pic
+    import os
 
-    gridMODS = open("models/marcs/MARCS1M.bin","rb")
+    fname = "/home/paranoia/Software/models/marcs/MARCS1M.bin"
+    if not os.path.isfile(fname):
+        return False
+
+    gridMODS = open(fname,"rb")
     tmod     = pic.load(gridMODS)
     gmod     = pic.load(gridMODS)
     mmod     = pic.load(gridMODS)
@@ -170,17 +199,22 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
         return False
 
 def interpolator(params, abund=0.0, elem=False, save=True, atmtype='kurucz95', result=None):
-    '''This is a new approach based on a scipy interpolator.
-    Re1sembles the original interpolator we used but with a change
+    '''Function to connect all. For a given set of params, return a model atmosphere.
 
     Input
     -----
     params : list of length 3
-      Teff, logg, [Fe/H] desired.
+      Teff, logg, [Fe/H].
+    abund : float
+      abundance of a given element to added in the atmosphere.
+    element : float
+      any element to change abundance in the atmosphere.
     save : bool
-      Wether the new atmosphere should be saved. Default is True.
+      Whether the new atmosphere should be saved. Default is True.
     atmtype : str
       The atmosphere models being used. Default is Kurucz95.
+    result : bool
+      return the new atmosphere. Default is False.
 
     Output
     ------
@@ -191,10 +225,16 @@ def interpolator(params, abund=0.0, elem=False, save=True, atmtype='kurucz95', r
     params = list(params)
     if atmtype == 'marcs':
         newatm = interpolator_marcs(params, fesun=7.47, microlim=3.0)
+        if newatm is False:
+            raise NameError('Could not find %s models' % atmtype)
     elif atmtype == 'kurucz95':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
+        if newatm is False:
+            raise NameError('Could not find %s models' % atmtype)
     elif atmtype == 'apogee_kurucz':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
+        if newatm is False:
+            raise NameError('Could not find %s models' % atmtype)
     else:
         raise NameError('Could not find %s models' % atmtype)
 
@@ -204,14 +244,18 @@ def interpolator(params, abund=0.0, elem=False, save=True, atmtype='kurucz95', r
         return newatm, params
 
 def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.atm'):
-    '''Save the model atmosphere in the right format
+    '''Save the model atmosphere in the right format.
 
     Input
     -----
     model : ndarray
       The interpolated model atmosphere.
     params : list
-      Teff, logg, [Fe/H], vt of the interpolated atmosphere.
+      Teff, logg, [M/H], vt of the interpolated atmosphere.
+    abund : float
+      abundance of a given element to added in the atmosphere.
+    element : float
+      any element to change abundance in the atmosphere.
     type : str
       Type of atmospheric parameters. Default is Kurucz95
     fout : str
@@ -219,10 +263,12 @@ def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.
 
     Output
     ------
-    Atmospheric model.
+    Saved atmospheric model in file.
     '''
+
     teff, logg, feh, vt = params
     if type in ['kurucz95', 'apogee_kurucz', 'marcs']:
+        # The name in the header shows the format of the model not the type.
         header = 'KURUCZ\n'\
                  'Teff= %i   log g= %.2f\n'\
                  'NTAU        %i' % (teff, logg, model.shape[0])
@@ -230,23 +276,25 @@ def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.
         raise NameError('Could not find %s models' % type)
 
     if elem:
+        # Get atomic number and solar abundance, only one element per time.
         num, solabund = solar_abundance(elem)
         footer = '    %.3e\n'\
-             'NATOMS     2  %.2f\n'\
-             '      26.0    %.2f\n'\
-             '      %.1f    %.2f\n'\
-             'NMOL      19\n'\
-             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
-             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
-             '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh, num, solabund+abund)
+        'NATOMS     2  %.2f\n'\
+        '      26.0    %.2f\n'\
+        '      %.1f    %.2f\n'\
+        'NMOL      19\n'\
+        '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
+        '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
+        '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh, num, solabund+abund)
+
     else:
         footer = '    %.3e\n'\
-             'NATOMS     1  %.2f\n'\
-             '      26.0    %.2f\n'\
-             'NMOL      19\n'\
-             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
-             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
-             '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh)
+        'NATOMS     1  %.2f\n'\
+        '      26.0    %.2f\n'\
+        'NMOL      19\n'\
+        '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'\
+        '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'\
+        '         8.1    822.0     22.1' % (vt*1e5, feh, 7.47+feh)
 
     _fmt = ('%15.8E', '%8.1f', '%.3E', '%.3E', '%.3E', '%.3E', '%.3E')
     while model.shape[1] < len(_fmt):

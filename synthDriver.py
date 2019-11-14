@@ -129,8 +129,6 @@ class synthMethod:
                     'fix_vt':       False,
                     'fix_vmac':     False,
                     'fix_vsini':    False,
-                    'flag_vt':      False,
-                    'flag_vmac':    False,
                     'plot':         False,
                     'plot_res':     False,
                     'damping':      1,
@@ -368,10 +366,6 @@ class synthMethod:
                 self.logger.error('Minimization of parameters and abundances at the same time!\n')
                 continue
 
-            if self.options['save']:
-                self.logger.info('Save synthetic spectrum.')
-                self.saveRunner()
-
             if self.options['observations']:
                 if os.path.isfile(self.options['observations']):
                     self.xobs, self.yobs, delta_l = read_obs_intervals(self.options['observations'], self.ranges, snr=self.options['snr'])
@@ -410,6 +404,10 @@ class synthMethod:
                     self.logger.info('The minimization routine finished succesfully.')
                 self.parameters = [self.linelist] + [self.options['observations']] + self.initial + self.abund.tolist() + [self.end_time] + [self.options['model'], self.options['resolution'], self.options['snr']]
                 self._output(abundance=True)
+
+            if self.options['save']:
+                self.logger.info('Save synthetic spectrum.')
+                self.saveRunner()
 
             if self.options['plot']:
                 self.logger.info('Plotting results.')

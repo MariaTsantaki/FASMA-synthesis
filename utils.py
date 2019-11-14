@@ -43,7 +43,7 @@ class GetModels:
     Inputs
     ------
     teff : int
-      The effective temperature(K) for the model atmosphere
+      The effective temperature (K) for the model atmosphere
     logg : float
       The surface gravity (logarithmic in cgs) for the model atmosphere
     feh : float
@@ -55,7 +55,7 @@ class GetModels:
     def __init__(self, teff, logg, feh, atmtype):
         self.teff = teff
         self.logg = logg
-        self.feh = feh
+        self.feh  = feh
         self.atmtype = atmtype
 
         atmmodels = {'kurucz95': [kurucz95, 'kurucz95'], 'apogee_kurucz': [apogee_kurucz, 'apogee_kurucz'], 'marcs': [marcs, 'marcs']}
@@ -92,6 +92,7 @@ class GetModels:
         name : str
           The path to the atmosphere model
         '''
+        name = '/home/paranoia/Software/models/%s/' % self.atmtype
         name = 'models/%s/' % self.atmtype
         if feh_model < 0:
             name += 'm%s/' % str(abs(feh_model)).replace('.', '')
@@ -129,7 +130,9 @@ class GetModels:
         fname = self._model_path(teff_model, logg_model, feh_model)
         if os.path.isfile(fname):
             return fname, teff_model, logg_model
-
+        else:
+            print('Models do not exist.')
+            return False
         # Change the Teff (up or down) to compensate for the gap
         teff_model0 = teff_model
         idx = np.where(teff_model == self.grid['teff'])[0][0]
@@ -159,6 +162,8 @@ class GetModels:
             for j, logg_m in enumerate(logg_model):
                 for feh_m in feh_model:
                     upper = True if self.teff < teff_m else False
+                    if self._model_exists(teff_m, logg_m, feh_m, upper) is False:
+                        return False
                     fname, Te, ge = self._model_exists(teff_m, logg_m, feh_m, upper)
                     teff_model[i] = Te
                     logg_model[j] = ge
@@ -221,6 +226,10 @@ class GetModels:
 
         teff0 = tuple(teff_model)
         logg0 = tuple(logg_model)
+
+        if self._looping_models(teff_model, logg_model, feh_model) is False:
+            return False
+
         models, teff_model, logg_model = self._looping_models(teff_model, logg_model, feh_model)
 
         if logg_model != logg0:
@@ -354,8 +363,10 @@ def _run_moog(par='batch.par', driver='synth'):
 def fun_moog_synth(x, atmtype, abund=0.0, par='batch.par', ranges=None, results='summary.out',
                    driver='synth', version=2014, **options):
     '''Run MOOG and create synthetic spectrum for the synth driver.
-
     :x: A tuple/list with values (teff, logg, [Fe/H], vt, vmic, vmac)
+    :atmtype: model atmosphere
+    :abund: abundance of specific species
+    :ranges: array of intervals for the synthesis
     :par: The parameter file (batch.par)
     :results: The summary file
     :driver: Which driver to use when running MOOG
@@ -375,52 +386,26 @@ def fun_moog_synth(x, atmtype, abund=0.0, par='batch.par', ranges=None, results=
     # Create an atmosphere model from input parameters
     teff, logg, feh, _, vmac, vsini = x
     teff  = int(teff)
-    logg  = round(logg,4)
-    feh   = round(feh,4)
+    logg  = round(logg, 3)
+    feh   = round(feh, 3)
     vsini = round(vsini, 3)
     vmac  = round(vmac, 3)
 
     interpolator(x[0:4], atmtype=atmtype, abund=abund, elem=options['element'])
-    # Create synthetic spectrum
-    start = ranges[0][0]
-    end   = ranges[-1][-1]
-    _update_par_synth(start, end, options=options)
-    _run_moog(driver='synth')
-    x, y = _read_raw_moog('summary.out')
 
+    # Create synthetic spectrum for each of the intervals
     spec = []
     for i, ri in enumerate(ranges):
-        x_synth = x[(x > ri[0]) & (x < ri[1])]
-        y_synth = y[(x > ri[0]) & (x < ri[1])]
-        # Check for enough points for vmac
-        # Define central wavelength
-        lambda0 = (x_synth[0] + x_synth[-1]) / 2.0
-        vmacro = vmac/(299792458.*1e-3)*lambda0
-        n_wave = len(x_synth)
-        dwave = x_synth[1]-x_synth[0]
-        n_kernel = int(5*vmacro/dwave)
-        if n_kernel % 2 == 0:
-            n_kernel += 1
-        # The kernel might be of too low resolution, or the the wavelength range
-        # might be too narrow. In both cases, raise an appropriate error
-        if n_kernel > n_wave:
-            # Add extra points on both sides
-            ex_points = n_kernel-n_wave
-            print("Spectrum range too narrow for macroturbulent broadening. Adding %s points." % ex_points)
-            if ex_points % 2 == 0:
-                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
-                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
-                _update_par_synth(w_s, w_e, options=options)
-                _run_moog(driver='synth')
-                x_synth, y_synth = _read_raw_moog('summary.out')
-            else:
-                ex_points += 1
-                w_s = x_synth[0] - (dwave*((ex_points+2)/2))
-                w_e = x_synth[-1] + (dwave*((ex_points+2)/2))
-                _update_par_synth(w_s, w_e, options=options)
-                _run_moog(driver='synth')
-                x_synth, y_synth = _read_raw_moog('summary.out')
+        _update_par_synth(ri[0], ri[1], options=options)
+        _run_moog(driver='synth')
+        x_synth, y_synth = _read_raw_moog('summary.out')
+
+        if len(x_synth) < 1:
+            print('This region does not exits in synthetic spectrum: ', ri)
+            print('Or the region is to wide for synthesis.')
+
         spec.append(broadening(x_synth, y_synth, vsini, vmac, resolution=options['resolution'], epsilon=options['limb']))
+
     # Gather all individual spectra to one
     w = np.column_stack(spec)[0]
     f = np.column_stack(spec)[1]
