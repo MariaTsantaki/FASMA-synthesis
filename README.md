@@ -82,7 +82,3 @@ limb:         0.6
    * [M. Tsantaki](https://github.com/MariaTsantaki)
    * [D. Andreasen](https://github.com/DanielAndreasen)
    * [G. Teixeira](https://github.com/gdcteixeira)
-
-# LICENCE
-
-FASMA uses the MIT licence.
