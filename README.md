@@ -1,7 +1,7 @@
 ![My image](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/img/running_icon.png)
 
 
-# FASMA-synthesis
+# FASMA 2.0
 Stellar spectral analysis package. 
 
 The python code is wrapped around the spectral synthesis package: [MOOG](http://www.as.utexas.edu/~chris/moog.html).
