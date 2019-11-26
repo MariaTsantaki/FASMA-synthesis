@@ -12,3 +12,4 @@ isochrones
 PyAstronomy
 astropy
 # emcee
+periodictable==1.5.2
