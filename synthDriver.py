@@ -12,8 +12,8 @@ from minimization import MinimizeSynth, getMic, getMac
 from synthetic import read_linelist, read_linelist_elem, save_synth_spec
 import time
 
-class synthMethod:
 
+class synthMethod:
     def __init__(self, cfgfile='StarMe_synth.cfg', overwrite=None):
         '''The function that glues everything together. A log file is created
         with the list of processes (captain.log).
@@ -31,7 +31,7 @@ class synthMethod:
           Easy readable table with results
         '''
 
-        self.cfgfile   = cfgfile
+        self.cfgfile = cfgfile
         self.overwrite = overwrite
         # Setup of logger
         if os.path.isfile('captain.log'):  # Cleaning from previous runs
@@ -102,13 +102,35 @@ class synthMethod:
             return None
 
         if self.options['element']:
-            self.ranges, atomic = read_linelist_elem(self.linelist, element=self.options['element'], intname=self.options['inter_file'])
+            self.ranges, atomic = read_linelist_elem(
+                self.linelist,
+                element=self.options['element'],
+                intname=self.options['inter_file'],
+            )
             self.logger.info('Getting initial model grid')
-            self.xspec, self.yspec = func(self.initial, atmtype=self.options['model'], abund=self.initial[2], elem=self.options['element'], ranges=self.ranges, driver='synth', version=self.options['MOOGv'], **self.options)
+            self.xspec, self.yspec = func(
+                self.initial,
+                atmtype=self.options['model'],
+                abund=self.initial[2],
+                elem=self.options['element'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
         else:
-            self.ranges, atomic = read_linelist(self.linelist, intname=self.options['inter_file'])
+            self.ranges, atomic = read_linelist(
+                self.linelist, intname=self.options['inter_file']
+            )
             self.logger.info('Getting initial model grid')
-            self.xspec, self.yspec = func(self.initial, atmtype=self.options['model'], ranges=self.ranges, driver='synth', version=self.options['MOOGv'], **self.options)
+            self.xspec, self.yspec = func(
+                self.initial,
+                atmtype=self.options['model'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
 
         if __name__ in ('__main__', 'synthDriver'):
             self.options['GUI'] = False  # Running batch mode
@@ -119,30 +141,31 @@ class synthMethod:
         '''Reads the options inside the config file otherwise set to defaults.
         '''
 
-        defaults = {'model':        'kurucz95',
-                    'MOOGv':        2014,
-                    'save':         False,
-                    'element':      False,
-                    'fix_teff':     False,
-                    'fix_logg':     False,
-                    'fix_feh':      False,
-                    'fix_vt':       False,
-                    'fix_vmac':     False,
-                    'fix_vsini':    False,
-                    'plot':         False,
-                    'plot_res':     False,
-                    'damping':      1,
-                    'step_wave':    0.01,
-                    'step_flux':    3.0,
-                    'minimize':     False,
-                    'refine':       False,
-                    'errors':       False,
-                    'observations': False,
-                    'inter_file':   'intervals_hr10_15n.lst',
-                    'snr':          None,
-                    'resolution':   None,
-                    'limb':         0.6
-                    }
+        defaults = {
+            'model': 'kurucz95',
+            'MOOGv': 2014,
+            'save': False,
+            'element': False,
+            'fix_teff': False,
+            'fix_logg': False,
+            'fix_feh': False,
+            'fix_vt': False,
+            'fix_vmac': False,
+            'fix_vsini': False,
+            'plot': False,
+            'plot_res': False,
+            'damping': 1,
+            'step_wave': 0.01,
+            'step_flux': 3.0,
+            'minimize': False,
+            'refine': False,
+            'errors': False,
+            'observations': False,
+            'inter_file': 'intervals_hr10_15n.lst',
+            'snr': None,
+            'resolution': None,
+            'limb': 0.6,
+        }
         if not options:
             self.options = defaults
         else:
@@ -155,11 +178,11 @@ class synthMethod:
                     if option in ['teff', 'logg', 'mh', 'vt', 'vmac', 'vsini']:
                         option = 'fix_%s' % option
                     defaults[option] = False if defaults[option] else True
-            defaults['model']     = defaults['model'].lower()
+            defaults['model'] = defaults['model'].lower()
             defaults['step_wave'] = float(defaults['step_wave'])
             defaults['step_flux'] = float(defaults['step_flux'])
-            defaults['limb']      = float(defaults['limb'])
-            defaults['MOOGv']     = int(defaults['MOOGv'])
+            defaults['limb'] = float(defaults['limb'])
+            defaults['MOOGv'] = int(defaults['MOOGv'])
             if defaults['observations'] and (defaults['snr'] is None):
                 if os.path.isfile(str(defaults['observations'])):
                     defaults['snr'] = snr(defaults['observations'])
@@ -174,7 +197,9 @@ class synthMethod:
                 defaults['resolution'] = int(float(defaults['resolution']))
             self.options = defaults
 
-    def _output(self, overwrite=None, header=None, stellarparams=False, abundance=False):
+    def _output(
+        self, overwrite=None, header=None, stellarparams=False, abundance=False
+    ):
         '''Create the output file 'synthresults.dat'
 
         Input
@@ -188,37 +213,94 @@ class synthMethod:
         '''
         if abundance:
             if header:
-                hdr2 = ['linelist', 'observations', 'Teff', 'erTeff', 'logg', 'erlogg', '[M/H]', 'er[M/H]',
-                'vmic', 'ervmic', 'vmac', 'ervmac', 'vsini', 'ervsini', 'Na', 'erNa', 'Mg', 'erMg', 'Al', 'erAl',
-                'Si', 'erSi', 'Ca', 'erCa', 'Sc', 'erSc', 'Ti', 'erTi', 'V', 'erV', 'Cr', 'erCr', 'Mn', 'erMn',
-                'Ni', 'erNi', 'chi^2', 'time', 'model', 'resolution', 'snr']
+                hdr2 = [
+                    'linelist',
+                    'observations',
+                    'Teff',
+                    'erTeff',
+                    'logg',
+                    'erlogg',
+                    '[M/H]',
+                    'er[M/H]',
+                    'vmic',
+                    'ervmic',
+                    'vmac',
+                    'ervmac',
+                    'vsini',
+                    'ervsini',
+                    'Na',
+                    'erNa',
+                    'Mg',
+                    'erMg',
+                    'Al',
+                    'erAl',
+                    'Si',
+                    'erSi',
+                    'Ca',
+                    'erCa',
+                    'Sc',
+                    'erSc',
+                    'Ti',
+                    'erTi',
+                    'V',
+                    'erV',
+                    'Cr',
+                    'erCr',
+                    'Mn',
+                    'erMn',
+                    'Ni',
+                    'erNi',
+                    'chi^2',
+                    'time',
+                    'model',
+                    'resolution',
+                    'snr',
+                ]
                 if overwrite:
                     with open('synthresults_elements.dat', 'w') as output:
-                        output.write('\t'.join(hdr2)+'\n')
+                        output.write('\t'.join(hdr2) + '\n')
                 else:
                     if not os.path.isfile('synthresults_elements.dat'):
                         with open('synthresults_elements.dat', 'w') as output:
-                            output.write('\t'.join(hdr2)+'\n')
+                            output.write('\t'.join(hdr2) + '\n')
             else:
                 with open('synthresults_elements.dat', 'a') as output:
-                    output.write('\t'.join(map(str, self.parameters))+'\n')
+                    output.write('\t'.join(map(str, self.parameters)) + '\n')
 
         if stellarparams:
             if header:
-                hdr1 = ['linelist', 'observations', 'Teff', 'erTeff', 'logg', 'erlogg', '[M/H]', 'er[M/H]',
-                'vmic', 'ervmic', 'vmac', 'ervmac', 'vsini', 'ervsini', 'chi^2', 'time', 'model', 'resolution',
-                'snr']
+                hdr1 = [
+                    'linelist',
+                    'observations',
+                    'Teff',
+                    'erTeff',
+                    'logg',
+                    'erlogg',
+                    '[M/H]',
+                    'er[M/H]',
+                    'vmic',
+                    'ervmic',
+                    'vmac',
+                    'ervmac',
+                    'vsini',
+                    'ervsini',
+                    'chi^2',
+                    'time',
+                    'model',
+                    'resolution',
+                    'snr',
+                ]
 
                 if overwrite:
                     with open('synthresults.dat', 'w') as output:
-                        output.write('\t'.join(hdr1)+'\n')
+                        output.write('\t'.join(hdr1) + '\n')
                 else:
                     if not os.path.isfile('synthresults.dat'):
                         with open('synthresults.dat', 'w') as output:
-                            output.write('\t'.join(hdr1)+'\n')
+                            output.write('\t'.join(hdr1) + '\n')
             else:
                 with open('synthresults.dat', 'a') as output:
-                    output.write('\t'.join(map(str, self.parameters))+'\n')
+                    output.write('\t'.join(map(str, self.parameters)) + '\n')
 
     def minizationRunner(self, p=None):
         '''A function to run the minimization routine
@@ -233,16 +315,27 @@ class synthMethod:
         start_time = time.time()
         # Run the minimization routine first time
         if p is not None:
-            function = MinimizeSynth(p, self.xobs, self.yobs, self.ranges, **self.options)
+            function = MinimizeSynth(
+                p, self.xobs, self.yobs, self.ranges, **self.options
+            )
             self.params, self.xo, self.yo = function.minimize()
         else:
-            function = MinimizeSynth(self.initial, self.xobs, self.yobs, self.ranges, **self.options)
+            function = MinimizeSynth(
+                self.initial, self.xobs, self.yobs, self.ranges, **self.options
+            )
             self.params, self.xo, self.yo = function.minimize()
 
         if self.options['refine']:
             print('Refining the parameters...')
             print('Patience is the key...')
-            params2 = [self.params[0], self.params[2], self.params[4], self.params[6], self.params[8], self.params[10]]
+            params2 = [
+                self.params[0],
+                self.params[2],
+                self.params[4],
+                self.params[6],
+                self.params[8],
+                self.params[10],
+            ]
             params2[3] = getMic(self.params[0], self.params[2], self.params[4])
             params2[4] = getMac(self.params[0], self.params[2])
             if round(params2[1], 2) == 5.0:
@@ -250,7 +343,9 @@ class synthMethod:
                 self.options['fix_logg'] = True
             self.options['fix_vt'] = True
             self.options['fix_vmac'] = True
-            function = MinimizeSynth(params2, self.xo, self.yo, self.ranges, **self.options)
+            function = MinimizeSynth(
+                params2, self.xo, self.yo, self.ranges, **self.options
+            )
             self.params, xxo, yyo = function.minimize()
 
         self.end_time = int(time.time() - start_time)
@@ -273,10 +368,14 @@ class synthMethod:
         start_time = time.time()
         # Run the minimization routine first time
         if p is not None:
-            function = MinimizeSynth(p, self.xobs, self.yobs, self.ranges, **self.options)
+            function = MinimizeSynth(
+                p, self.xobs, self.yobs, self.ranges, **self.options
+            )
             self.elemabund, self.xo, self.yo = function.minimizeElement()
         else:
-            function = MinimizeSynth(self.initial, self.xobs, self.yobs, self.ranges, **self.options)
+            function = MinimizeSynth(
+                self.initial, self.xobs, self.yobs, self.ranges, **self.options
+            )
             self.elemabund, self.xo, self.yo = function.minimizeElement()
 
         self.end_time = int(time.time() - start_time)
@@ -285,13 +384,13 @@ class synthMethod:
 
         # Make the output array to save results.
         el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
-        a = np.empty(2*len(el)+1)
+        a = np.empty(2 * len(el) + 1)
         a[:] = np.nan
         ind1 = el.index(self.options['element'])
         ind2 = ind1 + 1
         a[ind1] = self.elemabund[0]
         a[ind2] = self.elemabund[1]
-        a[-1]   = self.elemabund[2]
+        a[-1] = self.elemabund[2]
         self.abund = a
         status = 1
         return status
@@ -306,11 +405,34 @@ class synthMethod:
 
         if self.options['minimize']:
             # Create final spectrum with final parameters.
-            p1 = [self.params[0], self.params[2], self.params[4], self.params[6], self.params[8], self.params[10]]
-            xf, yf = func(p1, atmtype=self.options['model'], ranges=self.ranges, driver='synth', version=self.options['MOOGv'], **self.options)
+            p1 = [
+                self.params[0],
+                self.params[2],
+                self.params[4],
+                self.params[6],
+                self.params[8],
+                self.params[10],
+            ]
+            xf, yf = func(
+                p1,
+                atmtype=self.options['model'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
         elif self.options['element']:
             # Create final spectrum with final parameters.
-            xf, yf = func(self.initial, atmtype=self.options['model'], abund=self.elemabund[0], elem=self.options['element'], ranges=self.ranges, driver='synth', version=self.options['MOOGv'], **self.options)
+            xf, yf = func(
+                self.initial,
+                atmtype=self.options['model'],
+                abund=self.elemabund[0],
+                elem=self.options['element'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
         else:
             xf, yf = (None, None)
 
@@ -333,7 +455,9 @@ class synthMethod:
             self.logger.info('results directory was created')
 
         if self.xspec is not None:
-            save_synth_spec(self.xspec, self.yspec, initial=self.initial, **self.options)
+            save_synth_spec(
+                self.xspec, self.yspec, initial=self.initial, **self.options
+            )
         else:
             print('No spectrum was created.')
 
@@ -346,13 +470,19 @@ class synthMethod:
         self._output(header=True, stellarparams=True, abundance=True)
 
         for (self.initial, self.options, line) in self._genStar():
-            self.logger.info('Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(*self.initial))
+            self.logger.info(
+                'Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(
+                    *self.initial
+                )
+            )
 
             # Check here if element exists
             if self.options['element']:
                 el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
                 if self.options['element'] not in el:
-                    print('This element is not in the line list:', self.options['element'])
+                    print(
+                        'This element is not in the line list:', self.options['element']
+                    )
                     self.logger.error('This element is not in the line list.')
                     continue
 
@@ -363,22 +493,40 @@ class synthMethod:
                 continue
             if self.options['minimize'] and self.options['element']:
                 print('I am confused! First derive parameters and then abundances')
-                self.logger.error('Minimization of parameters and abundances at the same time!\n')
+                self.logger.error(
+                    'Minimization of parameters and abundances at the same time!\n'
+                )
                 continue
 
             if self.options['observations']:
                 if os.path.isfile(self.options['observations']):
-                    self.xobs, self.yobs, delta_l = read_obs_intervals(self.options['observations'], self.ranges, snr=self.options['snr'])
+                    self.xobs, self.yobs, delta_l = read_obs_intervals(
+                        self.options['observations'],
+                        self.ranges,
+                        snr=self.options['snr'],
+                    )
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')
                 elif os.path.isfile('spectra/' + self.options['observations']):
-                    print('This is your observed spectrum: %s' % self.options['observations'])
-                    self.xobs, self.yobs, delta_l = read_obs_intervals('spectra/' + self.options['observations'], self.ranges, snr=self.options['snr'])
+                    print(
+                        'This is your observed spectrum: %s'
+                        % self.options['observations']
+                    )
+                    self.xobs, self.yobs, delta_l = read_obs_intervals(
+                        'spectra/' + self.options['observations'],
+                        self.ranges,
+                        snr=self.options['snr'],
+                    )
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')
                 else:
-                    print('The observed spectrum %s was not found.' % self.options['observations'])
-                    self.logger.error('Error: %s not found.' % self.options['observations'])
+                    print(
+                        'The observed spectrum %s was not found.'
+                        % self.options['observations']
+                    )
+                    self.logger.error(
+                        'Error: %s not found.' % self.options['observations']
+                    )
                     continue
             else:
                 self.xobs, self.yobs = (None, None)
@@ -386,11 +534,23 @@ class synthMethod:
             if self.options['minimize']:
                 status = self.minizationRunner()
                 if status is None:
-                    self.logger.error('The minimization routine did not finish succesfully.')
+                    self.logger.error(
+                        'The minimization routine did not finish succesfully.'
+                    )
                     continue  # Problem with the minimization routine
                 else:
                     self.logger.info('The minimization routine finished succesfully.')
-                self.parameters = [self.linelist] + [self.options['observations']] + self.params + [self.end_time] + [self.options['model'], self.options['resolution'], self.options['snr']]
+                self.parameters = (
+                    [self.linelist]
+                    + [self.options['observations']]
+                    + self.params
+                    + [self.end_time]
+                    + [
+                        self.options['model'],
+                        self.options['resolution'],
+                        self.options['snr'],
+                    ]
+                )
                 # Save the results in the output file.
                 self._output(stellarparams=True)
                 self.xobs, self.yobs = self.xo, self.yo
@@ -398,11 +558,24 @@ class synthMethod:
             if self.options['element']:
                 status = self.minizationElementRunner()
                 if status is None:
-                    self.logger.error('The minimization routine did not finish succesfully.')
+                    self.logger.error(
+                        'The minimization routine did not finish succesfully.'
+                    )
                     continue  # Problem with the minimization routine
                 else:
                     self.logger.info('The minimization routine finished succesfully.')
-                self.parameters = [self.linelist] + [self.options['observations']] + self.initial + self.abund.tolist() + [self.end_time] + [self.options['model'], self.options['resolution'], self.options['snr']]
+                self.parameters = (
+                    [self.linelist]
+                    + [self.options['observations']]
+                    + self.initial
+                    + self.abund.tolist()
+                    + [self.end_time]
+                    + [
+                        self.options['model'],
+                        self.options['resolution'],
+                        self.options['snr'],
+                    ]
+                )
                 self._output(abundance=True)
 
             if self.options['save']:
