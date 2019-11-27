@@ -1,5 +1,7 @@
 #!/usr/bin/python
 from __future__ import division
+from solar_abundance import solar
+from periodictable import elements
 import numpy as np
 import gzip
 from scipy.interpolate import griddata
@@ -26,226 +28,26 @@ def read_model(fname):
     return model
 
 
-def solar_abundance(elem):
+def solar_abundance(element):
     '''For a given atomic number, return solar abundance from Asplund et al. 2009.
 
     Input
     -----
-    atom : int
-      The atomic number
+    element : str
+      The name of an element
 
     Output
     ------
+    index : int
+      The atomic number of the element
     abundance : float
       The solar abundance of the atom in dex
     '''
-
-    element = [
-        'H',
-        'He',
-        'Li',
-        'Be',
-        'B',
-        'C',
-        'N',
-        'O',
-        'F',
-        'Ne',
-        'Na',
-        'Mg',
-        'Al',
-        'Si',
-        'P',
-        'S',
-        'Cl',
-        'Ar',
-        'K',
-        'Ca',
-        'Sc',
-        'Ti',
-        'V',
-        'Cr',
-        'Mn',
-        'Fe',
-        'Co',
-        'Ni',
-        'Cu',
-        'Zn',
-        'Ga',
-        'Ge',
-        'As',
-        'Se',
-        'Br',
-        'Kr',
-        'Rb',
-        'Sr',
-        'Y',
-        'Zr',
-        'Nb',
-        'Mo',
-        'Tc',
-        'Ru',
-        'Rh',
-        'Pd',
-        'Ag',
-        'Cd',
-        'In',
-        'Sn',
-        'Sb',
-        'Te',
-        'I',
-        'Xe',
-        'Cs',
-        'Ba',
-        'La',
-        'Ce',
-        'Pr',
-        'Nd',
-        'Pm',
-        'Sm',
-        'Eu',
-        'Gd',
-        'Tb',
-        'Dy',
-        'Ho',
-        'Er',
-        'Tm',
-        'Yb',
-        'Lu',
-        'Hf',
-        'Ta',
-        'W',
-        'Re',
-        'Os',
-        'Ir',
-        'Pt',
-        'Au',
-        'Hg',
-        'Tl',
-        'Pb',
-        'Bi',
-        'Po',
-        'At',
-        'Rn',
-        'Fr',
-        'Ra',
-        'Ac',
-        'Th',
-        'Pa',
-        'U',
-        'Np',
-        'Pu',
-        'Am',
-        'Cm',
-        'Bk',
-        'Cf',
-        'Es',
-    ]  # periodic table
-
-    solar = [
-        12.00,
-        10.93,
-        0.96,
-        1.38,
-        2.70,
-        8.43,
-        7.83,
-        8.69,
-        4.56,
-        7.93,
-        6.24,
-        7.60,
-        6.45,
-        7.51,
-        5.41,
-        7.12,
-        5.50,
-        6.40,
-        5.03,
-        6.34,
-        3.15,
-        4.95,
-        3.93,
-        5.64,
-        5.43,
-        7.47,
-        4.99,
-        6.22,
-        4.19,
-        4.56,
-        3.04,
-        3.65,
-        2.30,
-        3.34,
-        2.54,
-        3.25,
-        2.52,
-        2.87,
-        2.21,
-        2.58,
-        1.46,
-        1.88,
-        -5.00,
-        1.75,
-        0.91,
-        1.57,
-        0.94,
-        1.71,
-        0.80,
-        2.04,
-        1.01,
-        2.18,
-        1.55,
-        2.24,
-        1.08,
-        2.18,
-        1.10,
-        1.58,
-        0.72,
-        1.42,
-        -5.00,
-        0.96,
-        0.52,
-        1.07,
-        0.30,
-        1.10,
-        0.48,
-        0.92,
-        0.10,
-        0.84,
-        0.10,
-        0.85,
-        -0.12,
-        0.85,
-        0.26,
-        1.40,
-        1.38,
-        1.62,
-        0.92,
-        1.17,
-        0.90,
-        1.75,
-        0.65,
-        -5.00,
-        -5.00,
-        -5.00,
-        -5.00,
-        -5.00,
-        -5.00,
-        0.02,
-        -5.00,
-        -0.54,
-        -5.00,
-        -5.00,
-        -5.00,
-    ]  # solar abundances
-
-    if elem in element:
-        ind = element.index(str(elem))
-    else:
-        print('Element does not exist in the periodic table.')
-        ind, solar[ind] = None, None
-    return ind + 1, solar[ind]
+    abundance = solar.get(element, None)
+    if abundance is None:
+        return None, None
+    index = elements.symbol(element).number
+    return index, abundance
 
 
 def interpolator_kurucz(params, atmtype='kurucz95'):
@@ -327,17 +129,16 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
     if not os.path.isfile(fname):
         return False
 
-    gridMODS = open(fname, "rb")
-    tmod = pic.load(gridMODS)
-    gmod = pic.load(gridMODS)
-    mmod = pic.load(gridMODS)
-    ltaumod = pic.load(gridMODS)
-    Temod = pic.load(gridMODS)
-    lpgmod = pic.load(gridMODS)
-    lpemod = pic.load(gridMODS)
-    rhoxmod = pic.load(gridMODS)
-    kmod = pic.load(gridMODS)
-    gridMODS.close()
+    with open(fname, "rb") as gridMODS:
+        tmod = pic.load(gridMODS)
+        gmod = pic.load(gridMODS)
+        mmod = pic.load(gridMODS)
+        ltaumod = pic.load(gridMODS)
+        Temod = pic.load(gridMODS)
+        lpgmod = pic.load(gridMODS)
+        lpemod = pic.load(gridMODS)
+        rhoxmod = pic.load(gridMODS)
+        kmod = pic.load(gridMODS)
 
     x = list(params)
     Teff = np.round(x[0], 0)
@@ -460,19 +261,15 @@ def interpolator(
     params = list(params)
     if atmtype == 'marcs':
         newatm = interpolator_marcs(params, fesun=7.47, microlim=3.0)
-        if newatm is False:
-            raise NameError('Could not find %s models' % atmtype)
     elif atmtype == 'kurucz95':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
-        if newatm is False:
-            raise NameError('Could not find %s models' % atmtype)
     elif atmtype == 'apogee_kurucz':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
-        if newatm is False:
-            raise NameError('Could not find %s models' % atmtype)
     else:
-        raise NameError('Could not find %s models' % atmtype)
+        raise NameError(f'Could not find {atmtype} models')
 
+    if newatm is False:
+        raise NameError(f'Could not find {atmtype} models')
     if save:
         save_model(newatm, params, abund=abund, elem=elem, type=atmtype)
     if result:
@@ -510,8 +307,6 @@ def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.
             'Teff= %i   log g= %.2f\n'
             'NTAU        %i' % (teff, logg, model.shape[0])
         )
-    else:
-        raise NameError('Could not find %s models' % type)
 
     if elem:
         # Get atomic number and solar abundance, only one element per time.
@@ -584,4 +379,4 @@ if __name__ == '__main__':
         type=args.atmosphere,
         fout=args.out,
     )
-    print('Atmosphere model sucessfully saved in: %s' % args.out)
+    print(f'Atmosphere model sucessfully saved in: {args.out}')
