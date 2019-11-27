@@ -7,14 +7,17 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import os
 from astropy.io import fits
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+
 
 def mad(data, axis=None):
     '''Function to calculate the median average deviation.
     '''
 
     return np.median(np.absolute(data - np.median(data, axis)), axis)
+
 
 def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
     '''Very local Normalization function. Makes a linear fit from the maximum points
@@ -34,21 +37,21 @@ def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
 
     # Define the area of Normalization
     start_norm = r[0] - 1.0
-    end_norm   = r[1] + 1.0
-    #Transform SNR to noise
+    end_norm = r[1] + 1.0
+    # Transform SNR to noise
     if snr is None:
         noise = 0.0
     else:
         snr = float(snr)
-        noise = 1.0/snr
-    #Read observations
+        noise = 1.0 / snr
+    # Read observations
     wave_obs, flux_obs, delta_l = read_observations(obs_fname, start_norm, end_norm)
 
-    flux_obs = flux_obs/np.median(flux_obs)
+    flux_obs = flux_obs / np.median(flux_obs)
     # Clean for cosmic rays
     med = np.median(flux_obs)
     sig = mad(flux_obs)
-    flux_clean = np.where(flux_obs < (med + (sig*3.0)), flux_obs, med)
+    flux_clean = np.where(flux_obs < (med + (sig * 3.0)), flux_obs, med)
     flux_obs = flux_clean
 
     # Normalization process
@@ -61,9 +64,9 @@ def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
         pol_fit_new = np.polyfit(cont_wl, cont_fl, 1)
         fit_line = np.poly1d(pol_fit_new)
 
-    new_flux = flux_obs/fit_line(wave_obs)
+    new_flux = flux_obs / fit_line(wave_obs)
     # Cut to original region
-    wave     = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
+    wave = wave_obs[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
     new_flux = new_flux[np.where((wave_obs >= float(r[0])) & (wave_obs <= float(r[1])))]
 
     # This plot is silent
@@ -87,6 +90,7 @@ def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
         plt.show()
 
     return wave, new_flux, delta_l
+
 
 def read_observations(fname, start_synth, end_synth):
     '''Read observed spectrum of different types and return wavelength and flux.
@@ -129,12 +133,17 @@ def read_observations(fname, start_synth, end_synth):
             wave = x['wavelength']
         # Cut observations to the intervals of the synthesis
         delta_l = wave[1] - wave[0]
-        wave_obs = wave[np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))]
-        flux_obs = flux[np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))]
+        wave_obs = wave[
+            np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))
+        ]
+        flux_obs = flux[
+            np.where((wave >= float(start_synth)) & (wave <= float(end_synth)))
+        ]
     else:
         print('Spectrum is not in acceptable format. Convert to ascii or fits.')
         wave_obs, flux_obs, delta_l = (None, None, None)
     return wave_obs, flux_obs, delta_l
+
 
 def read_obs_intervals(obs_fname, r, snr=None):
     '''Read only the spectral chunks from the observed spectrum and normalize
@@ -153,7 +162,7 @@ def read_obs_intervals(obs_fname, r, snr=None):
     delta_l : wavelenghth spacing
     '''
 
-    lol = 1.0 # This is here for no reason. Just for fun
+    lol = 1.0  # This is here for no reason. Just for fun
     # Obtain the normalized spectrum for all regions
     spec = [local_norm(obs_fname, ri, snr, lol) for ri in r]
     xobs = np.hstack(np.vstack(spec).T[0])
@@ -164,6 +173,7 @@ def read_obs_intervals(obs_fname, r, snr=None):
 
     print('SNR: %s' % snr)
     return xobs, yobs, delta_l
+
 
 def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     '''Function to plot synthetic and observed spectra.
@@ -197,13 +207,14 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
         if res:
             sl = InterpolatedUnivariateSpline(xfinal, yfinal, k=1)
             ymodel = sl(xobs)
-            plt.plot(xobs, (yobs-ymodel)*10, label='residuals x10')
+            plt.plot(xobs, (yobs - ymodel) * 10, label='residuals x10')
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
     plt.legend(loc='best', frameon=False)
     plt.grid(True)
     plt.show()
     return
+
 
 def snr(fname, plot=False):
     '''Calculate SNR using for various intervals.
@@ -240,25 +251,37 @@ def snr(fname, plot=False):
             # Clean for cosmic rays
             med = np.median(flux_cut)
             sig = mad(flux_cut)
-            flux_obs = np.where(flux_cut < (med + (sig*3.0)), flux_cut, med)
+            flux_obs = np.where(flux_cut < (med + (sig * 3.0)), flux_cut, med)
             pol_fit = np.polyfit(wave_cut, flux_obs, 1)
             fit_line = np.poly1d(pol_fit)
             for i in range(5):
-                condition = abs(flux_obs - fit_line(wave_cut)) < 3*sig
+                condition = abs(flux_obs - fit_line(wave_cut)) < 3 * sig
                 cont_points_wl = wave_cut[condition]
                 cont_points_fl = flux_obs[condition]
-            num_points = int(len(cont_points_fl)/2.0)
+            num_points = int(len(cont_points_fl) / 2.0)
 
         if num_points != 0:
-            snrEstimate = pyasl.estimateSNR(cont_points_wl, cont_points_fl, num_points, deg=2, controlPlot=plot)
+            snrEstimate = pyasl.estimateSNR(
+                cont_points_wl, cont_points_fl, num_points, deg=2, controlPlot=plot
+            )
             return snrEstimate["SNR-Estimate"]
         else:
             return 0
 
     # These regions are relatively free from absorption.
-    snr_regions = [[5744, 5746], [6048, 6052], [6068, 6076], [6682, 6686], [6649, 6652],
-                [6614, 6616], [5438.5, 5440], [5449.5, 5051], [5458, 5459.25],
-                [5498.3, 5500], [5541.5, 5542.5]]
+    snr_regions = [
+        [5744, 5746],
+        [6048, 6052],
+        [6068, 6076],
+        [6682, 6686],
+        [6649, 6652],
+        [6614, 6616],
+        [5438.5, 5440],
+        [5449.5, 5051],
+        [5458, 5459.25],
+        [5498.3, 5500],
+        [5541.5, 5542.5],
+    ]
 
     snr = [sub_snr(snr_region) for snr_region in snr_regions]
 

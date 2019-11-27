@@ -7,6 +7,7 @@ import os
 import pandas as pd
 from astropy.io import fits
 
+
 def save_synth_spec(x, y, initial=None, **options):
     '''Save synthetic spectrum of all intervals
 
@@ -23,21 +24,42 @@ def save_synth_spec(x, y, initial=None, **options):
     -----
     fname fits file
     '''
-    #Create header
+    # Create header
     header = fits.Header()
-    header['CRVAL1']   = x[0]
-    header['CDELT1']   = x[1] - x[0]
+    header['CRVAL1'] = x[0]
+    header['CDELT1'] = x[1] - x[0]
 
     if initial:
-        fname = str(initial[0]) + '_' + str(initial[1]) + '_' + str(initial[2]) + '_' + str(initial[3]) + '_' + str(initial[4]) + '_' + str(initial[5]) + '_' + str(options['resolution']) + '.spec'
+        fname = (
+            str(initial[0])
+            + '_'
+            + str(initial[1])
+            + '_'
+            + str(initial[2])
+            + '_'
+            + str(initial[3])
+            + '_'
+            + str(initial[4])
+            + '_'
+            + str(initial[5])
+            + '_'
+            + str(options['resolution'])
+            + '.spec'
+        )
     else:
         fname = 'synthetic.spec'
 
-    tbhdu = fits.BinTableHDU.from_columns([fits.Column(name='wavelength', format='D', array=x),
-                                           fits.Column(name='flux', format='D', array=y)], header=header)
+    tbhdu = fits.BinTableHDU.from_columns(
+        [
+            fits.Column(name='wavelength', format='D', array=x),
+            fits.Column(name='flux', format='D', array=y),
+        ],
+        header=header,
+    )
     tbhdu.writeto('results/%s' % fname, overwrite=True)
     print('Synthetic spectrum saved: results/%s' % fname)
     return
+
 
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     '''This function broadens the given data using velocity kernels,
@@ -95,7 +117,9 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         if (resolution is None) or (resolution == 0):
             y_inst = y
         else:
-            y_inst = pyasl.instrBroadGaussFast(x, y, resolution, edgeHandling="firstlast", fullout=False, maxsig=None)
+            y_inst = pyasl.instrBroadGaussFast(
+                x, y, resolution, edgeHandling="firstlast", fullout=False, maxsig=None
+            )
         return y_inst
 
     def vsini_broadening(x, y, epsilon, vsini):
@@ -138,13 +162,34 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
         '''
         dlam[dlam == 0] = 1e-8
         if Zr != Zt:
-            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) * quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0] +
-                              2*At*idlam/(np.sqrt(np.pi)*Zt**2) * quad(lambda u: np.exp(-1/u**2), 0, Zt/idlam)[0])
-                             for idlam in dlam])
+            return np.array(
+                [
+                    (
+                        2
+                        * Ar
+                        * idlam
+                        / (np.sqrt(np.pi) * Zr ** 2)
+                        * quad(lambda u: np.exp(-1 / u ** 2), 0, Zr / idlam)[0]
+                        + 2
+                        * At
+                        * idlam
+                        / (np.sqrt(np.pi) * Zt ** 2)
+                        * quad(lambda u: np.exp(-1 / u ** 2), 0, Zt / idlam)[0]
+                    )
+                    for idlam in dlam
+                ]
+            )
         else:
-            return np.array([(2*Ar*idlam/(np.sqrt(np.pi)*Zr**2) + 2*At*idlam/(np.sqrt(np.pi)*Zt**2)) *
-                             quad(lambda u: np.exp(-1/u**2), 0, Zr/idlam)[0]
-                             for idlam in dlam])
+            return np.array(
+                [
+                    (
+                        2 * Ar * idlam / (np.sqrt(np.pi) * Zr ** 2)
+                        + 2 * At * idlam / (np.sqrt(np.pi) * Zt ** 2)
+                    )
+                    * quad(lambda u: np.exp(-1 / u ** 2), 0, Zr / idlam)[0]
+                    for idlam in dlam
+                ]
+            )
 
     def vmac_broadening(wave, flux, vmacro_rad):
         '''
@@ -169,41 +214,45 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
             return flux
 
         # Define central wavelength
-        lambda0  = (wave[0] + wave[-1]) / 2.0
-        vmac_rad = vmacro_rad/(299792458.*1e-3)*lambda0
+        lambda0 = (wave[0] + wave[-1]) / 2.0
+        vmac_rad = vmacro_rad / (299792458.0 * 1e-3) * lambda0
         vmac_tan = vmac_rad
 
         # Make sure the wavelength range is equidistant before applying the
         # convolution
         delta_wave = np.diff(wave).min()
         range_wave = wave.ptp()
-        n_wave = int(range_wave/delta_wave)+1
+        n_wave = int(range_wave / delta_wave) + 1
         wave_ = np.linspace(wave[0], wave[-1], n_wave)
         flux_ = np.interp(wave_, wave, flux)
-        dwave = wave_[1]-wave_[0]
-        n_kernel = int(5*max(vmac_rad, vmac_tan)/dwave)
+        dwave = wave_[1] - wave_[0]
+        n_kernel = int(5 * max(vmac_rad, vmac_tan) / dwave)
         if n_kernel % 2 == 0:
             n_kernel += 1
         # The kernel might be of too low resolution, or the the wavelength range
         # might be too narrow. In both cases, raise an appropriate error
         if n_kernel == 0:
-            raise ValueError(("Spectrum resolution too low for macroturbulent broadening"))
+            raise ValueError(
+                ("Spectrum resolution too low for macroturbulent broadening")
+            )
         elif n_kernel > n_wave:
-            raise ValueError(("Spectrum range too narrow for macroturbulent broadening"))
+            raise ValueError(
+                ("Spectrum range too narrow for macroturbulent broadening")
+            )
         # Construct the broadening kernel
-        wave_k = np.arange(n_kernel)*dwave
-        wave_k -= wave_k[-1]/2.
+        wave_k = np.arange(n_kernel) * dwave
+        wave_k -= wave_k[-1] / 2.0
         kernel = vmacro_kernel(wave_k, 1.0, 1.0, vmac_rad, vmac_tan)
         kernel /= sum(kernel)
 
-        flux_conv = fftconvolve(1-flux_, kernel, mode='same')
+        flux_conv = fftconvolve(1 - flux_, kernel, mode='same')
         # And interpolate the results back on to the original wavelength array,
         # taking care of even vs. odd-length kernels
         if n_kernel % 2 == 1:
             offset = 0.0
         else:
             offset = dwave / 2.0
-        flux = np.interp(wave+offset, wave_, 1-flux_conv)
+        flux = np.interp(wave + offset, wave_, 1 - flux_conv)
         return flux
 
     # vmac broadening
@@ -213,6 +262,7 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     # Instrumental broadening
     y_inst = instrumental_profile(x, y_rot, resolution)
     return x, y_inst
+
 
 def _read_raw_moog(fname='summary.out'):
     '''Read the summary.out and return them
@@ -239,8 +289,8 @@ def _read_raw_moog(fname='summary.out'):
 
     data = []
     for line in lines:
-        line = line.replace('-',' ')
-        line = line.replace('\n','').split(' ')
+        line = line.replace('-', ' ')
+        line = line.replace('\n', '').split(' ')
         line = filter(None, line)
         data.append(line)
 
@@ -253,6 +303,7 @@ def _read_raw_moog(fname='summary.out'):
     w = w0 + dw * n
     wavelength = np.linspace(w0, w, n, endpoint=False)
     return wavelength, flux
+
 
 def read_linelist(fname, intname='intervals.lst'):
     '''Read the line list (atomic data) and the file which includes the ranges
@@ -273,17 +324,28 @@ def read_linelist(fname, intname='intervals.lst'):
 
     if not os.path.isfile('rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
-    lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
-    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
-    converters={'Do': lambda x : x.replace("nan"," "), 'vdwaals': lambda x : float(x)})
+    lines = pd.read_csv(
+        'rawLinelist/%s' % fname,
+        skiprows=1,
+        comment='#',
+        delimiter='\t',
+        usecols=range(6),
+        names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
+        converters={
+            'Do': lambda x: x.replace("nan", " "),
+            'vdwaals': lambda x: float(x),
+        },
+    )
     lines.sort_values(by='wl', inplace=True)
 
-    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t')
+    intervals = pd.read_csv(
+        'rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t'
+    )
     ranges = intervals.values
     atomic = []
     N = []
     for i, ri in enumerate(intervals.values):
-        a = lines[(lines.wl>ri[0]) & (lines.wl<ri[1])]
+        a = lines[(lines.wl > ri[0]) & (lines.wl < ri[1])]
         atomic.append(a.values)
         N.append(len(a))
     N = sum(N)
@@ -295,6 +357,7 @@ def read_linelist(fname, intname='intervals.lst'):
     header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
     np.savetxt('linelist.moog', atomic, fmt=fmt, header=header)
     return ranges, atomic
+
 
 def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     '''Read the line list (atomic data) and the file which includes the ranges
@@ -320,12 +383,24 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
         raise IOError('The interval list is not in the correct place!')
     print('Line list:', fname)
     print('Intervals list:', intname)
-    lines = pd.read_csv('rawLinelist/%s' % fname, skiprows=1, comment='#', delimiter='\t', usecols=range(6),
-    names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'])
+    lines = pd.read_csv(
+        'rawLinelist/%s' % fname,
+        skiprows=1,
+        comment='#',
+        delimiter='\t',
+        usecols=range(6),
+        names=['wl', 'elem', 'excit', 'loggf', 'vdwaals', 'Do'],
+    )
     lines.sort_values(by='wl', inplace=True)
-    intervals = pd.read_csv('rawLinelist/%s' % intname, comment='#', usecols=(0,1), names=['El', 'wave'], delimiter='\t')
+    intervals = pd.read_csv(
+        'rawLinelist/%s' % intname,
+        comment='#',
+        usecols=(0, 1),
+        names=['El', 'wave'],
+        delimiter='\t',
+    )
     intervals['El'] = intervals['El'].map(lambda x: x.strip().strip("I"))
-    intervals = intervals[intervals['El']==element]
+    intervals = intervals[intervals['El'] == element]
     intervals.sort_values(by='wave', inplace=True)
 
     N = []
@@ -335,7 +410,7 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
         r1 = float(ri) - 2.0
         r2 = float(ri) + 2.0
         ranges.append([r1, r2])
-        a = lines[(lines.wl>r1) & (lines.wl<r2)]
+        a = lines[(lines.wl > r1) & (lines.wl < r2)]
         atomic = atomic.append(a)
         N.append(len(a))
 

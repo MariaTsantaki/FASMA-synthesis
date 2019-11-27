@@ -27,3 +27,5 @@ batch.par
 
 ## Other stuff
 *.log
+.envrc
+*.swp
