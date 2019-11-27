@@ -5,7 +5,7 @@ from __future__ import division
 import os
 from itertools import islice
 import numpy as np
-from synthetic import broadening, _read_raw_moog
+from .synthetic import broadening, _read_raw_moog
 
 kurucz95 = {
     'teff': (

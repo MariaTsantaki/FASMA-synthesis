@@ -1,11 +1,12 @@
 #!/usr/bin/python
 from __future__ import division
-from solar_abundance import solar
 from periodictable import elements
+from scipy.interpolate import griddata
 import numpy as np
 import gzip
-from scipy.interpolate import griddata
-from utils import GetModels
+
+from .solar_abundance import solar
+from .utils import GetModels
 
 
 def read_model(fname):

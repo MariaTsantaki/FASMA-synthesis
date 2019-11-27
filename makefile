@@ -2,12 +2,12 @@ SHELL = /bin/bash
 
 install:
 	@./check_moog.sh
-	@mkdir -p linelist
-	@mkdir -p spectra
-	@tar -zxvf models/apogee_kurucz.tar.gz
-	@mv apogee_kurucz models
-	@tar -zxvf models/marcs.tar.gz
-	@mv marcs models
+	@mkdir -p FASMA/linelist
+	@mkdir -p FASMA/spectra
+	@tar -zxvf FASMA/models/apogee_kurucz.tar.gz
+	@mv apogee_kurucz FASMA/models
+	@tar -zxvf FASMA/models/marcs.tar.gz
+	@mv marcs FASMA/models
 	@echo "Atmosphere models installed in dir: models"
 	@echo "Installing dependencies..."
 	@pip install -r requirements.txt
