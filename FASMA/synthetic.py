@@ -322,10 +322,10 @@ def read_linelist(fname, intname='intervals.lst'):
     atomic : atomic data
     '''
 
-    if not os.path.isfile('rawLinelist/%s' % intname):
+    if not os.path.isfile('FASMA/rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
     lines = pd.read_csv(
-        'rawLinelist/%s' % fname,
+        'FASMA/rawLinelist/%s' % fname,
         skiprows=1,
         comment='#',
         delimiter='\t',
@@ -339,7 +339,7 @@ def read_linelist(fname, intname='intervals.lst'):
     lines.sort_values(by='wl', inplace=True)
 
     intervals = pd.read_csv(
-        'rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t'
+        'FASMA/rawLinelist/%s' % intname, comment='#', names=['start', 'end'], delimiter='\t'
     )
     ranges = intervals.values
     atomic = []
@@ -379,12 +379,12 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     atomic : atomic data
     '''
 
-    if not os.path.isfile('rawLinelist/%s' % intname):
+    if not os.path.isfile('FASMA/rawLinelist/%s' % intname):
         raise IOError('The interval list is not in the correct place!')
     print('Line list:', fname)
     print('Intervals list:', intname)
     lines = pd.read_csv(
-        'rawLinelist/%s' % fname,
+        'FASMA/rawLinelist/%s' % fname,
         skiprows=1,
         comment='#',
         delimiter='\t',
@@ -393,7 +393,7 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     )
     lines.sort_values(by='wl', inplace=True)
     intervals = pd.read_csv(
-        'rawLinelist/%s' % intname,
+        'FASMA/rawLinelist/%s' % intname,
         comment='#',
         usecols=(0, 1),
         names=['El', 'wave'],
