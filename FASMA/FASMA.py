@@ -197,8 +197,8 @@ def main():
     parent_parser.add_argument(
         '--model',
         help='Grid of models',
-        default='kurucz95',
-        choices=['kurucz95', 'apogee_kurucz', 'marcs'],
+        default='apogee_kurucz',
+        choices=['apogee_kurucz', 'marcs'],
         metavar='Model atmosphere',
     )
 

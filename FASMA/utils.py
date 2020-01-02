@@ -5,94 +5,7 @@ from __future__ import division
 import os
 from itertools import islice
 import numpy as np
-from synthetic import broadening, _read_raw_moog
-
-kurucz95 = {
-    'teff': (
-        3750,
-        4000,
-        4250,
-        4500,
-        4750,
-        5000,
-        5250,
-        5500,
-        5750,
-        6000,
-        6250,
-        6500,
-        6750,
-        7000,
-        7250,
-        7500,
-        7750,
-        8000,
-        8250,
-        8500,
-        8750,
-        9000,
-        9250,
-        9500,
-        9750,
-        10000,
-        10250,
-        10500,
-        10750,
-        11000,
-        11250,
-        11500,
-        11750,
-        12000,
-        12250,
-        12500,
-        12750,
-        13000,
-        14000,
-        15000,
-        16000,
-        17000,
-        18000,
-        19000,
-        20000,
-        21000,
-        22000,
-        23000,
-        24000,
-        25000,
-        26000,
-        27000,
-        28000,
-        29000,
-        30000,
-        31000,
-        32000,
-        33000,
-        34000,
-        35000,
-        36000,
-        37000,
-        38000,
-        39000,
-    ),
-    'feh': (
-        -3.0,
-        -2.5,
-        -2.0,
-        -1.5,
-        -1.0,
-        -0.5,
-        -0.3,
-        -0.2,
-        -0.1,
-        0.0,
-        0.1,
-        0.2,
-        0.3,
-        0.5,
-        1.0,
-    ),
-    'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0),
-}
+from .synthetic import broadening, _read_raw_moog
 
 apogee_kurucz = {
     'teff': (
@@ -260,7 +173,6 @@ class GetModels:
         self.atmtype = atmtype
 
         atmmodels = {
-            'kurucz95': [kurucz95, 'kurucz95'],
             'apogee_kurucz': [apogee_kurucz, 'apogee_kurucz'],
             'marcs': [marcs, 'marcs'],
         }
@@ -299,7 +211,7 @@ class GetModels:
         name : str
           The path to the atmosphere model
         '''
-        name = 'models/%s/' % self.atmtype
+        name = 'FASMA/models/%s/' % self.atmtype
         if feh_model < 0:
             name += 'm%s/' % str(abs(feh_model)).replace('.', '')
         else:
@@ -616,7 +528,7 @@ def fun_moog_synth(
     :returns: w, f : wavelength and flux
     '''
 
-    from interpolation import interpolator
+    from .interpolation import interpolator
 
     fnames = ['summary.out', 'result.out']
     for i in fnames:

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 from __future__ import division
-from solar_abundance import solar
 from periodictable import elements
+from scipy.interpolate import griddata
 import numpy as np
 import gzip
-from scipy.interpolate import griddata
-from utils import GetModels
+from .solar_abundance import solar
+from .utils import GetModels
 
 
 def read_model(fname):
@@ -50,7 +50,7 @@ def solar_abundance(element):
     return index, abundance
 
 
-def interpolator_kurucz(params, atmtype='kurucz95'):
+def interpolator_kurucz(params, atmtype='apogee_kurucz'):
     '''Interpolation for Kurucz model atmospheres.
     Input
     -----
@@ -233,7 +233,7 @@ def interpolator_marcs(params, fesun=7.47, microlim=3.0):
 
 
 def interpolator(
-    params, abund=0.0, elem=False, save=True, atmtype='kurucz95', result=None
+    params, abund=0.0, elem=False, save=True, atmtype='apogee_kurucz', result=None
 ):
     '''Function to connect all. For a given set of params, return a model atmosphere.
 
@@ -248,7 +248,7 @@ def interpolator(
     save : bool
       Whether the new atmosphere should be saved. Default is True.
     atmtype : str
-      The atmosphere models being used. Default is Kurucz95.
+      The atmosphere models being used. Default is apogee_kurucz.
     result : bool
       return the new atmosphere. Default is False.
 
@@ -261,22 +261,20 @@ def interpolator(
     params = list(params)
     if atmtype == 'marcs':
         newatm = interpolator_marcs(params, fesun=7.47, microlim=3.0)
-    elif atmtype == 'kurucz95':
-        newatm = interpolator_kurucz(params, atmtype=atmtype)
     elif atmtype == 'apogee_kurucz':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
     else:
-        raise NameError(f'Could not find {atmtype} models')
+        raise NameError('Could not find %s models', atmtype)
 
     if newatm is False:
-        raise NameError(f'Could not find {atmtype} models')
+        raise NameError('Could not find %s models', atmtype)
     if save:
         save_model(newatm, params, abund=abund, elem=elem, type=atmtype)
     if result:
         return newatm, params
 
 
-def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.atm'):
+def save_model(model, params, abund=0.0, elem=False, type='apogee_kurucz', fout='out.atm'):
     '''Save the model atmosphere in the right format.
 
     Input
@@ -290,7 +288,7 @@ def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.
     element : float
       any element to change abundance in the atmosphere.
     type : str
-      Type of atmospheric parameters. Default is Kurucz95
+      Type of atmospheric parameters. Default is apogee_kurucz
     fout : str
       Name of the saved atmosphere. Default is out.atm
 
@@ -300,7 +298,7 @@ def save_model(model, params, abund=0.0, elem=False, type='kurucz95', fout='out.
     '''
 
     teff, logg, feh, vt = params
-    if type in ['kurucz95', 'apogee_kurucz', 'marcs']:
+    if type in ['apogee_kurucz', 'marcs']:
         # The name in the header shows the format of the model not the type.
         header = (
             'KURUCZ\n'
@@ -357,8 +355,8 @@ if __name__ == '__main__':
         '-a',
         '--atmosphere',
         help='Model atmosphere',
-        choices=['kurucz95', 'apogee_kurucz', 'marcs'],
-        default='kurucz95',
+        choices=['apogee_kurucz', 'marcs'],
+        default='apogee_kurucz',
     )
     args = args.parse_args()
 
@@ -379,4 +377,4 @@ if __name__ == '__main__':
         type=args.atmosphere,
         fout=args.out,
     )
-    print(f'Atmosphere model sucessfully saved in: {args.out}')
+    print('Atmosphere model sucessfully saved in: %s', args.out)

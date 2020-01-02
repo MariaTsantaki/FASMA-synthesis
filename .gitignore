@@ -1,5 +1,6 @@
 ## Python stuff
 *.pyc
+*.egg-info
 venv
 
 ## Model stuff

@@ -6,10 +6,10 @@ from __future__ import division, print_function
 import logging
 import os
 import yaml
-from utils import fun_moog_synth as func
-from observations import read_obs_intervals, plot, snr
-from minimization import MinimizeSynth, getMic, getMac
-from synthetic import read_linelist, read_linelist_elem, save_synth_spec
+from .utils import fun_moog_synth as func
+from .observations import read_obs_intervals, plot, snr
+from .minimization import MinimizeSynth, getMic, getMac
+from .synthetic import read_linelist, read_linelist_elem, save_synth_spec
 import time
 
 
@@ -96,7 +96,7 @@ class synthMethod:
         initial parameters.
         '''
 
-        if not os.path.isfile('rawLinelist/%s' % self.linelist):
+        if not os.path.isfile('FASMA/rawLinelist/%s' % self.linelist):
             print('The line list does not exists!\n')
             self.logger.error('The line list does not exists!\n')
             return None
@@ -142,7 +142,7 @@ class synthMethod:
         '''
 
         defaults = {
-            'model': 'kurucz95',
+            'model': 'apogee_kurucz',
             'MOOGv': 2014,
             'save': False,
             'element': False,
@@ -500,11 +500,8 @@ class synthMethod:
 
             if self.options['observations']:
                 if os.path.isfile(self.options['observations']):
-                    self.xobs, self.yobs, delta_l = read_obs_intervals(
-                        self.options['observations'],
-                        self.ranges,
-                        snr=self.options['snr'],
-                    )
+                    self.xobs, self.yobs, delta_l = read_obs_intervals(self.options['observations'],
+                    self.ranges, snr=self.options['snr'])
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')
                 elif os.path.isfile('spectra/' + self.options['observations']):
@@ -515,7 +512,7 @@ class synthMethod:
                     self.xobs, self.yobs, delta_l = read_obs_intervals(
                         'spectra/' + self.options['observations'],
                         self.ranges,
-                        snr=self.options['snr'],
+                        snr=self.options['snr']
                     )
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')

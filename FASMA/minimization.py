@@ -5,6 +5,7 @@
 from __future__ import division
 import numpy as np
 from copy import copy
+from .mpfit import mpfit
 
 
 class MinimizeSynth:
@@ -47,8 +48,6 @@ class MinimizeSynth:
         the grid of model atmospheres.
         '''
 
-        if self.model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0]
         if self.model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if self.model.lower() == 'marcs':
@@ -64,8 +63,6 @@ class MinimizeSynth:
         i: the index of the bounds we want to check.
         '''
 
-        if self.model.lower() == 'kurucz95':
-            bounds = [3750, 39000, 0.0, 5.0, -3.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if self.model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
         if self.model.lower() == 'marcs':
@@ -222,7 +219,7 @@ class MinimizeSynth:
         (y-ymodel)/err : ndarray
           Model deviation from observation
         '''
-        from utils import fun_moog_synth as func
+        from .utils import fun_moog_synth as func
         from scipy.interpolate import InterpolatedUnivariateSpline
 
         options = kwargs['options']
@@ -278,7 +275,6 @@ class MinimizeSynth:
     def minimize(self):
         '''Function to glue the minimization together. Set the minimization options here.
         '''
-        from mpfit import mpfit
 
         # Set PARINFO structure for all free parameters for mpfit
         # The limits are also cheched by the bounds function
@@ -363,8 +359,6 @@ class MinimizeSynth:
         return self.parameters, self.xobs_lpts, self.yobs_lpts
 
     def minimizeElement(self):
-
-        from mpfit import mpfit
 
         # Initial value is the initial metallicity.
         pelem = self.p0[2]
