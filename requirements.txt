@@ -8,8 +8,6 @@ statsmodels
 patsy
 argparse
 pandas>=0.17.0
-isochrones
 PyAstronomy
 astropy
-# emcee
 periodictable==1.5.2
