@@ -12,7 +12,7 @@ install:
 	@rm -r marcs
 	@echo "Atmosphere models installed in dir: models"
 	@echo "Installing dependencies..."
-	@pip3.5 install -r requirements.txt
+	@pip install -r requirements.txt
 	@conda install -c anaconda wxpython=3.0.0.0
 	@echo "Dependencies installed"
 	@echo ""
