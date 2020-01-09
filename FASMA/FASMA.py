@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 from __future__ import print_function
-from synthDriver import synthMethod
 from gooey import Gooey, GooeyParser
-
+import FASMA
 
 def synth(args):
     '''Driver for the synthesis method for stellar parameters.
@@ -77,7 +76,8 @@ def synth(args):
         fout += ',vsini'
     with open('StarMe_synth.cfg', 'w') as f:
         f.writelines(fout)
-    driver = synthMethod(cfgfile='StarMe_synth.cfg', overwrite=None)
+
+    driver = FASMA.synthMethod(cfgfile='StarMe_synth.cfg', overwrite=None)
     driver.synthdriver()
 
 
@@ -139,15 +139,14 @@ def abund(args):
         fout += ',save'
     with open('StarMe_synth.cfg', 'w') as f:
         f.writelines(fout)
-    driver = synthMethod(cfgfile='StarMe_synth.cfg', overwrite=None)
+
+    driver = FASMA.synthMethod(cfgfile='StarMe_synth.cfg', overwrite=None)
     driver.synthdriver()
 
 
-@Gooey(
-    program_name='FASMA - Spectral Synthesis with MOOG',
-    default_size=(900, 1000),
-    image_dir='./img',
-)
+@Gooey(program_name='FASMA - Spectral Synthesis with MOOG',
+    default_size=(900, 1000), image_dir='./img')
+
 def main():
     '''Take care of all the argparse stuff.
     :returns: the args
@@ -156,174 +155,36 @@ def main():
     subparsers = parser.add_subparsers()
 
     parent_parser = GooeyParser(add_help=False)
-    parent_parser.add_argument(
-        '--temperature',
-        help='(in K)',
-        default=5777,
-        type=int,
-        metavar='Effective temperature',
-    )
-    parent_parser.add_argument(
-        '--surfacegravity',
-        help='(in dex)',
-        default=4.44,
-        type=float,
-        metavar='Surface gravity',
-    )
-    parent_parser.add_argument(
-        '--FeH', help='(in dex)', default='0.00', type=float, metavar='Metallicity'
-    )
-    parent_parser.add_argument(
-        '--microturbulence',
-        help='(in km/s)',
-        default=1.00,
-        type=float,
-        metavar='Microturbulence',
-    )
-    parent_parser.add_argument(
-        '--macroturbulence',
-        help='(in km/s)',
-        default=3.21,
-        type=float,
-        metavar='Macroturbulence',
-    )
-    parent_parser.add_argument(
-        '--vsini',
-        help='(in km/s)',
-        default=1.90,
-        type=float,
-        metavar='Rotational Velocity',
-    )
-    parent_parser.add_argument(
-        '--model',
-        help='Grid of models',
-        default='apogee_kurucz',
-        choices=['apogee_kurucz', 'marcs'],
-        metavar='Model atmosphere',
-    )
+    parent_parser.add_argument('--temperature', help='(in K)',  default=5777, type=int, metavar='Effective temperature')
+    parent_parser.add_argument('--surfacegravity', help='(in dex)', default=4.44, type=float, metavar='Surface gravity')
+    parent_parser.add_argument('--FeH', help='(in dex)', default='0.00', type=float, metavar='Metallicity')
+    parent_parser.add_argument('--microturbulence', help='(in km/s)', default=1.00, type=float, metavar='Microturbulence')
+    parent_parser.add_argument('--macroturbulence', help='(in km/s)', default=3.21, type=float, metavar='Macroturbulence')
+    parent_parser.add_argument('--vsini', help='(in km/s)', default=1.90, type=float, metavar='Rotational Velocity')
+    parent_parser.add_argument('--model', help='Grid of models', default='apogee_kurucz', choices=['apogee_kurucz', 'marcs'], metavar='Model atmosphere')
 
-    synth_parser = subparsers.add_parser(
-        'Parameters', parents=[parent_parser], help='Spectal Synthesis'
-    )
-    synth_parser.add_argument(
-        'linelist',
-        help='List with atomic data',
-        widget='FileChooser',
-        metavar='Line List',
-    )
-    synth_parser.add_argument(
-        '--inter_file',
-        help='List of wavelength intervals',
-        default='intervals.lst',
-        widget='FileChooser',
-        metavar='Intervals File',
-    )
-    synth_parser.add_argument(
-        '--observations',
-        help='Input formats: fits, dat, spec',
-        widget='FileChooser',
-        metavar='Observed Spectrum',
-    )
-    synth_parser.add_argument(
-        '--damping',
-        help='Parameter for MOOG',
-        default='1',
-        choices=['0', '1', '2'],
-        type=str,
-        metavar='Damping',
-    )
-    synth_parser.add_argument(
-        '--step_wave',
-        help='for synthetic spectrum',
-        default=0.01,
-        type=float,
-        metavar='Step Wavelength',
-    )
-    synth_parser.add_argument(
-        '--step_flux',
-        help='for synthetic spectrum',
-        default=3.0,
-        type=float,
-        metavar='Step Flux',
-    )
-    synth_parser.add_argument(
-        '--minimize',
-        help='Start minimization process',
-        action='store_true',
-        metavar='Minimization',
-    )
-    synth_parser.add_argument(
-        '--refine',
-        help='Refine parameters',
-        action='store_true',
-        metavar='Refine Parameters',
-    )
-    synth_parser.add_argument(
-        '--Iterations', help='Maximum number', default=100, type=int
-    )
-    synth_parser.add_argument(
-        '--Fixteff', help='Fix Teff', action='store_true', metavar='Fix Temperature'
-    )
-    synth_parser.add_argument(
-        '--Fixgravity', help='Fix logg', action='store_true', metavar='Fix Gravity'
-    )
-    synth_parser.add_argument(
-        '--FixFeH', help='Fix [Fe/H]', action='store_true', metavar='Fix Metallicity'
-    )
-    synth_parser.add_argument(
-        '--Fixmicroturbulence',
-        help='Fix vt',
-        action='store_true',
-        metavar='Fix Microturbulence',
-    )
-    synth_parser.add_argument(
-        '--Fixmacroturbulence',
-        help='Fix vmac',
-        action='store_true',
-        metavar='Fix Macroturbulence',
-    )
-    synth_parser.add_argument(
-        '--Fixvsini',
-        help='Fix vsini',
-        action='store_true',
-        metavar='Fix Rotational Velocity',
-    )
-    synth_parser.add_argument(
-        '--resolution',
-        help='of the spectrograph',
-        default=None,
-        type=int,
-        metavar='Resolution',
-    )
-    synth_parser.add_argument(
-        '--snr',
-        help='ratio of spectrum',
-        default=None,
-        type=float,
-        metavar='Signal-to-noise',
-    )
-    synth_parser.add_argument(
-        '--plot', help='Plot output', action='store_true', metavar='Plot'
-    )
-    synth_parser.add_argument(
-        '--plot_res',
-        help='Add residuals to the plot',
-        action='store_true',
-        metavar='Plot Residuals',
-    )
-    synth_parser.add_argument(
-        '--limb',
-        help='coefficient for rotation',
-        default=0.6,
-        type=float,
-        metavar='Limb Darkening',
-    )
-    synth_parser.add_argument(
-        '--save',
-        help='Save synthetic spectrum',
-        action='store_true',
-        metavar='Save Output',
-    )
+    synth_parser = subparsers.add_parser('Parameters', parents=[parent_parser], help='Spectal Synthesis')
+    synth_parser.add_argument('linelist', help='List with atomic data', widget='FileChooser', metavar='Line List')
+    synth_parser.add_argument('--inter_file', help='List of wavelength intervals', default='intervals.lst', widget='FileChooser', metavar='Intervals File')
+    synth_parser.add_argument('--observations', help='Input formats: fits, dat, spec', widget='FileChooser', metavar='Observed Spectrum')
+    synth_parser.add_argument('--damping', help='Parameter for MOOG', default='1', choices=['0', '1', '2'], type=str, metavar='Damping')
+    synth_parser.add_argument('--step_wave', help='for synthetic spectrum', default=0.01, type=float, metavar='Step Wavelength')
+    synth_parser.add_argument('--step_flux', help='for synthetic spectrum', default=3.0, type=float, metavar='Step Flux')
+    synth_parser.add_argument('--minimize', help='Start minimization process', action='store_true', metavar='Minimization')
+    synth_parser.add_argument('--refine', help='Refine parameters', action='store_true', metavar='Refine Parameters')
+    synth_parser.add_argument('--Iterations', help='Maximum number', default=100, type=int)
+    synth_parser.add_argument('--Fixteff', help='Fix Teff', action='store_true', metavar='Fix Temperature')
+    synth_parser.add_argument('--Fixgravity', help='Fix logg', action='store_true', metavar='Fix Gravity')
+    synth_parser.add_argument('--FixFeH', help='Fix [Fe/H]', action='store_true', metavar='Fix Metallicity')
+    synth_parser.add_argument('--Fixmicroturbulence', help='Fix vt', action='store_true', metavar='Fix Microturbulence')
+    synth_parser.add_argument('--Fixmacroturbulence', help='Fix vmac', action='store_true', metavar='Fix Macroturbulence')
+    synth_parser.add_argument('--Fixvsini', help='Fix vsini', action='store_true', metavar='Fix Rotational Velocity')
+    synth_parser.add_argument('--resolution', help='of the spectrograph', default=None, type=int, metavar='Resolution')
+    synth_parser.add_argument('--snr', help='ratio of spectrum', default=None, type=float, metavar='Signal-to-noise')
+    synth_parser.add_argument('--plot', help='Plot output', action='store_true', metavar='Plot')
+    synth_parser.add_argument('--plot_res', help='Add residuals to the plot', action='store_true', metavar='Plot Residuals')
+    synth_parser.add_argument('--limb', help='coefficient for rotation', default=0.6, type=float, metavar='Limb Darkening')
+    synth_parser.add_argument('--save', help='Save synthetic spectrum', action='store_true', metavar='Save Output')
     synth_parser.set_defaults(driver=synth)
 
     abund_parser = subparsers.add_parser(

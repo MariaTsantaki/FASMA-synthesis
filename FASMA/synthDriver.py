@@ -545,12 +545,13 @@ class synthMethod:
                     + [
                         self.options['model'],
                         self.options['resolution'],
-                        self.options['snr'],
+                        self.options['snr']
                     ]
                 )
                 # Save the results in the output file.
                 self._output(stellarparams=True)
                 self.xobs, self.yobs = self.xo, self.yo
+                return self.params
 
             if self.options['element']:
                 status = self.minizationElementRunner()
@@ -574,6 +575,7 @@ class synthMethod:
                     ]
                 )
                 self._output(abundance=True)
+                return self.abund.tolist()
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
