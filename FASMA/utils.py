@@ -211,7 +211,8 @@ class GetModels:
         name : str
           The path to the atmosphere model
         '''
-        name = 'FASMA/models/%s/' % self.atmtype
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        name = cwd + '/models/%s/' % self.atmtype
         if feh_model < 0:
             name += 'm%s/' % str(abs(feh_model)).replace('.', '')
         else:

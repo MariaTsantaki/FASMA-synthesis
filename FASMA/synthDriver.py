@@ -76,9 +76,6 @@ class synthMethod:
 
         lines = open(self.cfgfile, 'r')
         for line in lines:
-            if not line[0].isalpha():
-                self.logger.debug('Skipping header: %s' % line.strip())
-                continue
             self.logger.info('Line processing: %s' % line.strip())
             line = line.strip()
             line = line.split(' ')
@@ -96,9 +93,14 @@ class synthMethod:
         initial parameters.
         '''
 
-        if not os.path.isfile('FASMA/rawLinelist/%s' % self.linelist):
+        if not os.path.isfile(self.linelist):
             print('The line list does not exists!\n')
             self.logger.error('The line list does not exists!\n')
+            return None
+
+        if not os.path.isfile(self.options['inter_file']):
+            print('The intervals list does not exists!\n')
+            self.logger.error('The intervals list does not exists!\n')
             return None
 
         if self.options['element']:
@@ -593,5 +595,6 @@ if __name__ == '__main__':
         cfgfile = sys.argv[1]
     else:
         cfgfile = 'StarMe_synth.cfg'
+
     driver = synthMethod(cfgfile=cfgfile, overwrite=None)
     driver.synthdriver()

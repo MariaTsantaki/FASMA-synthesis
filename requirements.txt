@@ -11,3 +11,6 @@ pandas>=0.17.0
 PyAstronomy
 astropy
 periodictable==1.5.2
+setuptools
+nose
+coverage
