@@ -8,6 +8,7 @@ setup(
     author='Maria Tsantaki',
     license='MIT',
     packages=['FASMA'],
+    scripts=['bin/fasma', 'bin/fasma_gui'],
     include_package_data=True,
     zip_safe=False,
 )
