@@ -2,28 +2,25 @@
 
 
 # FASMA 2.0
-Stellar spectral analysis package. 
+Stellar spectral analysis package.
 
 The python code is wrapped around the spectral synthesis package: [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
-To install, simply run the makefile file with `make install`.
-
-**WARNING**: Contact here for bugs: tsantaki@arcetri.astro.it
+Contact here for bugs: tsantaki@arcetri.astro.it
 
 # Installation
-Installing `FASMA-synthesis` requires a few simple steps. We highly recommend
-using [Anaconda](https://www.continuum.io/) to manage your python packages.
-If you do not have Anaconda installed, you need to change [line 13 - 14](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/makefile#L13-L14) in the `makefile`. Otherwise, just run `make`
-to install all dependencies.
-Now FASMA runs with python 3.
+Installing `FASMA-synthesis` requires a few simple steps.
+
+To install, simply run the makefile file with `make install`. A list of basic packages will
+be installed automatically. FASMA assumes MOOG is already installed and runs with python 3.
 
 # Usage
-FASMA is so easy. You can run FASMA 1) either with the GUI or 2) from the terminal. 
+FASMA is so easy. You can run FASMA 1) either with the GUI or 2) from the terminal.
 
 1) Run to open the GUI control:
 
 ```
-python FASMA.py
+fasma_gui
 ```
 
 2) Run the CLI version.
@@ -31,15 +28,14 @@ python FASMA.py
 Add the options in the `StarMe_synth.cfg` file manually and then:
 
 ```
-python synthDriver.py
+fasma
 ```
-
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
 
 ## Configuration file
 
-A standard setting of the configuration file has this form:
+A standard setting of the configuration file has this form with the correct paths (see [manual](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) for more information):
 
 `linelist teff logg [M/H] vt vmac vsini options`
 
@@ -60,18 +56,16 @@ fix_feh:      False
 fix_vt:       False
 fix_vmac:     False
 fix_vsini:    False
-flag_vt:      False
-flag_vmac:    False
 plot:         False
 plot_res:     False
 damping:      1
 step_wave:    0.01
 step_flux:    3.0
 minimize:     False
+element:      False
 refine:       False
-errors:       False
 observations: False
-inter_file:   intervals_hr10_15n.lst
+inter_file:   intervals.lst
 snr:          None
 resolution:   None
 limb:         0.6
