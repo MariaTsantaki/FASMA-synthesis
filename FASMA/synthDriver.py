@@ -161,7 +161,6 @@ class synthMethod:
             'step_flux': 3.0,
             'minimize': False,
             'refine': False,
-            'errors': False,
             'observations': False,
             'inter_file': 'intervals_hr10_15n.lst',
             'snr': None,

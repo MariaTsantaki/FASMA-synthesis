@@ -13,9 +13,9 @@ authors:
 affiliations:
  - name: INAF -- Osservatorio Astrofisico di Arcetri, Largo E. Fermi 5, 50125 Firenze, Italy
    index: 1
- - name: Instituto de Astrof\'isica e Ci\^encias do Espa\c{c}o, Universidade do Porto, CAUP, Rua das Estrelas, Porto, 4150-762, Portugal
+ - name: Instituto de Astrofísica e Ciências do Espa\c{c}o, Universidade do Porto, CAUP, Rua das Estrelas, Porto, 4150-762, Portugal
    index: 2
-date: 13 August 2019
+date: 13 August 2020
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -30,7 +30,7 @@ Effective temperature (Teff), surface gravity (logg), and metallicity ([M/H]) ar
 
 ``FASMA`` is a Python package to derive stellar atmospheric parameters based on the spectral synthesis technique. The principle of this technique relies on the comparison between synthetic spectra with observations to yield the best-fit parameters under a minimization process.
 
-The synthetic spectra are created on-the-fly with a radiative transfer code, [``MOOG``](https://www.as.utexas.edu/~chris/moog.html) [@Sneden:1973, @Sneden:2017)] in fortran for a set of stellar parameters. The synthetic spectra are later convolved with different rotational profiles, such as macroturbulence (vmac), projected rotational velocity (vsini), and instrumental broadening (resolution) to match the observations. Spectral synthesis has model dependence and thus, grids of pre-computed stellar atmospheres (e.g. Kurucz [@Kurucz:1993] or marcs [@Gustafsson:2008] models) are provided with ``FASMA`` along this the interpolation processes for the models (stellar atmospheres) in the grid.
+The synthetic spectra are created on-the-fly with a radiative transfer code, [``MOOG``](https://www.as.utexas.edu/~chris/moog.html) [@Sneden:1973, @Sneden:2017] in fortran for a set of stellar parameters. The synthetic spectra are later convolved with different rotational profiles, such as macroturbulence (vmac), projected rotational velocity (vsini), and instrumental broadening (resolution) to match the observations. Spectral synthesis has model dependence and thus, grids of pre-computed stellar atmospheres (e.g. Kurucz [@Kurucz:1993] or marcs [@Gustafsson:2008] models) are provided with ``FASMA`` along this the interpolation processes for the models (stellar atmospheres) in the grid.
 
 A key component for spectral synthesis is the list of atoms and molecules which are included in the wavelength intervals. The spectral line list required for the derivation of stellar parameters is described in @Tsantaki:2018 and for the chemical abundances is taken from @Adibekyan:2015.
 
@@ -41,7 +41,7 @@ Before we compare with observations, we perform a local normalization for the re
 
 # Figures
 
-Figures can be included like this: ![Example figure.](figure.png)
+Synthetic spectrum with solar values generated with ``FASMA`` (blue) compared with observed spectrum (orange).![Figure 1](/home/paranoia/FASMA-synthesis/manual/Sun_fasma.png)
 
 # Acknowledgements
 

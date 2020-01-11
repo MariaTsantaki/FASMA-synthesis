@@ -1,1 +1,2 @@
 recursive-include FASMA/models *
+recursive-include FASMA/img *

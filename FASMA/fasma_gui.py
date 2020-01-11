@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+
+# My imports
 from __future__ import print_function
+import os
 from gooey import Gooey, GooeyParser
 import FASMA
 
@@ -144,10 +147,13 @@ def abund(args):
     driver.synthdriver()
 
 
+cwd = os.path.dirname(os.path.abspath(FASMA.__file__))
+name = cwd + '/img/'
 @Gooey(program_name='FASMA - Spectral Synthesis with MOOG',
-    default_size=(900, 1000), image_dir='./img')
+    default_size=(900, 1000), image_dir=name)
 
-def main():
+
+def gooey_main():
     '''Take care of all the argparse stuff.
     :returns: the args
     '''
@@ -286,6 +292,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    #driver = synthMethod(cfgfile='StarMe_synth.cfg', overwrite=None)
-    #driver.synthdriver()
+    gooey_main()

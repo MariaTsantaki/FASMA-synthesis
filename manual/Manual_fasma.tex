@@ -1,4 +1,4 @@
-\documentclass[a4paper,10pt]{article}
+\documentclass[a4paper,12pt]{article}
 %\usepackage[a4paper]{geometry}
 \usepackage[top=1in, bottom=1.25in, left=0.5in, right=0.5in]{geometry}
 \usepackage[utf8]{inputenc}
@@ -27,48 +27,48 @@
 
 \section{The configuration file}
 
-To use FASMA in an automatic way, configure the ``StarMe\_synth.cfg'. There are four acceptable configurations. For more options, the synthDriver has to be adapted.
+To use FASMA in an automatic way, configure the ``StarMe\_synth.cfg'. This file should be in the folder where FASMA runs. There are various configurations depending on what the user wants. 
+A mandatory requirement is the line list. 
 
 \begin{itemize}
  \item To create a synthetic spectrum with solar values, only the line list file is required, e.g.:
  \begin{lstlisting}[language=Python]
  #linelist
 
- giraffe_sun_arcturus_calib.lst
+ linelist_sun_arcturus_calib.lst
 \end{lstlisting}
-The line list file should be in the rawLinelist folder. A line list is given already with FASMA.
+The complete path should be given for the list file in the configuration file (``StarMe\_synth.cfgs). The default line list is in the \texttt{rawLinelist} folder already provided within FASMA.
  \item For a given line list select your options. The options are space seperated from the line list file and the options are comma seperated, e.g.:
  {\footnotesize
  \begin{lstlisting}[language=Python]
  #linelist options
 
- giraffe_sun_arcturus_calib.lst observations:Sun_HARPS.fits,resolution:115000,minimize,refine
+ linelist_sun_arcturus_calib.lst observations:Sun_HARPS.fits,resolution:115000,
+ minimize,refine,inter_file:intervals.lst,plot
 \end{lstlisting}}
-This example means that for the observed spectrum 'Sun\_HARPS.fits' with resolution 115000, FASMA will minimize it starting from solar values using the refine option.
-For the not listed options, FASMA uses the default ones.
+This example indicates that for the observed spectrum 'Sun\_HARPS.fits' with resolution 115000, FASMA will minimize it starting from solar values using the refine option (see below). The 
+spectral regions for the synthesis are difined in the intervals.lst file with the option inter\_file. The final spectrum will be plotted. 
+For the not listed options, FASMA uses the default ones. {\bf The complete paths of the line list, spectrum, and intervals file should be given.} FASMA already includes the 
+line list (linelist\_sun\_arcturus\_calib.lst), the interval file (intervals.lst) and a HARPS spectrum of the Sun (Sun\_HARPS.fits)
 
  \item For a given line list and a set of initial values, create a synthetic spectrum. The initial parameters are space seperated from the line list file, e.g.:
  \begin{lstlisting}[language=Python]
  #linelist teff logg [M/H] vt vmac vsini
 
- giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9
+ linelist_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9
 \end{lstlisting}
 
- \item For a given line list and a set of initial values select your options. The initial parameters are space seperated from the line list file and the options are comma seperated, e.g.:
+ \item For a given line list and a set of initial values, select your options. {\bf The initial parameters are space seperated from the line list file and the options are comma seperated}, e.g.:
  {\tiny
  \begin{lstlisting}[language=Python]
  #linelist teff logg [M/H] vt vmac vsini options
 
- giraffe_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:Sun_HARPS.fits,resolution:115000,minimize,vt,vmac,refine
+ linelist_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:Sun_HARPS.fits,resolution:115000,
+ minimize,vt,vmac,refine
 \end{lstlisting} }
-The latter configuration is the suggested methodology.
+The latter configuration is the suggested methodology (Tsantaki et al. 2018). Microturbulence (vt) and macroturbulence (vmac) are set fixed. 
 
 \end{itemize}
-% \\*
-Once the configuration file is set, run FASMA:
-\begin{lstlisting}[language=Python]
-python synthDriver.py
-\end{lstlisting}
 
 
 \subsection{Default options}
@@ -88,21 +88,22 @@ In case the initial parameters of the stars are not known, the user can input th
 model:        marcs
 \end{lstlisting}
 % \\*
-The model atmospheres included in FASMA are: kurucz08, apogee\_kurucz, and marcs.
+The model atmospheres included in FASMA are: apogee\_kurucz, and marcs.
 
 \item
 \begin{lstlisting}[language=Python]
-MOOGv:        2014
+MOOGv:        2017
 \end{lstlisting}
+
 % \\*
-The version of MOOG currently is 2014 but can easily updated to newer versions.
+The version of MOOG currently is 2017 but can easily updated to newer versions. This is relevant only if the output files change for future updates of MOOG.
 
 \item
 \begin{lstlisting}[language=Python]
 save:         False
 \end{lstlisting}
 % \\*
-If save = True, the output synthetic spectrum is saved in results.
+If save = True, the output synthetic spectrum is saved in the folder \texttt{results}. The output is saved in a .spec format and is read with the astropy.io fits module.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -114,15 +115,7 @@ vmac:         False
 vsini:        False
 \end{lstlisting}
 % \\*
-If any of these options is set, then they are fixed in the minimization process.
-
-\item
-\begin{lstlisting}[language=Python]
-flag_vt:      False
-flag_vmac:    False
-\end{lstlisting}
-% \\*
-If any of these flags is on, the microturbulence or macroturbulence are set fixed to the values of empirical calibrations during the minimization process.
+If any of these options is set, then they are fixed in the minimization process. 
 
 \item
 \begin{lstlisting}[language=Python]
@@ -152,7 +145,7 @@ The wavelength step for the synthetic spectrum to be created and the flux limit 
 minimize:     False
 \end{lstlisting}
 % \\*
-The minimization option is on/off.
+If minimize appears in the options, the minimization process will start to find the best-fit parameters for the observed spectrum, therefore observations must be included in the options.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -164,31 +157,26 @@ microturbulence and macroturbulence values according to the parameters of the fi
 
 \item
 \begin{lstlisting}[language=Python]
-errors:       False
-\end{lstlisting}
-% \\*
-The errors are calculated by shifting the free parameters by a certain value. If this option is of the errors correspond to the covariance matrix of the fit.
-
-\item
-\begin{lstlisting}[language=Python]
 observations: False
 \end{lstlisting}
 % \\*
-The name of the spectrum is given here. If the spectrum is at the spectra folder there is no need to give the full path.
+The name of the spectrum is given here. The full path of the spectrum should be given.
 
 \item
 \begin{lstlisting}[language=Python]
-inter_file:   intervals_hr10_15n.lst
+inter_file:   intervals.lst
 \end{lstlisting}
 % \\*
-This is the file which contains the intervals of the synthesis. FASMA already has specific intervals which correspond to the given line list. This file should be inside the rawLinelist folder.
+This is the file which contains the intervals of the synthesis. FASMA already has specific intervals which correspond to the given line list. This file should be inside the \texttt{rawLinelist} folder. 
+The complete path should be given. 
 
 \item
 \begin{lstlisting}[language=Python]
 snr:          None
 \end{lstlisting}
 % \\*
-The signal-to-noise (SNR) values of the observed spectra can be given by the user. They are used in the normalization process. Otherwise the SNR is calculated by the PyAstronomy function.
+The signal-to-noise (SNR) values of the observed spectra can be given by the user (optional). They are used in the normalization process. Otherwise the SNR is calculated by the PyAstronomy function 
+within FASMA.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -203,27 +191,41 @@ limb:         0.6
 \end{lstlisting}
 % \\*
 The limb darkening coefficient for the vsini calculations. It is set fixed to 0.6 but can have different values depending on luminosity class.
+
+\item
+\begin{lstlisting}[language=Python]
+element:     False
+\end{lstlisting}
+% \\*
+This option will start the minimization process to derive the chemical abundance of a specific element. The element has to be set from this list: 
+Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni. In this case the line list and intervals are different than the standard derivation of the stellar parameters. 
+They are also included in FASMA, elements.lst and intervals\_elements.lst, respectively in the \texttt{rawLinelist} folder. For the derivation of the chemical 
+abundance the minimize option should be False. 
+
 \end{enumerate}
 
 
 \section{Run FASMA}
 
-There different ways to run FASMA. One way is to open the GUI with simple running:
+There different ways to run FASMA. FASMA is installed as a module. One way is to open the GUI with simple running:
 \begin{lstlisting}[language=Python]
-python FASMA.py
+fasma_gui
 \end{lstlisting}
 This will create the configuration file for you, but will only allow you to analyse one star.
 
-To run the batch version (recommended) it can be done in two different ways. If you already have a
-valid S``StarMe\_synth.cfg' file on your system, then simply run:
+To run the batch version, the ``StarMe\_synth.cfg' file has to configured and then simply run:
 \begin{lstlisting}[language=Python]
-python syntheDriver.py
+fasma
 \end{lstlisting}
 
 If your configuration file is called something else (recommended for different projects), then run
 \begin{lstlisting}[language=Python]
-python synthDriver.py myConf.cfg
+fasma myConf.cfg
 \end{lstlisting}
 
+The module can be imported in scripts as:
+\begin{lstlisting}[language=Python]
+import FASMA
+\end{lstlisting}
 
 \end{document}
