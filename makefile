@@ -11,7 +11,6 @@ install:
 	@echo "Atmosphere models installed in dir: models"
 	@echo "Installing dependencies..."
 	@pip install -r requirements.txt
-	@conda install -c anaconda wxpython=3.0.0.0
 	@pip install .
 	@echo "Dependencies installed"
 	@echo ""
