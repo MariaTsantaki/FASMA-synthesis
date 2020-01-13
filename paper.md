@@ -10,10 +10,10 @@ authors:
   - name: Maria Tsantaki
     orcid: 0000-0002-0552-2313
     affiliation: "1, 2"
-  - name: Daniel Andreasen Without ORCID
-  affiliation: "2"
-  - name: Guilherme Teixeira Without ORCID
-  affiliation: "2"
+  - name: Daniel Andreasen
+    affiliation: 2
+  - name: Guilherme Teixeira
+    affiliation: 2
 affiliations:
  - name: INAF -- Osservatorio Astrofisico di Arcetri, Largo E. Fermi 5, 50125 Firenze, Italy
    index: 1
