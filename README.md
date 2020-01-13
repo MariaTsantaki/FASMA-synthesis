@@ -19,6 +19,8 @@ make install
 A list of basic packages will be installed automatically with pip (see requirements.txt). FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html).
 FASMA runs with python 3.
 
+NOTE: For MAC users, the [Xcode](https://stackoverflow.com/questions/52522565/git-is-not-working-after-macos-update-xcrun-error-invalid-active-developer-pa) Command-line may need to be updated.
+
 # Usage
 FASMA is so easy. You can run FASMA 1) either with the GUI (using the [gooey](https://github.com/chriskiehl/Gooey) package) or 2) from the terminal.
 
