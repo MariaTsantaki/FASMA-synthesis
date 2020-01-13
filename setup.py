@@ -10,5 +10,7 @@ setup(
     packages=['FASMA'],
     scripts=['bin/fasma', 'bin/fasma_gui'],
     include_package_data=True,
+    test_suite='nose.collector',
+    tests_require=['nose'],
     zip_safe=False,
 )
