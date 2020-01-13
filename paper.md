@@ -10,12 +10,16 @@ authors:
   - name: Maria Tsantaki
     orcid: 0000-0002-0552-2313
     affiliation: "1, 2"
+  - name: Daniel Andreasen Without ORCID
+  affiliation: "2"
+  - name: Guilherme Teixeira Without ORCID
+  affiliation: "2"
 affiliations:
  - name: INAF -- Osservatorio Astrofisico di Arcetri, Largo E. Fermi 5, 50125 Firenze, Italy
    index: 1
  - name: Instituto de Astrofísica e Ciências do Espa\c{c}o, Universidade do Porto, CAUP, Rua das Estrelas, Porto, 4150-762, Portugal
    index: 2
-date: 13 August 2020
+date: 13 January 2020
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
