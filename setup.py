@@ -8,7 +8,7 @@ setup(
     author='Maria Tsantaki',
     license='MIT',
     packages=['FASMA'],
-    scripts=['bin/fasma', 'bin/fasma_gui'],
+    scripts=['bin/fasma'],
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=['nose'],

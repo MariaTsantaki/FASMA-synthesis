@@ -40,7 +40,7 @@ A key component for spectral synthesis is the list of atoms and molecules which 
 
 Before we compare with observations, we perform a local normalization for the regions of the synthesis and filter out cosmic rays. The minimization process is based on the Levenberg-Marquardt algorithm [@Marquardt:1963]. The procedure to derive stellar parameters is presented in detail in [@Tsantaki:2018] and has been tested for medium and high resolution spectrographs. In this version, we now include a new feature to derive chemical abundances for the following elements: Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, and Ni. For this process, stellar parameters have to be set and the only free parameter is the abundance of each element. The abundances are calculated in a region of &pm;2m &angst; around each spectral line. The line list of the neighboring lines is taken from [VALD](http://vald.astro.uu.se/~vald/php/vald.php) [@Ryabchikova:2015]
 
-``FASMA`` includes a GUI for a more user-friendly approach but can also run via terminal by setting the configuration file. ``FASMA`` incorporates all the standard inputs for spectral synthesis along with a manual for the derivation of stellar parameters and chemical abundances, the user has to provide only the stellar spectrum for the analysis.
+``FASMA`` is run via terminal by setting the configuration file. ``FASMA`` includes all the standard inputs for spectral synthesis along with a manual for the derivation of stellar parameters and chemical abundances, the user has to provide only the stellar spectrum for the analysis.
 
 
 # Figures

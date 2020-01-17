@@ -19,20 +19,9 @@ make install
 A list of basic packages will be installed automatically with pip (see requirements.txt). FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html).
 FASMA runs with python 3.
 
-NOTE: For MAC users, the [Xcode](https://stackoverflow.com/questions/52522565/git-is-not-working-after-macos-update-xcrun-error-invalid-active-developer-pa) Command-line may need to be updated.
-
 # Usage
-FASMA is so easy. You can run FASMA 1) either with the GUI (using the [gooey](https://github.com/chriskiehl/Gooey) package) or 2) from the terminal.
-
-1) Run to open the GUI control:
-
-```
-fasma_gui
-```
-
-2) Run the CLI version (this is necessary in case there is a list of stellar spectra to be analyzed).
-
-Configure the options in the `StarMe_synth.cfg` file manually and then run in the working directory:
+FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `StarMe_synth.cfg` file
+and then run in the working directory:
 
 ```
 fasma
