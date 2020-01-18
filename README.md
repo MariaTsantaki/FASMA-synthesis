@@ -16,7 +16,7 @@ Run the makefile file with
 make install
 ```
 
-A list of basic packages will be installed automatically with pip (see requirements.txt). FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html).
+A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install. FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html).
 FASMA runs with python 3.
 
 # Usage
@@ -28,6 +28,7 @@ fasma
 ```
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
+FASMA includes a log file `captain.log` every time it is used which catches errors in order to inform the user.
 
 ## Configuration file
 
@@ -69,6 +70,14 @@ limb:         0.6
 ```
 
 FASMA includes the line list for the derivation of stellar parameters (`giraffe_sun_arcturus_calib.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) . The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `StarMe_synth.cfg` file.
+
+# Outputs
+
+Assuming FASMA works well, the delivered stellar parameters are saved in the `synthresults.dat` and for the
+chemical abundances in the `synthresults_elements.dat`. The model atmosphere produced by the interpolation from
+the model grid is created in the `out.atm` file. The output synthetic spectrum of MOOG is in `summary.out`. The
+`linelist.moog` contains the line list in the format of MOOG and `result.out` is the summary of the parameters used
+for the synthetic spectrum. The MOOG configuration file is `batch.par` and its options are also set from the  `StarMe_synth.cfg` file.
 
 # AUTHORS
 
