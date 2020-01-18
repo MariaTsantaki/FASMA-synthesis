@@ -10,8 +10,8 @@ install:
 	@rm -r marcs
 	@echo "Atmosphere models installed in dir: models"
 	@echo "Installing dependencies..."
-	@pip install -r requirements.txt
-	@pip install .
+	@sudo pip install -r requirements.txt
+	@sudo pip install .
 	@echo "Dependencies installed"
 	@echo ""
 	@echo "FASMA is successfully installed!"
