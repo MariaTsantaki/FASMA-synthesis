@@ -79,13 +79,13 @@ class synthMethod:
             if line.startswith('#'):
                 self.logger.debug('Skipping header: %s' % line.strip())
                 continue
-                self.logger.info('Line processing: %s' % line.strip())
-                line = line.strip()
-                line = line.split(' ')
-                # Check if configuration parameters are correct
-                if len(line) not in [1, 2, 7, 8]:
-                    self.logger.error('Could not process this information: %s' % line)
-                    continue
+            self.logger.info('Line processing: %s' % line.strip())
+            line = line.strip()
+            line = line.split(' ')
+            # Check if configuration parameters are correct
+            if len(line) not in [1, 2, 7, 8]:
+                self.logger.error('Could not process this information: %s' % line)
+                continue
 
             self._setup(line)
             yield self.initial, self.options, line

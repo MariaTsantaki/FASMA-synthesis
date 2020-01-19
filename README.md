@@ -16,7 +16,9 @@ Run the makefile file with
 make install
 ```
 
-A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install. FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html).
+A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install. FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). MOOG uses fortran and its
+installation can be tricky so please follow the instructions carefully.
+
 FASMA runs with python 3.
 
 # Usage
