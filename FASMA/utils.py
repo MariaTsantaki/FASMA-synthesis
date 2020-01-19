@@ -502,7 +502,7 @@ def _run_moog(par='batch.par', driver='synth'):
     elif driver == 'synth':
         with open('stupid.tmp', 'w') as f:
             f.writelines('batch.par\nq')
-        os.system('MOOGSILENT < stupid.tmp > /dev/null')
+        os.system('MOOGSILENT < stupid.tmp > /dev/null 2>&1')
         os.remove('stupid.tmp')
 
 
