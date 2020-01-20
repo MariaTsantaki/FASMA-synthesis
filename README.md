@@ -19,7 +19,7 @@ make install
 A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install.
 
 FASMA requires MOOG which creates the synthetic spectra and it is installed separately from FASMA but it is provided in
-the `FASMA/MOOG` folder. In case MOOG is not installed, edit line 29 of the `Moogsilent.f` in the `FASMA/MOOG` folder.
+the `FASMA/MOOG` folder. To install MOOG, edit line 29 of the `Moogsilent.f` in the `FASMA/MOOG` folder.
 Then depending on the system, compile:
 
 ```
