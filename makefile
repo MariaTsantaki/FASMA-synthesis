@@ -1,7 +1,6 @@
 SHELL = /bin/bash
 
 install:
-	@./check_moog.sh
 	@tar -zxvf FASMA/models/apogee_kurucz.tar.gz
 	@tar -zxvf FASMA/models/marcs.tar.gz
 	@cp -r apogee_kurucz FASMA/models
@@ -14,4 +13,5 @@ install:
 	@sudo pip install .
 	@echo "Dependencies installed"
 	@echo ""
+	@./check_moog.sh
 	@echo "FASMA is successfully installed!"

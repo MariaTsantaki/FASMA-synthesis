@@ -76,7 +76,7 @@ class synthMethod:
 
         lines = open(self.cfgfile, 'r')
         for line in lines:
-            if line.startswith('#'):
+            if line.startswith(('#', ' ')):
                 self.logger.debug('Skipping header: %s' % line.strip())
                 continue
             self.logger.info('Line processing: %s' % line.strip())
