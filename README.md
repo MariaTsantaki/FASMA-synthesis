@@ -4,7 +4,7 @@
 # FASMA 2.0
 Stellar spectral analysis package. FASMA delivers the atmospheric stellar parameters (effective temperature, surface gravity, metallicity, microturbulence, macroturbulence, rotational velocity) and chemical abundances of 12 elements.
 
-The python code is wrapped around the spectral synthesis package: [MOOG](http://www.as.utexas.edu/~chris/moog.html).
+The python code is wrapped around the spectral synthesis package in fortran: [MOOG](http://www.as.utexas.edu/~chris/moog.html).
 
 Contact here for bugs: tsantaki@arcetri.astro.it
 
@@ -16,10 +16,19 @@ Run the makefile file with
 make install
 ```
 
-A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install. FASMA assumes MOOG is already installed. The installation instructions of MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). MOOG uses fortran and its
-installation can be tricky so please follow the instructions carefully.
+A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install.
 
-FASMA runs with python 3.
+FASMA requires MOOG which creates the synthetic spectra and it is installed separately from FASMA but it is provided in
+the `FASMA/MOOG` folder. In case MOOG is not installed, edit line 29 of the `Moogsilent.f` in the `FASMA/MOOG` folder.
+Then depending on the system, compile:
+
+```
+make -f Makefile.xxx           
+```
+
+where xxx = "rh64silent", "rhsilent", "maclapselent", "macdesksilent".
+
+More instructions are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python 3.
 
 # Usage
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `StarMe_synth.cfg` file
