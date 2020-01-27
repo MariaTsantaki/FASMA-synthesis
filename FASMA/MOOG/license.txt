@@ -1,0 +1,6 @@
+License
+-------
+MOOG has public permission and free of charge, available at https://www.as.utexas.edu/~chris/moog.html by Chris Sneden, Department of Astronomy, University of Texas at Austin.
+FASMA uses the 2019 version without any changes to the original code. 
+
+

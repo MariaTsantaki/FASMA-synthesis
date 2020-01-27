@@ -46,7 +46,7 @@ Before we compare with observations, we perform a local normalization for the re
 # Figures
 
 ![Synthetic spectrum with solar values generated with ``FASMA`` (blue) compared with observed spectrum (orange).
-](manual/Sun_fasma.png)
+](img/Sun_fasma.png)
 
 # Acknowledgements
 
