@@ -101,8 +101,9 @@ class synthMethod:
             return None
 
         if not os.path.isfile(self.options['inter_file']):
-            print('The intervals list does not exists!\n')
-            self.logger.error('The intervals list does not exists!\n')
+            message='The intervals list file {0} does not exists!\n'.format(self.options['inter_file'])
+            print(message)
+            self.logger.error(message)
             return None
 
         if self.options['element']:
