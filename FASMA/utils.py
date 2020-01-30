@@ -498,11 +498,13 @@ def _run_moog(par='batch.par', driver='synth'):
       Run MOOG once in silent mode
     '''
     if driver == 'abfind':
-        os.system('./MOOG/MOOGSILENT > /dev/null')
+        #~ os.system('./MOOG/MOOGSILENT > /dev/null')
+        os.system('./MOOG/MOOGSILENT')
     elif driver == 'synth':
         with open('stupid.tmp', 'w') as f:
             f.writelines('batch.par\nq')
-        os.system('./MOOG/MOOGSILENT < stupid.tmp > /dev/null 2>&1')
+        #~ os.system('./MOOG/MOOGSILENT < stupid.tmp > /dev/null 2>&1')
+        os.system('./MOOG/MOOGSILENT < stupid.tmp ')
         os.remove('stupid.tmp')
 
 
