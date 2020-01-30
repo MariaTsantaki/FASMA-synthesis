@@ -19,7 +19,8 @@ OBJECTS = Abfind.o Abpop.o Abunplot.o Batom.o Begin.o Binary.o \
         Pltflux.o Pltspec.o Pointcurs.o Prinfo.o Putasci.o Readobs.o \
         Rinteg.o Setmols.o Smooth.o Specplot.o Stats.o Sunder.o Synpop.o \
         Synspec.o Synth.o Tablepop.o Taukap.o Total.o Trudamp.o Ucalc.o \
-        Vargauss.o Vmacro.o Voigt.o Wavecalc.o Weedout.o Writenumber.o
+        Vargauss.o Vmacro.o Voigt.o Wavecalc.o Weedout.o Writenumber.o \
+        smstub.o
 
 #     here are the common files
 COMMON =  Atmos.com Dummy.com Equivs.com Factor.com Kappa.com Linex.com \
@@ -27,7 +28,7 @@ COMMON =  Atmos.com Dummy.com Equivs.com Factor.com Kappa.com Linex.com \
         Quants.com Multimod.com Dampdat.com
 
 CC = cc
-FC = gfortran -ff2c -Wall
+FC = gfortran -Wall
 
 # the following lines point to some needed libraries
 X11LIB = fakelib
@@ -45,7 +46,7 @@ all: MOOGSILENT ;
 
 MOOGSILENT:  $(OBJECTS);
 	$(FC) $(OBJECTS) -o MOOGSILENT -L$(X11LIB) -lX11 \
-        -L$(SMLIB) -lplotsub -ldevices -lutils
+        -L$(SMLIB) # -lplotsub -ldevices -lutils
 
 $(OBJECTS): $(COMMON)
 
