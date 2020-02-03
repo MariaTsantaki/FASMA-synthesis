@@ -9,26 +9,27 @@ The python code is wrapped around the spectral synthesis package in fortran: [MO
 Contact here for bugs: tsantaki@arcetri.astro.it
 
 # Installation
-Installing FASMA requires a few simple steps.
+Installing FASMA requires a few simple steps. FASMA requires MOOG which creates the synthetic spectra.
+First, edit line 29 of the [`Moogsilent.f`](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/FASMA/MOOG/Moogsilent.f)
+in the `FASMA/MOOG` folder depending on the user's machine:
 
-Run the makefile file with
+     "mac" = Intel-based Apple Mac
+
+     "pcl" = a PC or desktop running some standard linux like Redhat
+
+     "uni" = a machine running Unix, specifically Sun Solaris
+
+Then run the `install_fasma.sh` file with the following commands. The user will be asked system requirements:
+"rh64" for 64-bit linux system, "rh" for 32-bit linux system, "maclap" for mac laptop, "macdesk" for mac desktop.
+
 ```
-make install
+chmod +x install_fasma.sh
+.\install_fasma.sh
 ```
 
-A list of basic packages will be installed automatically with pip (see requirements.txt). It requires sudo privilege otherwise correct the makefile with pip install --user instead of sudo pip install.
+A list of basic packages will be installed automatically with pip (see [requirements](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/requirements.txt).
 
-FASMA requires MOOG which creates the synthetic spectra and it is installed separately from FASMA but it is provided in
-the `FASMA/MOOG` folder. To install MOOG, edit line 29 of the `Moogsilent.f` in the `FASMA/MOOG` folder.
-Then depending on the system, compile:
-
-```
-make -f Makefile.xxx           
-```
-
-where xxx = "rh64silent", "rhsilent", "maclapselent", "macdesksilent".
-
-More instructions are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python 3.
+More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python 3.
 
 # Usage
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `StarMe_synth.cfg` file
@@ -55,7 +56,6 @@ The line list and the initial stellar parameters (teff logg [M/H] vt vmac vsini)
 The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
 
 ```
-spt:          False
 model:        marcs
 MOOGv:        2017
 save:         False
@@ -80,7 +80,7 @@ resolution:   None
 limb:         0.6
 ```
 
-FASMA includes the line list for the derivation of stellar parameters (`giraffe_sun_arcturus_calib.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) . The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `StarMe_synth.cfg` file.
+FASMA includes the line list for the derivation of stellar parameters (`linelist.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) . The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `StarMe_synth.cfg` file.
 
 # Outputs
 

@@ -165,7 +165,7 @@ class synthMethod:
             'minimize': False,
             'refine': False,
             'observations': False,
-            'inter_file': 'intervals_hr10_15n.lst',
+            'inter_file': 'intervals.lst',
             'snr': None,
             'resolution': None,
             'limb': 0.6,
@@ -179,7 +179,7 @@ class synthMethod:
                     defaults[option[0]] = option[1]
                 else:
                     # Clever way to change the boolean
-                    if option in ['teff', 'logg', 'mh', 'vt', 'vmac', 'vsini']:
+                    if option in ['teff', 'logg', 'feh', 'vt', 'vmac', 'vsini']:
                         option = 'fix_%s' % option
                     defaults[option] = False if defaults[option] else True
             defaults['model'] = defaults['model'].lower()
@@ -555,7 +555,6 @@ class synthMethod:
                 # Save the results in the output file.
                 self._output(stellarparams=True)
                 self.xobs, self.yobs = self.xo, self.yo
-                return self.params
 
             if self.options['element']:
                 status = self.minizationElementRunner()
@@ -579,7 +578,6 @@ class synthMethod:
                     ]
                 )
                 self._output(abundance=True)
-                return self.abund.tolist()
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
