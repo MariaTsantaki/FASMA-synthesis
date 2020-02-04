@@ -43,6 +43,10 @@ class synthMethod:
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        if not os.path.isdir('/MOOG/data'):
+            path = os.path.dirname(os.path.abspath(__file__))
+            os.system('cp -r ' + path + '/MOOG/data .')
+
 
     def _setup(self, line):
         '''Do the setup with initial parameters and options.
