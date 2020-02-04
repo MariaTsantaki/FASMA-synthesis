@@ -17,7 +17,8 @@ c*****if the syntheses need to be redone: first rewind the output files,
 c     then close/reopen line list(s), then rewrite model atmosphere output
       if (choice .eq. 'n') then
          call chabund
-         if (choice .eq. 'x') call pltspec (lscreen,ncall)
+         if (choice .eq. 'x') print *, "Sorry I cannot plot!"
+c         if (choice .eq. 'x') call pltspec (lscreen,ncall)
          rewind nf1out
          rewind nf2out
          if (nflines .ne. 0) then

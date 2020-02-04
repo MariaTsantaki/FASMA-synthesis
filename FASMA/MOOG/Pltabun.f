@@ -19,7 +19,8 @@ c******************************************************************************
 10       choice = 'y'
          plotroutine = 'term_port_abun'
          lscreen = maxline -2
-         call makeplot (lscreen)
+	 print *, "Sorry I cannot plot!"
+c         call makeplot (lscreen)
          array = 'WHAT TO DO NEXT ([n]/h/f/r/m/v)? '
          lscreen = lscreen + 2
          nchars = 35
@@ -44,12 +45,14 @@ c******************************************************************************
             return   
          elseif (choice .eq. 'h') then
             plotroutine = 'hard_port_abun'
-            call makeplot (lscreen)
+            print *, "Sorry I cannot plot!"
+c            call makeplot (lscreen)
          elseif (choice .eq. 'r') then
             go to 10
          elseif (choice .eq. 'f') then
             plotroutine = 'file_port_abun'
-            call makeplot (lscreen)
+            print *, "Sorry I cannot plot!"
+c            call makeplot (lscreen)
          endif
       endif
 
