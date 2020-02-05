@@ -1,9 +1,7 @@
 #!/bin/bash
 
-tar -zxvf FASMA/models/apogee_kurucz.tar.gz
-tar -zxvf FASMA/models/marcs.tar.gz
-mv apogee_kurucz FASMA/models
-mv marcs FASMA/models
+tar -zxvf FASMA/models/apogee_kurucz.tar.gz -C FASMA/models/
+tar -zxvf FASMA/models/marcs.tar.gz -C FASMA/models/
 echo "Atmosphere models installed in dir: models"
 echo "Installing dependencies..."
 pip install --user .
