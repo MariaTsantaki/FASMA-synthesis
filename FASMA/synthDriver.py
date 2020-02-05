@@ -33,6 +33,7 @@ class synthMethod:
 
         self.cfgfile = cfgfile
         self.overwrite = overwrite
+        self.status = None
         # Setup of logger
         if os.path.isfile('captain.log'):  # Cleaning from previous runs
             os.remove('captain.log')
@@ -43,10 +44,83 @@ class synthMethod:
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        # Now MOOG can be run in any working folder
         if not os.path.isdir('/MOOG/data'):
             path = os.path.dirname(os.path.abspath(__file__))
             os.system('cp -r ' + path + '/MOOG/data .')
 
+    @classmethod
+    def create_config(cls, cfgfile='StarMe_synth.cfg', **kwargs):
+        '''Create configuration file from kwargs.
+        Otherwise set to default.
+        '''
+
+        defaults = {
+            'linelist': 'linelist.lst',
+            'teff': 5777,
+            'logg': 4.44,
+            'feh': 0.0,
+            'vt': 1.0,
+            'vmac': 3.21,
+            'vsini': 1.90,
+            'model': 'apogee_kurucz',
+            'MOOGv': 2014,
+            'save': False,
+            'element': False,
+            'fix_teff': False,
+            'fix_logg': False,
+            'fix_feh': False,
+            'fix_vt': False,
+            'fix_vmac': False,
+            'fix_vsini': False,
+            'plot': False,
+            'plot_res': False,
+            'damping': 1,
+            'step_wave': 0.01,
+            'step_flux': 3.0,
+            'minimize': False,
+            'refine': False,
+            'observations': False,
+            'inter_file': 'intervals.lst',
+            'snr': None,
+            'resolution': None,
+            'limb': 0.6,
+        }
+
+        defaults.update(kwargs)
+        fout = ''
+        fout += '%s %s %s %s %s %s %s ' % (defaults.get('linelist'), defaults.get('teff'), defaults.get('logg'), defaults.get('feh'), defaults.get('vt'), defaults.get('vmac'), defaults.get('vsini'))
+        fout += 'model:%s,step_wave:%s,step_flux:%s,inter_file:%s,limb:%s,damping:%s' % (defaults.get('model'), defaults.get('step_wave'), defaults.get('step_flux'), defaults.get('inter_file'), defaults.get('limb'), defaults.get('damping'))
+        if defaults.get('observations'):
+            fout += ',observations:%s' % defaults.get('observations')
+        if defaults.get('resolution'):
+            fout += ',resolution:%s' % defaults.get('resolution')
+        if defaults.get('snr'):
+            fout += ',snr:%s' % defaults.get('snr')
+        if defaults.get('refine'):
+            fout += ',refine'
+        if defaults.get('plot'):
+            fout += ',plot'
+        if defaults.get('plot_res'):
+            fout += ',plot_res'
+        if defaults.get('save'):
+            fout += ',save'
+        if defaults.get('minimize'):
+            fout += ',minimize'
+        if defaults.get('fix_teff'):
+            fout += ',teff'
+        if defaults.get('fix_logg'):
+            fout += ',logg'
+        if defaults.get('fix_feh'):
+            fout += ',feh'
+        if defaults.get('fix_vt'):
+            fout += ',vt'
+        if defaults.get('fix_vmac'):
+            fout += ',vmac'
+        if defaults.get('fix_vsini'):
+            fout += ',vsini'
+        with open(cfgfile, 'w') as f:
+            f.writelines(fout)
 
     def _setup(self, line):
         '''Do the setup with initial parameters and options.
@@ -144,7 +218,7 @@ class synthMethod:
         if __name__ in ('__main__', 'synthDriver'):
             self.options['GUI'] = False  # Running batch mode
         else:
-            self.options['GUI'] = True  # Running GUI mode
+            self.options['GUI'] = True
 
     def _options(self, options=None):
         '''Reads the options inside the config file otherwise set to defaults.
@@ -359,8 +433,8 @@ class synthMethod:
         self.end_time = int(time.time() - start_time)
         print('Minimization finished in %s sec' % int(self.end_time))
         self.logger.info('Minimization done.')
-        status = 1
-        return status
+        self.status = 1
+        return self.status
 
     def minizationElementRunner(self, p=None):
         '''A function to run the minimization routine for element abundances.
@@ -400,8 +474,8 @@ class synthMethod:
         a[ind2] = self.elemabund[1]
         a[-1] = self.elemabund[2]
         self.abund = a
-        status = 1
-        return status
+        self.status = 1
+        return self.status
 
     def plotRunner(self, x=None, y=None, xs=None, ys=None, xf=None, yf=None, res=False):
         '''A function to plot spectra with or without residuals.
@@ -477,6 +551,9 @@ class synthMethod:
         # Creating the output file
         self._output(header=True, stellarparams=True, abundance=True)
 
+        # Define options
+
+
         for (self.initial, self.options, line) in self._genStar():
             self.logger.info(
                 'Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(
@@ -537,8 +614,8 @@ class synthMethod:
                 self.xobs, self.yobs = (None, None)
 
             if self.options['minimize']:
-                status = self.minizationRunner()
-                if status is None:
+                self.status = self.minizationRunner()
+                if self.status is None:
                     self.logger.error(
                         'The minimization routine did not finish succesfully.'
                     )
@@ -561,8 +638,8 @@ class synthMethod:
                 self.xobs, self.yobs = self.xo, self.yo
 
             if self.options['element']:
-                status = self.minizationElementRunner()
-                if status is None:
+                self.status = self.minizationElementRunner()
+                if self.status is None:
                     self.logger.error(
                         'The minimization routine did not finish succesfully.'
                     )
@@ -590,6 +667,22 @@ class synthMethod:
             if self.options['plot']:
                 self.logger.info('Plotting results.')
                 self.plotRunner(x=self.xobs, y=self.yobs, xs=self.xspec, ys=self.yspec)
+
+    def result(self):
+        '''If any, get the output parameters.
+
+        Input
+        ------
+        status : if None, no minimization happened
+
+        Output
+        ------
+        params : output parameters
+        '''
+        if self.status is None:
+            self.params = None
+            self.logger.info('No parameters are returned.\n')
+        return self.params
 
 
 if __name__ == '__main__':
