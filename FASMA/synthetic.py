@@ -397,7 +397,11 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
         names=['El', 'wave'],
         delimiter='\t',
     )
-    intervals['El'] = intervals['El'].map(lambda x: x.strip().strip("I"))
+
+    try:
+        intervals['El'] = intervals['El'].map(lambda x: x.strip().strip("I"))
+    except AttributeError:
+        print('The format of the line list is not correct.')
     intervals = intervals[intervals['El'] == element]
     intervals.sort_values(by='wave', inplace=True)
 

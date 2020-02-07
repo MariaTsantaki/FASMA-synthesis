@@ -48,9 +48,10 @@ class fasma:
         if not os.path.isdir('/MOOG/data'):
             path = os.path.dirname(os.path.abspath(__file__))
             os.system('cp -r ' + path + '/MOOG/data .')
-        self.configure(**kwargs)
+        if kwargs:
+            self.configure(**kwargs)
         self.synthdriver()
-        self.result()
+        result = self.result()
 
     def configure(cls, cfgfile='StarMe_synth.cfg', **kwargs):
         '''Create configuration file from kwargs.
@@ -103,19 +104,25 @@ class fasma:
           Each line from the configuration file after being split at spaces
           The format is spaced separated: linelist_file (params) (options)
         '''
-        self.linelist = line.linelist
+        self.linelist = line['linelist']
         self._options(line)
         self.initial = [self.options['teff'], self.options['logg'], self.options['feh'], self.options['vt'], self.options['vmac'], self.options['vsini']]
 
     def _genStar(self):
         '''A generator for the configuration file.
         '''
-        with open(cfgfile, 'r') as stream:
-	           try:
-                   data = yaml.safe_load(stream)
-	           except yaml.YAMLError as exc:
-                   self.logger.error('Could not process this information, check input parameters.')
-                   break
+        with open(self.cfgfile, 'r') as stream:
+            try:
+                data = yaml.safe_load(stream)
+                self.logger.info('Reading input parameters.')
+            except yaml.scanner.ScannerError as exc:
+                self.logger.error('Could not process this information, check input parameters.')
+                raise
+
+        if data is None:
+            print('Could not process this information, check input parameters.')
+            self.logger.error('Could not process this information, check input parameters.')
+            return None
 
         for item, line in data.items():
             self._setup(line)
@@ -127,15 +134,33 @@ class fasma:
         '''
 
         if not os.path.isfile(self.linelist):
-            print('The line list does not exists!\n')
-            self.logger.error('The line list does not exists!\n')
-            return None
-
-        if not os.path.isfile(self.options['intervals_file']):
-            message='The intervals list file {0} does not exists!\n'.format(self.options['intervals_file'])
+            message = 'The line list file {0} does not exists!\n'.format(self.options['linelist'])
             print(message)
             self.logger.error(message)
-            return None
+            raise StopIteration
+
+        if not os.path.isfile(self.options['intervals_file']):
+            message = 'The intervals list file {0} does not exists!\n'.format(self.options['intervals_file'])
+            print(message)
+            self.logger.error(message)
+            raise StopIteration
+
+        if self.options['element']:
+            el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+            if self.options['element'] not in el:
+                message = 'This element is not in the line list:', self.options['element']
+                print(message)
+                self.logger.error(message)
+                raise StopIteration
+
+        if self.options is None:
+            self.logger.error('The inputs were not inserted correctly.\n')
+            raise StopIteration
+
+        if self.options['minimize'] and self.options['element']:
+            message = 'I am confused with the inputs! First derive parameters and then abundances'
+            self.logger.error('Options minimize and element at the same time!\n')
+            raise StopIteration
 
         if self.options['element']:
             self.ranges, atomic = read_linelist_elem(
@@ -505,35 +530,16 @@ class fasma:
         self._output(header=True, stellarparams=True, abundance=True)
 
         # Define options
-
-
-        for (self.initial, self.options, line) in self._genStar():
+        for (self.initial, self.options) in self._genStar():
             self.logger.info(
                 'Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(
                     *self.initial
                 )
             )
 
-            # Check here if element exists
-            if self.options['element']:
-                el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
-                if self.options['element'] not in el:
-                    print(
-                        'This element is not in the line list:', self.options['element']
-                    )
-                    self.logger.error('This element is not in the line list.')
-                    continue
-
-            self._prepare()
-
-            if self.options is None:
-                self.logger.error('The line list does not exists!\n')
-                continue
-            if self.options['minimize'] and self.options['element']:
-                print('I am confused! First derive parameters and then abundances')
-                self.logger.error(
-                    'Minimization of parameters and abundances at the same time!\n'
-                )
+            try:
+                self._prepare()
+            except StopIteration:
                 continue
 
             if self.options['observations']:
@@ -567,6 +573,8 @@ class fasma:
                 self.xobs, self.yobs = (None, None)
 
             if self.options['minimize']:
+                if self.xobs is None:
+                    continue
                 self.status = self.minizationRunner()
                 if self.status is None:
                     self.logger.error(
@@ -591,6 +599,8 @@ class fasma:
                 self.xobs, self.yobs = self.xo, self.yo
 
             if self.options['element']:
+                if self.xobs is None:
+                    continue
                 self.status = self.minizationElementRunner()
                 if self.status is None:
                     self.logger.error(
@@ -612,6 +622,8 @@ class fasma:
                     ]
                 )
                 self._output(abundance=True)
+            else:
+                self.abund = (None, None)
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
@@ -634,25 +646,25 @@ class fasma:
         '''
         if self.status is None:
             self.logger.info('No parameters are returned.\n')
-            result = {
-            "teff": self.initial[0],
-            "erteff": 0,
-            "logg": self.initial[1],
-            "erlogg": 0,
-            "feh": self.initial[2],
-            "erfeh": 0,
-            "vt": self.initial[3],
-            "ervt": 0,
-            "vmac": self.initial[4],
-            "ervmac": 0,
-            "vsini": self.initial[5],
-            "ervsini": 0,
-            "spectrum": {
-            "wave" : self.xobs,
-            "flux" : self.yobs},
-            }
+            result = None
         else:
-            if self.minimize:
+            if self.options['element']:
+                result = {
+                "teff": self.initial[0],
+                "logg": self.initial[1],
+                "feh": self.initial[2],
+                "vt": self.initial[3],
+                "vmac": self.initial[4],
+                "vsini": self.initial[5],
+                "element": self.options['element'],
+                "abund": self.abund[0],
+                "erabund": self.abund[1],
+                "spectrum": {
+                "wave" : self.xobs,
+                "flux" : self.yobs},
+                }
+
+            if self.options['minimize']:
                 result = {
                 "teff": self.params[0],
                 "erteff": self.params[1],
@@ -671,29 +683,6 @@ class fasma:
                 "wave" : self.xobs,
                 "flux" : self.yobs},
                 }
-            if self.element:
-                result = {
-                "teff": self.initial[0],
-                "erteff": 0,
-                "logg": self.initial[1],
-                "erlogg": 0,
-                "feh": self.initial[2],
-                "erfeh": 0,
-                "vt": self.initial[3],
-                "ervt": 0,
-                "vmac": self.initial[4],
-                "ervmac": 0,
-                "vsini": self.initial[5],
-                "ervsini": 0,
-                "element": self.element,
-                "abund": self.abund[0],
-                "erabund": self.abund[1],
-                "spectrum": {
-                "wave" : self.xobs,
-                "flux" : self.yobs},
-                }
-
-            print(self.options)
         return result
 
 

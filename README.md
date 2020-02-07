@@ -42,43 +42,58 @@ fasma
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
 FASMA includes a log file `captain.log` every time it is used which catches errors in order to inform the user.
 
+For large lists of stars, it is preferable to use the terminal version of FASMA.
+The configuration options are added from a dictionary.
+
+```
+from FASMA import fasma
+
+options = {'observations':'/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits', 'minimize':True, 'plot':True}
+driver = fasma(**options)
+output = driver.result()
+```
+
+The output is a dictionary with the final parameters.
+
 ## Configuration file
 
-A standard setting of the configuration file has this form with the correct paths (see [manual](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) for more information):
-
-`linelist teff logg [M/H] vt vmac vsini options`
+The complete list of options of the configuration file has the following form with the correct paths for the input files (see [manual](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) for examples):
 
 ```
-\home\star\rawLinelist\linelist.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:\home\star\spectra\Sun_HARPS.fits,resolution:115000,inter_file:\home\star\rawLinelist\intervals.lst,minimize,refine
+star:
+  teff: 5777
+  logg: 4.44
+  feh: 0.0
+  vmac: 3.21
+  vsini: 1.9
+  vt: 1.0
+  MOOGv: 2014
+  damping: 1
+  element: Na
+  fix_feh: False
+  fix_logg: False
+  fix_teff: False
+  fix_vmac: False
+  fix_vsini: False
+  fix_vt: False
+  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
+  limb: 0.6
+  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
+  minimize: False
+  model: apogee_kurucz
+  observations: /home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits
+  plot: False
+  plot_res: False
+  refine: False
+  resolution: None
+  save: False
+  snr: None
+  step_flux: 3.0
+  step_wave: 0.01
 ```
 
-The line list and the initial stellar parameters (teff logg [M/H] vt vmac vsini) are space separated. The options are comma separated (e.g. minimize,damping:1,plot).
-The default options of FASMA can be changed in the configuration file `StarMe_synth.cfg`.
-
-```
-model:        marcs
-MOOGv:        2017
-save:         False
-fix_teff:     False
-fix_logg:     False
-fix_feh:      False
-fix_vt:       False
-fix_vmac:     False
-fix_vsini:    False
-plot:         False
-plot_res:     False
-damping:      1
-step_wave:    0.01
-step_flux:    3.0
-minimize:     False
-element:      False
-refine:       False
-observations: False
-inter_file:   intervals.lst
-snr:          None
-resolution:   None
-limb:         0.6
-```
+The configuration file is space sensitive and it can include only the values which
+are other than the defaults.
 
 FASMA includes the line list for the derivation of stellar parameters (`linelist.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) . The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `StarMe_synth.cfg` file.
 
