@@ -4,7 +4,7 @@ tar -zxvf FASMA/models/apogee_kurucz.tar.gz -C FASMA/models/
 tar -zxvf FASMA/models/marcs.tar.gz -C FASMA/models/
 echo "Atmosphere models installed in dir: models"
 echo "Installing dependencies..."
-pip install --user .
+pip install .
 echo "Dependencies installed"
 echo ""
 
@@ -20,9 +20,13 @@ if [ "$answer" == "rh64" ] ;then
 elif [ "$answer" == "rh" ] ;then
     make -C FASMA/MOOG/ -f Makefile.rhsilent clean ; make -C FASMA/MOOG/ -f Makefile.rhsilent
 elif [ "$answer" == "maclap" ] ;then
+    sed -i '29s/pcl/mac/' FASMA/MOOG/Moogsilent.f
     make -C FASMA/MOOG/ -f Makefile.maclapsilent clean ; make -C FASMA/MOOG/ -f Makefile.maclapsilent
+    sed -i '29s/mac/pcl/' FASMA/MOOG/Moogsilent.f
 elif [ "$answer" == "macdesk" ] ;then
+    sed -i '29s/pcl/mac/' FASMA/MOOG/Moogsilent.f
     make -C FASMA/MOOG/ -f Makefile.macdesksilent clean ; make -C FASMA/MOOG/ -f Makefile.macdesksilent
+    sed -i '29s/mac/pcl/' FASMA/MOOG/Moogsilent.f
 else
     echo "The input is not valid. Do it again."
 fi
