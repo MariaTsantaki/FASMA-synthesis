@@ -10,29 +10,16 @@ Contact here for bugs: tsantaki@arcetri.astro.it
 
 # Installation
 Installing FASMA requires a few simple steps. FASMA requires MOOG which creates the synthetic spectra.
-First, edit line 29 of the [`Moogsilent.f`](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/FASMA/MOOG/Moogsilent.f)
-in the `FASMA/MOOG` folder depending on the user's machine:
 
-     "mac" = Intel-based Apple Mac
-
-     "pcl" = a PC or desktop running some standard linux like Redhat
-
-     "uni" = a machine running Unix, specifically Sun Solaris
-
-Then run the `install_fasma.sh` file with the following commands. The user will be asked system requirements:
+Run the installation script `./install_fasma.sh` file with the following commands. The user will be asked system requirements:
 "rh64" for 64-bit linux system, "rh" for 32-bit linux system, "maclap" for mac laptop, "macdesk" for mac desktop.
-
-```
-chmod +x install_fasma.sh
-.\install_fasma.sh
-```
 
 A list of basic packages will be installed automatically with pip (see [requirements](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/requirements.txt).
 
 More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python 3.
 
 # Usage
-FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `StarMe_synth.cfg` file
+FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `config.yml` file
 and then run in the working directory:
 
 ```
@@ -40,7 +27,7 @@ fasma
 ```
 
 A small tutorial is given [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf)
-FASMA includes a log file `captain.log` every time it is used which catches errors in order to inform the user.
+FASMA includes a log file `fasma.log` every time it is used which catches errors in order to inform the user.
 
 For large lists of stars, it is preferable to use the terminal version of FASMA.
 The configuration options are added from a dictionary.
@@ -48,12 +35,14 @@ The configuration options are added from a dictionary.
 ```
 from FASMA import fasma
 
-options = {'observations':'/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits', 'minimize':True, 'plot':True}
-driver = fasma(**options)
-output = driver.result()
+options = {'observations': '/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits',
+           'minimize': True,
+           'plot':True}
+result = fasma(**options)
+result.save_to_file('my_results.csv', append=True)
 ```
 
-The output is a dictionary with the final parameters.
+The output is a dictionary with the final parameters, and can be saved to a file (appended to previous results if needed).
 
 ## Configuration file
 
@@ -76,12 +65,12 @@ star:
   fix_vmac: False
   fix_vsini: False
   fix_vt: False
-  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
+  intervals_file: /home/user/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
   limb: 0.6
-  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
+  linelist: /home/user/FASMA-synthesis/FASMA/rawLinelist/elements.lst
   minimize: False
   model: apogee_kurucz
-  observations: /home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits
+  observations: /home/user/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits
   plot: False
   plot_res: False
   refine: False
@@ -95,15 +84,15 @@ star:
 The configuration file is space sensitive and it can include only the values which
 are other than the defaults.
 
-FASMA includes the line list for the derivation of stellar parameters (`linelist.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) . The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `StarMe_synth.cfg` file.
+FASMA includes the line list for the derivation of stellar parameters (`linelist.lst`), the list of the spectral regions for the spectral synthesis (`intervals.lst`) as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract). For the chemical abundance determination, FASMA incorporates the line list of 12 elements (`elements.lst`) and the intervals (`intervals_elements.lst`) from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract). The above lists are in the `rawLinelist` folder. The correct paths should be provided in the `config.yml` file.
 
 # Outputs
 
-Assuming FASMA works well, the delivered stellar parameters are saved in the `synthresults.dat` and for the
+The delivered stellar parameters are saved in the `synthresults.dat` and for the
 chemical abundances in the `synthresults_elements.dat`. The model atmosphere produced by the interpolation from
 the model grid is created in the `out.atm` file. The output synthetic spectrum of MOOG is in `summary.out`. The
 `linelist.moog` contains the line list in the format of MOOG and `result.out` is the summary of the parameters used
-for the synthetic spectrum. The MOOG configuration file is `batch.par` and its options are also set from the  `StarMe_synth.cfg` file.
+for the synthetic spectrum. The MOOG configuration file is `batch.par` and its options are also set from the `config.yml` file.
 
 # AUTHORS
 

@@ -13,14 +13,14 @@ import time
 import yaml
 
 class fasma:
-    def __init__(self, cfgfile='StarMe_synth.cfg', overwrite=None, **kwargs):
+    def __init__(self, cfgfile='config.yml', overwrite=None, **kwargs):
         '''The function that glues everything together. A log file is created
-        with the list of processes (captain.log).
+        with the list of processes (fasma.log).
 
         Input
         -----
         cfgfile : str
-          Configuration file (default: StarMe_synth.cfg)
+          Configuration file (default: config.yml)
         overwrite : bool
           Overwrite the synthresults.dat file (default: False)
 
@@ -35,11 +35,11 @@ class fasma:
         self.status = None
         self.kwargs = kwargs
         # Setup of logger
-        if os.path.isfile('captain.log'):  # Cleaning from previous runs
-            os.remove('captain.log')
+        if os.path.isfile('fasma.log'):  # Cleaning from previous runs
+            os.remove('fasma.log')
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler('captain.log')
+        handler = logging.FileHandler('fasma.log')
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
@@ -53,7 +53,7 @@ class fasma:
         self.synthdriver()
         result = self.result()
 
-    def configure(cls, cfgfile='StarMe_synth.cfg', **kwargs):
+    def configure(cls, cfgfile='config.yml', **kwargs):
         '''Create configuration file from kwargs.
         Otherwise set to default.
         '''
@@ -523,7 +523,7 @@ class fasma:
 
     def synthdriver(self):
         '''A function to connect all. This function applies the options set by
-        the user in the StarMe_synth.cfg file.
+        the user in the config.yml file.
         '''
 
         # Creating the output file
@@ -692,6 +692,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         cfgfile = sys.argv[1]
     else:
-        cfgfile = 'StarMe_synth.cfg'
+        cfgfile = 'config.yml'
 
     driver = fasma(cfgfile=cfgfile, overwrite=None)
