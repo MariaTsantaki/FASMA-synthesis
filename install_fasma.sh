@@ -10,6 +10,11 @@ echo ""
 
 echo -n "Press the type of system you have: 'rh64', 'rh', 'maclap', 'macdesk' "
 read answer
+
+# Insert users pwd. Note: Path can not be too long!
+sed -i "22s/data/$(pwd | sed 's/\//#/g')\/FASMA\/MOOG\/data/" FASMA/MOOG/Moogsilent.f
+sed -i '22s/#/\//g' FASMA/MOOG/Moogsilent.f
+
 if [ "$answer" == "rh64" ] ;then
     make -C FASMA/MOOG/ -f Makefile.rh64silent clean ; make -C FASMA/MOOG/ -f Makefile.rh64silent
 elif [ "$answer" == "rh" ] ;then
@@ -21,6 +26,9 @@ elif [ "$answer" == "macdesk" ] ;then
 else
     echo "The input is not valid. Do it again."
 fi
+
+sed -i "22s/.*/     .  'data\/'/" FASMA/MOOG/Moogsilent.f
+
 
 if ! command -v FASMA/MOOG/MOOGSILENT &> /dev/null ; then
     echo "MOOGSILENT is not installed properly!"
