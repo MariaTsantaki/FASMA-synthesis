@@ -12,7 +12,7 @@ from .synthetic import read_linelist, read_linelist_elem, save_synth_spec
 import time
 import yaml
 
-class fasma:
+class FASMA:
     def __init__(self, cfgfile='config.yml', overwrite=None, **kwargs):
         '''The function that glues everything together. A log file is created
         with the list of processes (fasma.log).

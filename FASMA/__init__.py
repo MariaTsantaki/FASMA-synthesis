@@ -1,4 +1,4 @@
-from .synthDriver import synthMethod
+from .synthDriver import FASMA
 
 if __name__ == '__main__':
     import sys
@@ -7,5 +7,5 @@ if __name__ == '__main__':
         cfgfile = sys.argv[1]
     else:
         cfgfile = 'config.yml'
-    driver = synthMethod(cfgfile=cfgfile, overwrite=None)
+    driver = FASMA(cfgfile=cfgfile, overwrite=None)
     driver.synthdriver()
