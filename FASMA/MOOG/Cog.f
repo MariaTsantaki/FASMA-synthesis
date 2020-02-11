@@ -71,7 +71,8 @@ c*****do the curves of growth, making plots if desired
       do lim1=lim1line,lim2line
          lim2 = lim1
          call curve
-         call pltcog
+c         call pltcog
+         print *, "Sorry I cannot plot!"
          if (choice .eq. 'm') then
             close (unit=nfmodel)
             close (unit=nflines)

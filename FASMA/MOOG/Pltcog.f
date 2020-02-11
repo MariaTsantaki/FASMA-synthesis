@@ -18,7 +18,8 @@ c  call up the curve-of-growth plot
       plotroutine = 'term_land_cog '
       lscreen = 12
       whichwin = '1of1'
-      call makeplot (lscreen)
+      print *, "Sorry I cannot plot!"
+c      call makeplot (lscreen)
 
 
 c  make a hardcopy, write to a postscript file, point at a place on the
@@ -32,7 +33,8 @@ c  screen, try a new model atmosphere, or replot?
          return
       elseif (choice .eq. 'h') then
          plotroutine = 'hard_land_cog '
-         call makeplot (lscreen)
+	 print *, "Sorry I cannot plot!"
+c         call makeplot (lscreen)
          go to 10
       elseif (choice .eq. 'v') then
          write (array,*) 'What is the new microturbulence (km/s)? '
@@ -56,11 +58,13 @@ c  screen, try a new model atmosphere, or replot?
          array = 'MARK THE POSITION WITH THE CURSOR'
          istat=ivcleof(21,1)
          istat=ivwrite(13,3,array,34)
-         call drawcurs
+	 print *, "Sorry I cannot plot!"
+c         call drawcurs
          go to 1
       elseif (choice .eq. 'f') then
          plotroutine = 'file_land_cog '
-         call makeplot (lscreen)
+	 print *, "Sorry I cannot plot!"
+c         call makeplot (lscreen)
          go to 10
       endif
       return

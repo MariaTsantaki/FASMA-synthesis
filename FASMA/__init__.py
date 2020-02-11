@@ -1,4 +1,4 @@
-from .synthDriver import synthMethod
+from .synthDriver import FASMA
 
 if __name__ == '__main__':
     import sys
@@ -6,6 +6,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         cfgfile = sys.argv[1]
     else:
-        cfgfile = 'StarMe_synth.cfg'
-    driver = synthMethod(cfgfile=cfgfile, overwrite=None)
+        cfgfile = 'config.yml'
+    driver = FASMA(cfgfile=cfgfile, overwrite=None)
     driver.synthdriver()

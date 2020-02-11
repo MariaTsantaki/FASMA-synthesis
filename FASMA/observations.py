@@ -195,7 +195,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     # if nothing exists, pass
     if (xobs is None) and (xinit is None):
         pass
-    # if there is not observed spectrum, plot only synthetic (case 1, 3)
+    # if there is not observed spectrum, plot only synthetic 
     if xobs is None:
         plt.plot(xinit, yinit, label='synthetic')
     # if all exist

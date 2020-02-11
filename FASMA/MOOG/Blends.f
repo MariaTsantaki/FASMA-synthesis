@@ -261,7 +261,8 @@ c*****here a plot may be made on the terminal (and paper) if there
 c     are enough lines; then the user will be prompted on some
 c     options concerning what is seen on the plot
       if (plotopt .ne. 0) then
-         call pltabun
+         print *, "Sorry I cannot plot!"
+c         call pltabun
          if (choice.eq.'v' .or. choice.eq.'m') go to 100
       endif
 

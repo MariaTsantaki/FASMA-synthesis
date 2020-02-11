@@ -16,7 +16,8 @@ c  call up the flux plot
 10    choice = 'y'
       plotroutine = 'term_land_flux'
       lscreen = 12
-      call makeplot (lscreen)
+      print *, "Sorry I cannot plot!"
+c      call makeplot (lscreen)
 
 
 c  make a hardcopy, write to a postscript file, or replot?
@@ -29,12 +30,14 @@ c  make a hardcopy, write to a postscript file, or replot?
          return
       elseif (choice .eq. 'h') then
          plotroutine = 'hard_land_flux'
-         call makeplot (lscreen)
+	 print *, "Sorry I cannot plot!"
+c         call makeplot (lscreen)
       elseif (choice .eq. 'r') then
          go to 10
       elseif (choice .eq. 'f') then
          plotroutine = 'file_land_flux'
-         call makeplot (lscreen)
+	 print *, "Sorry I cannot plot!"
+c         call makeplot (lscreen)
       endif
 
       return

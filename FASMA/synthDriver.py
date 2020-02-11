@@ -5,23 +5,22 @@
 from __future__ import division, print_function
 import logging
 import os
-import yaml
 from .utils import fun_moog_synth as func
 from .observations import read_obs_intervals, plot, snr
 from .minimization import MinimizeSynth, getMic, getMac
 from .synthetic import read_linelist, read_linelist_elem, save_synth_spec
 import time
+import yaml
 
-
-class synthMethod:
-    def __init__(self, cfgfile='StarMe_synth.cfg', overwrite=None):
+class FASMA:
+    def __init__(self, cfgfile='config.yml', overwrite=None, **kwargs):
         '''The function that glues everything together. A log file is created
-        with the list of processes (captain.log).
+        with the list of processes (fasma.log).
 
         Input
         -----
         cfgfile : str
-          Configuration file (default: StarMe_synth.cfg)
+          Configuration file (default: config.yml)
         overwrite : bool
           Overwrite the synthresults.dat file (default: False)
 
@@ -33,120 +32,35 @@ class synthMethod:
 
         self.cfgfile = cfgfile
         self.overwrite = overwrite
+        self.status = None
+        self.kwargs = kwargs
         # Setup of logger
-        if os.path.isfile('captain.log'):  # Cleaning from previous runs
-            os.remove('captain.log')
+        if os.path.isfile('fasma.log'):  # Cleaning from previous runs
+            os.remove('fasma.log')
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler('captain.log')
+        handler = logging.FileHandler('fasma.log')
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        if kwargs:
+            self.configure(**kwargs)
+        self.synthdriver()
+        result = self.result()
 
-    def _setup(self, line):
-        '''Do the setup with initial parameters and options.
-
-        Input
-        -----
-        line : list
-          Each line from the configuration file after being split at spaces
-          The format is spaced separated: linelist_file (params) (options)
+    def configure(cls, cfgfile='config.yml', **kwargs):
+        '''Create configuration file from kwargs.
+        Otherwise set to default.
         '''
-
-        self.linelist = line[0]
-        if len(line) == 1:
-            self.initial = [5777, 4.44, 0.00, 1.00, 3.21, 1.90]
-            self._options()
-        elif len(line) == 2:
-            self.initial = [5777, 4.44, 0.00, 1.00, 3.21, 1.90]
-            self._options(line[-1])
-        elif len(line) == 7:
-            self.initial = list(map(float, line[1::]))
-            self.initial[0] = int(self.initial[0])
-            self._options()
-        elif len(line) == 8:
-            self.initial = list(map(float, line[1:-1]))
-            self.initial[0] = int(self.initial[0])
-            self._options(line[-1])
-
-    def _genStar(self):
-        '''A generator for the configuration file.
-        '''
-
-        lines = open(self.cfgfile, 'r')
-        for line in lines:
-            if line.startswith(('#', ' ')):
-                self.logger.debug('Skipping header: %s' % line.strip())
-                continue
-            self.logger.info('Line processing: %s' % line.strip())
-            line = line.strip()
-            line = line.split(' ')
-            # Check if configuration parameters are correct
-            if len(line) not in [1, 2, 7, 8]:
-                self.logger.error('Could not process this information: %s' % line)
-                continue
-
-            self._setup(line)
-            yield self.initial, self.options, line
-
-    def _prepare(self):
-        '''Check if linelist exists and create the first synthetic spectrum with
-        initial parameters.
-        '''
-
-        if not os.path.isfile(self.linelist):
-            print('The line list does not exists!\n')
-            self.logger.error('The line list does not exists!\n')
-            return None
-
-        if not os.path.isfile(self.options['inter_file']):
-            message='The intervals list file {0} does not exists!\n'.format(self.options['inter_file'])
-            print(message)
-            self.logger.error(message)
-            return None
-
-        if self.options['element']:
-            self.ranges, atomic = read_linelist_elem(
-                self.linelist,
-                element=self.options['element'],
-                intname=self.options['inter_file'],
-            )
-            self.logger.info('Getting initial model grid')
-            self.xspec, self.yspec = func(
-                self.initial,
-                atmtype=self.options['model'],
-                abund=self.initial[2],
-                elem=self.options['element'],
-                ranges=self.ranges,
-                driver='synth',
-                version=self.options['MOOGv'],
-                **self.options
-            )
-        else:
-            self.ranges, atomic = read_linelist(
-                self.linelist, intname=self.options['inter_file']
-            )
-            self.logger.info('Getting initial model grid')
-            self.xspec, self.yspec = func(
-                self.initial,
-                atmtype=self.options['model'],
-                ranges=self.ranges,
-                driver='synth',
-                version=self.options['MOOGv'],
-                **self.options
-            )
-
-        if __name__ in ('__main__', 'synthDriver'):
-            self.options['GUI'] = False  # Running batch mode
-        else:
-            self.options['GUI'] = True  # Running GUI mode
-
-    def _options(self, options=None):
-        '''Reads the options inside the config file otherwise set to defaults.
-        '''
-
         defaults = {
+            'linelist': 'linelist.lst',
+            'teff': 5777,
+            'logg': 4.44,
+            'feh': 0.0,
+            'vt': 1.0,
+            'vmac': 3.21,
+            'vsini': 1.90,
             'model': 'apogee_kurucz',
             'MOOGv': 2014,
             'save': False,
@@ -165,23 +79,162 @@ class synthMethod:
             'minimize': False,
             'refine': False,
             'observations': False,
-            'inter_file': 'intervals_hr10_15n.lst',
+            'intervals_file': 'intervals.lst',
+            'snr': None,
+            'resolution': None,
+            'limb': 0.6
+        }
+
+        defaults.update(kwargs)
+        dic = {}
+        dic['star'] = defaults
+        with open(cfgfile, 'w') as f:
+            yaml.dump(dic, f)
+
+    def _setup(self, line):
+        '''Do the setup with initial parameters and options.
+
+        Input
+        -----
+        line : list
+          Each line from the configuration file after being split at spaces
+          The format is spaced separated: linelist_file (params) (options)
+        '''
+        self.linelist = line['linelist']
+        self._options(line)
+        self.initial = [self.options['teff'], self.options['logg'], self.options['feh'], self.options['vt'], self.options['vmac'], self.options['vsini']]
+
+    def _genStar(self):
+        '''A generator for the configuration file.
+        '''
+        with open(self.cfgfile, 'r') as stream:
+            try:
+                data = yaml.safe_load(stream)
+                self.logger.info('Reading input parameters.')
+            except yaml.scanner.ScannerError as exc:
+                self.logger.error('Could not process this information, check input parameters.')
+                raise
+
+        if data is None:
+            print('Could not process this information, check input parameters.')
+            self.logger.error('Could not process this information, check input parameters.')
+            return None
+
+        for item, line in data.items():
+            self._setup(line)
+            yield self.initial, self.options
+
+    def _prepare(self):
+        '''Check if linelist exists and create the first synthetic spectrum with
+        initial parameters.
+        '''
+
+        if not os.path.isfile(self.linelist):
+            message = 'The line list file {0} does not exists!\n'.format(self.options['linelist'])
+            print(message)
+            self.logger.error(message)
+            raise StopIteration
+
+        if not os.path.isfile(self.options['intervals_file']):
+            message = 'The intervals list file {0} does not exists!\n'.format(self.options['intervals_file'])
+            print(message)
+            self.logger.error(message)
+            raise StopIteration
+
+        if self.options['element']:
+            el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+            if self.options['element'] not in el:
+                message = 'This element is not in the line list:', self.options['element']
+                print(message)
+                self.logger.error(message)
+                raise StopIteration
+
+        if self.options is None:
+            self.logger.error('The inputs were not inserted correctly.\n')
+            raise StopIteration
+
+        if self.options['minimize'] and self.options['element']:
+            message = 'I am confused with the inputs! First derive parameters and then abundances'
+            self.logger.error('Options minimize and element at the same time!\n')
+            print(message)
+            raise StopIteration
+
+        if self.options['element']:
+            self.ranges, atomic = read_linelist_elem(
+                self.linelist,
+                element=self.options['element'],
+                intname=self.options['intervals_file'],
+            )
+            self.logger.info('Getting initial model grid')
+            self.xspec, self.yspec = func(
+                self.initial,
+                atmtype=self.options['model'],
+                abund=self.initial[2],
+                elem=self.options['element'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
+        else:
+            self.ranges, atomic = read_linelist(
+                self.linelist, intname=self.options['intervals_file']
+            )
+            self.logger.info('Getting initial model grid')
+            self.xspec, self.yspec = func(
+                self.initial,
+                atmtype=self.options['model'],
+                ranges=self.ranges,
+                driver='synth',
+                version=self.options['MOOGv'],
+                **self.options
+            )
+
+        if __name__ in ('__main__', 'synthDriver'):
+            self.options['GUI'] = False  # Running batch mode
+        else:
+            self.options['GUI'] = True
+
+    def _options(self, options=None):
+        '''Reads the options inside the config file otherwise set to defaults.
+        '''
+
+        defaults = {
+            'linelist': 'linelist.lst',
+            'teff': 5777,
+            'logg': 4.44,
+            'feh': 0.0,
+            'vt': 1.0,
+            'vmac': 3.21,
+            'vsini': 1.90,
+            'model': 'apogee_kurucz',
+            'MOOGv': 2014,
+            'save': False,
+            'element': False,
+            'fix_teff': False,
+            'fix_logg': False,
+            'fix_feh': False,
+            'fix_vt': False,
+            'fix_vmac': False,
+            'fix_vsini': False,
+            'plot': False,
+            'plot_res': False,
+            'damping': 1,
+            'step_wave': 0.01,
+            'step_flux': 3.0,
+            'minimize': False,
+            'refine': False,
+            'observations': False,
+            'intervals_file': 'intervals.lst',
             'snr': None,
             'resolution': None,
             'limb': 0.6,
         }
+
         if not options:
             self.options = defaults
         else:
-            for option in options.split(','):
-                if ':' in option:
-                    option = option.split(':')
-                    defaults[option[0]] = option[1]
-                else:
-                    # Clever way to change the boolean
-                    if option in ['teff', 'logg', 'mh', 'vt', 'vmac', 'vsini']:
-                        option = 'fix_%s' % option
-                    defaults[option] = False if defaults[option] else True
+            defaults.update(options)
             defaults['model'] = defaults['model'].lower()
             defaults['step_wave'] = float(defaults['step_wave'])
             defaults['step_flux'] = float(defaults['step_flux'])
@@ -195,8 +248,8 @@ class synthMethod:
                 else:
                     print('The SNR was not measured.')
                     self.logger.error('Error: %s not found.' % defaults['observations'])
-            if defaults['inter_file']:
-                defaults['inter_file'] = str(defaults['inter_file'])
+            if defaults['intervals_file']:
+                defaults['intervals_file'] = str(defaults['intervals_file'])
             if defaults['resolution'] is not None:
                 defaults['resolution'] = int(float(defaults['resolution']))
             self.options = defaults
@@ -355,8 +408,8 @@ class synthMethod:
         self.end_time = int(time.time() - start_time)
         print('Minimization finished in %s sec' % int(self.end_time))
         self.logger.info('Minimization done.')
-        status = 1
-        return status
+        self.status = 1
+        return self.status
 
     def minizationElementRunner(self, p=None):
         '''A function to run the minimization routine for element abundances.
@@ -396,8 +449,8 @@ class synthMethod:
         a[ind2] = self.elemabund[1]
         a[-1] = self.elemabund[2]
         self.abund = a
-        status = 1
-        return status
+        self.status = 1
+        return self.status
 
     def plotRunner(self, x=None, y=None, xs=None, ys=None, xf=None, yf=None, res=False):
         '''A function to plot spectra with or without residuals.
@@ -467,39 +520,23 @@ class synthMethod:
 
     def synthdriver(self):
         '''A function to connect all. This function applies the options set by
-        the user in the StarMe_synth.cfg file.
+        the user in the config.yml file.
         '''
 
         # Creating the output file
         self._output(header=True, stellarparams=True, abundance=True)
 
-        for (self.initial, self.options, line) in self._genStar():
+        # Define options
+        for (self.initial, self.options) in self._genStar():
             self.logger.info(
                 'Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(
                     *self.initial
                 )
             )
 
-            # Check here if element exists
-            if self.options['element']:
-                el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
-                if self.options['element'] not in el:
-                    print(
-                        'This element is not in the line list:', self.options['element']
-                    )
-                    self.logger.error('This element is not in the line list.')
-                    continue
-
-            self._prepare()
-
-            if self.options is None:
-                self.logger.error('The line list does not exists!\n')
-                continue
-            if self.options['minimize'] and self.options['element']:
-                print('I am confused! First derive parameters and then abundances')
-                self.logger.error(
-                    'Minimization of parameters and abundances at the same time!\n'
-                )
+            try:
+                self._prepare()
+            except StopIteration:
                 continue
 
             if self.options['observations']:
@@ -533,8 +570,10 @@ class synthMethod:
                 self.xobs, self.yobs = (None, None)
 
             if self.options['minimize']:
-                status = self.minizationRunner()
-                if status is None:
+                if self.xobs is None:
+                    continue
+                self.status = self.minizationRunner()
+                if self.status is None:
                     self.logger.error(
                         'The minimization routine did not finish succesfully.'
                     )
@@ -555,11 +594,12 @@ class synthMethod:
                 # Save the results in the output file.
                 self._output(stellarparams=True)
                 self.xobs, self.yobs = self.xo, self.yo
-                return self.params
 
             if self.options['element']:
-                status = self.minizationElementRunner()
-                if status is None:
+                if self.xobs is None:
+                    continue
+                self.status = self.minizationElementRunner()
+                if self.status is None:
                     self.logger.error(
                         'The minimization routine did not finish succesfully.'
                     )
@@ -579,7 +619,8 @@ class synthMethod:
                     ]
                 )
                 self._output(abundance=True)
-                return self.abund.tolist()
+            else:
+                self.abund = (None, None)
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
@@ -589,6 +630,58 @@ class synthMethod:
                 self.logger.info('Plotting results.')
                 self.plotRunner(x=self.xobs, y=self.yobs, xs=self.xspec, ys=self.yspec)
 
+    def result(self):
+        '''If any, get the output parameters.
+
+        Input
+        ------
+        status : if None, no minimization happened
+
+        Output
+        ------
+        params : output parameters in dictionary
+        '''
+        if self.status is None:
+            self.logger.info('No parameters are returned.\n')
+            result = None
+        else:
+            if self.options['element']:
+                result = {
+                "teff": self.initial[0],
+                "logg": self.initial[1],
+                "feh": self.initial[2],
+                "vt": self.initial[3],
+                "vmac": self.initial[4],
+                "vsini": self.initial[5],
+                "element": self.options['element'],
+                "abund": self.abund[0],
+                "erabund": self.abund[1],
+                "spectrum": {
+                "wave" : self.xobs,
+                "flux" : self.yobs},
+                }
+
+            if self.options['minimize']:
+                result = {
+                "teff": self.params[0],
+                "erteff": self.params[1],
+                "logg": self.params[2],
+                "erlogg": self.params[3],
+                "feh": self.params[4],
+                "erfeh": self.params[5],
+                "vt": self.params[6],
+                "ervt": self.params[7],
+                "vmac": self.params[8],
+                "ervmac": self.params[9],
+                "vsini": self.params[10],
+                "ervsini": self.params[11],
+                "chi2": self.params[12],
+                "spectrum": {
+                "wave" : self.xobs,
+                "flux" : self.yobs},
+                }
+        return result
+
 
 if __name__ == '__main__':
     import sys
@@ -596,7 +689,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         cfgfile = sys.argv[1]
     else:
-        cfgfile = 'StarMe_synth.cfg'
+        cfgfile = 'config.yml'
 
-    driver = synthMethod(cfgfile=cfgfile, overwrite=None)
-    driver.synthdriver()
+    driver = fasma(cfgfile=cfgfile, overwrite=None)

@@ -25,8 +25,13 @@ out.atm
 batch.par
 *.out
 *.spec
+FASMA/models/
 
 ## Other stuff
 *.log
 .envrc
 *.swp
+
+## MOOG
+*.o
+MOOGSILENT
