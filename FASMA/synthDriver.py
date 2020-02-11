@@ -44,10 +44,6 @@ class FASMA:
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        # Now MOOG can be run in any working folder
-        if not os.path.isdir('/MOOG/data'):
-            path = os.path.dirname(os.path.abspath(__file__))
-            os.system('cp -r ' + path + '/MOOG/data .')
         if kwargs:
             self.configure(**kwargs)
         self.synthdriver()
@@ -160,6 +156,7 @@ class FASMA:
         if self.options['minimize'] and self.options['element']:
             message = 'I am confused with the inputs! First derive parameters and then abundances'
             self.logger.error('Options minimize and element at the same time!\n')
+            print(message)
             raise StopIteration
 
         if self.options['element']:

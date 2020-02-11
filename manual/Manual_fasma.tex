@@ -4,6 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{hyperref}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \lstdefinestyle{mystyle}{
@@ -27,61 +28,90 @@
 
 \section{The configuration file}
 
-To use FASMA in an automatic way, configure the \texttt{StarMe\_synth.cfg}. This file should be in the folder where FASMA runs. There are various configurations depending on what the user wants. 
-A mandatory requirement is the line list. 
+To use FASMA, configure the \texttt{config.cfg} which is in YAML format. Because this format is whitespace sensitive, you can check if the format is correct \href{http://www.yamllint.com/}{here}.
+This file must be in the folder where FASMA runs. There are various configuration combinations depending on what the user wants. A mandatory requirement is the line list and the interval 
+file, where the whole path needs to be inserted. 
 
 \begin{itemize}
- \item To create a synthetic spectrum with solar values, only the line list file is required, e.g.:
+ \item This is the simplest option for FASMA where a synthetic spectrum is created. The rest options are set to default.
+ {\footnotesize
  \begin{lstlisting}[language=Python]
- #linelist
-
- linelist_sun_arcturus_calib.lst
+#
+star:
+  linelist: /home/FASMA_synthesis/FASMA/rawLinelist/linelist.lst
+  intervals_file: /home/FASMA_synthesis/FASMA/rawLinelist/intervals.lst
 \end{lstlisting}
-The complete path should be given for the list file in the configuration file (\texttt{StarMe\_synth.cfg}). The default line list is in the \texttt{rawLinelist} folder already provided within FASMA.
- \item For a given line list select your options. The options are space seperated from the line list file and the options are comma seperated, e.g.:
+}
+
+The default line list is in the \texttt{rawLinelist} folder already provided within FASMA.
+ \item For a given line list select your options, e.g.:
  {\footnotesize
  \begin{lstlisting}[language=Python]
  #linelist options
-
- linelist_sun_arcturus_calib.lst observations:Sun_HARPS.fits,resolution:115000,
- minimize,refine,inter_file:intervals.lst,plot
+star:
+  linelist: /home/FASMA_synthesis/FASMA/rawLinelist/linelist.lst
+  intervals_file: /home/FASMA_synthesis/FASMA/rawLinelist/intervals.lst
+  fix_vmac: true
+  fix_vt: true
+  minimize: true
+  refine: true
+  observations: /home/FASMA_synthesis/FASMA/spectra/Sun_HARPS.fits
+  resolution: 115000
+  plot: true
 \end{lstlisting}}
-This example indicates that for the observed spectrum \texttt{Sun\_HARPS.fits} with resolution 115000, FASMA will minimize it starting from solar values using the refine option (see below). The 
-spectral regions for the synthesis are difined in the intervals.lst file with the option inter\_file. The final spectrum will be plotted. 
-For the not listed options, FASMA uses the default ones. {\bf The complete paths of the line list, spectrum, and intervals file should be given.} FASMA already includes the 
-line list (\texttt{linelist\_sun\_arcturus\_calib.lst}), the interval file (\texttt{intervals.lst}) and a HARPS spectrum of the Sun (\texttt{Sun\_HARPS.fits})
 
- \item For a given line list and a set of initial values, create a synthetic spectrum. The initial parameters are space seperated from the line list file, e.g.:
- \begin{lstlisting}[language=Python]
- #linelist teff logg [M/H] vt vmac vsini
+This example indicates that for the observed spectrum \texttt{Sun\_HARPS.fits} with resolution 115000, FASMA will start the minimization process starting from solar values, keeping the 
+parameters vmac and vt fixed and using the refine option (see below). This option was used to derive parameters in Tsantaki et al. (2018). The spectral regions for the synthesis are 
+difined in the intervals.lst file with the option intervals\_file. The final spectrum will be plotted. For the not listed options, FASMA uses the default ones. {\bf The complete paths 
+of the line list, spectrum, and intervals file should be given.} FASMA already includes the line list (\texttt{linelist.lst}), the interval file (\texttt{intervals.lst}) and a HARPS 
+spectrum of the Sun (\texttt{Sun\_HARPS.fits})
 
- linelist_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9
-\end{lstlisting}
+ \item For a given line list and a set of initial values, create a synthetic spectrum, save the output in the results folder and plot it. 
+ {\footnotesize
 
- \item For a given line list and a set of initial values, select your options. {\bf The initial parameters are space seperated from the line list file and the options are comma seperated}, e.g.:
- {\tiny
- \begin{lstlisting}[language=Python]
- #linelist teff logg [M/H] vt vmac vsini options
+\begin{lstlisting}[language=Python]
+ #linelist options
+star:
+  teff: 5777
+  logg: 4.44
+  vmac: 3.21
+  vsini: 1.9
+  vt: 1.0
+  linelist: /home/FASMA_synthesis/FASMA/rawLinelist/elements.lst
+  intervals_file: /home/FASMA_synthesis/FASMA/rawLinelist/intervals_elements.lst.lst
+  resolution: 115000
+  plot: true
+  save: true
+\end{lstlisting}}
 
- linelist_sun_arcturus_calib.lst 5777 4.44 0.0 1.0 3.21 1.9 observations:Sun_HARPS.fits,resolution:115000,
- minimize,vt,vmac,refine
-\end{lstlisting} }
-The latter configuration is the suggested methodology (Tsantaki et al. 2018). Microturbulence (vt) and macroturbulence (vmac) are set fixed. 
+ \item This option will deliver chemical abundances of any of the provided elements ('Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni'), in this case for Ti. 
+ Note that for this option the line list and intervals are different than for the stellar parameters. The options 'minimize' and 'elements' contradict each other.
+ {\footnotesize
+
+\begin{lstlisting}[language=Python]
+#linelist options
+star:
+  teff: 5777
+  logg: 4.44
+  vmac: 3.21
+  vsini: 1.9
+  vt: 1.0
+  element: 'Ti'
+  linelist: /home/FASMA_synthesis/FASMA/rawLinelist/linelist.lst
+  intervals_file: /home/FASMA_synthesis/FASMA/rawLinelist/intervals.lst
+  observations: /home/FASMA_synthesis/FASMA/spectra/Sun_HARPS.fits
+  resolution: 115000
+  plot: true
+  save: true
+\end{lstlisting}}
 
 \end{itemize}
 
 
 \subsection{Default options}
 
-The default options of FASMA can be changed in the configuration file \texttt{StarMe\_synth.cfg}.
+The default options of FASMA can be changed in the configuration file \texttt{config.cfg}.
 \begin{enumerate}
- \item
-\begin{lstlisting}[language=Python]
-spt:          False
-
-\end{lstlisting}
-% \\*
-In case the initial parameters of the stars are not known, the user can input the spectral type and luminosity class as shown in the SpectralTypes.yml file, e.g. spt:G2V.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -92,11 +122,11 @@ The model atmospheres included in FASMA are: apogee\_kurucz, and marcs.
 
 \item
 \begin{lstlisting}[language=Python]
-MOOGv:        2017
+MOOGv:        2019
 \end{lstlisting}
 
 % \\*
-The version of MOOG currently is 2017 but can easily updated to newer versions. This is relevant only if the output files change for future updates of MOOG.
+The version of MOOG currently is 2019 but can easily updated to newer versions. This is relevant only if the output files change for future updates of MOOG.
 
 \item
 \begin{lstlisting}[language=Python]
@@ -164,7 +194,7 @@ The name of the spectrum is given here. The full path of the spectrum should be 
 
 \item
 \begin{lstlisting}[language=Python]
-inter_file:   intervals.lst
+intervals_file:   intervals.lst
 \end{lstlisting}
 % \\*
 This is the file which contains the intervals of the synthesis. FASMA already has specific intervals which correspond to the given line list. This file should be inside the \texttt{rawLinelist} folder. 
@@ -209,35 +239,31 @@ abundance the minimize option should be False.
 
 There are different ways to run FASMA. FASMA is installed as a python module. 
 
-To run the batch version, the \texttt{StarMe\_synth.cfg} file has to configured and then simply run:
+To run the batch version, the \texttt{config.cfg} file has to configured and then simply run:
 \begin{lstlisting}[language=Python]
 fasma
 \end{lstlisting}
 
-If your configuration file is called something else (recommended for different projects), then run
+If your configuration file is called something else (recommended for different projects), then run:
 \begin{lstlisting}[language=Python]
 fasma myConf.cfg
 \end{lstlisting}
 
-The module can be imported in scripts as:
+The module can be imported in scripts to be run automatic for large lists of stars. To run the function to derive the stellar parameters:
+{\footnotesize
 \begin{lstlisting}[language=Python]
 python
 >>> import FASMA
-\end{lstlisting}
-
-To run the function to derive the stellar parameters assuming the options from the \texttt{StarMe\_synth.cfg} file:
-\begin{lstlisting}[language=Python]
-python
->>> import FASMA
->>> driver = FASMA.synthMethod()
->>> driver.synthdriver()
-\end{lstlisting}
+>>> opt = {'minimize':True, 'observations':'Sun_HARPS.fits'} # Define the options here
+>>> driver = FASMA(**opt)
+>>> result = driver.result()
+\end{lstlisting}}
 
 \section{Input/Output files}
 
 This is a summary of the input files in the \texttt{rawLinelist} folder already provided by FASMA:
 \begin{itemize}
- \item \texttt{giraffe\_sun\_arcturus\_calib.lst} -- line list for the derivation of stellar parameters
+ \item \texttt{linelist.lst} -- line list for the derivation of stellar parameters
  \item \texttt{intervals.lst} -- the intervals where synthesis takes place. The line data are included in the above file. 
  \item \texttt{elements.lst} -- the line list the calculation of the chemical abundances
  \item \texttt{intervals\_elements.lst} -- the lines of the specific elements where the intervals are calculated 
@@ -251,7 +277,7 @@ This is a summary of the output files:
  \item \texttt{synthresults\_elements.dat} -- the final chemical abundances of the minimization process 
  \item \texttt{out.atm} -- the interpolated stellar atmospheres 
  \item \texttt{linelist.lst} -- the line list in the format readable by MOOG
- \item \texttt{batch.par} -- the configuration file of MOOG created by FASMA (see options in the \texttt{StarMe\_synth.cfg} file)
+ \item \texttt{batch.par} -- the configuration file of MOOG created by FASMA (see options in the \texttt{config.cfg} file)
  \item \texttt{result.out} -- main parameters of the synthetic spectrum generated by MOOG
  \item \texttt{summary.ou}t -- the synthetic spectrum generated by MOOG
 \end{itemize}
