@@ -9,5 +9,5 @@ if __name__ == '__main__':
         cfgfile = sys.argv[1]
     else:
         cfgfile = 'config.yml'
-    driver = FASMA.synthMethod(cfgfile=cfgfile, overwrite=None)
+    driver = FASMA.FASMA(cfgfile=cfgfile, overwrite=None)
     driver.synthdriver()
