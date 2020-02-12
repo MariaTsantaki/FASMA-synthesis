@@ -14,9 +14,10 @@ Installing FASMA requires a few simple steps. FASMA requires MOOG which creates 
 Run the installation script `./install_fasma.sh` file with the following commands. The user will be asked system requirements:
 "rh64" for 64-bit linux system, "rh" for 32-bit linux system, "maclap" for mac laptop, "macdesk" for mac desktop.
 
-A list of basic packages will be installed automatically with pip (see [requirements](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/requirements.txt).
+A list of basic packages will be installed automatically with pip (see [requirements](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/requirements.txt)).
 
-More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python 3.
+More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python3 and
+the version of MOOG is 2019.
 
 # Usage
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `config.yml` file
@@ -39,7 +40,6 @@ options = {'observations': '/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits',
            'minimize': True,
            'plot':True}
 result = fasma(**options)
-result.save_to_file('my_results.csv', append=True)
 ```
 
 The output is a dictionary with the final parameters, and can be saved to a file (appended to previous results if needed).
@@ -74,9 +74,9 @@ star:
   plot: False
   plot_res: False
   refine: False
-  resolution: None
+  resolution: null
   save: False
-  snr: None
+  snr: null
   step_flux: 3.0
   step_wave: 0.01
 ```
