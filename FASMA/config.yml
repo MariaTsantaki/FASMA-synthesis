@@ -1,133 +1,32 @@
-# lol
+# 
 star1: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
+    linelist: /home/FASMA-synthesis/FASMA/rawLinelist/linelist.lst 
+    teff: 5777
+    logg: 4.44
+    feh: 0.0
+    vt: 1.0
+    vmac: 3.21
+    vsini: 1.90
+    model: apogee_kurucz
+    MOOGv: 2014
+    save: False
+    element: False
+    fix_teff: False
+    fix_logg: False
+    fix_feh: False
+    fix_vt: False
+    fix_vmac: False
+    fix_vsini: False
     plot: True
-star2: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star3: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star4: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
+    plot_res: False
+    damping: 1
+    step_wave: 0.01
+    step_flux: 3.0
+    minimize: True
+    refine: False
+    observations: /home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
+    intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
+    snr: null
+    resolution: null
+    limb: 0.6
 
-star5: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-
-star6: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star7: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star8: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star9: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
-star10: 
-    teff: 5777 
-    logg: 4.44 
-    feh: 0.0 
-    vt: 1.0 
-    vmac: 3.21 
-    vsini: 1.9 
-    observations: /bla/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits 
-    resolution: 110000 
-    inter_file: /bla/FASMA-synthesis/FASMA/rawLinelist/intervals.lst 
-    minimize: True 
-    refine: True 
-    plot: True
