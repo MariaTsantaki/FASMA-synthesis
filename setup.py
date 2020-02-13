@@ -13,8 +13,7 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     install_requires=['numpy>=1.7.0', 'scipy>=0.16', 'matplotlib',
-    'seaborn', 'PyYAML', 'statsmodels', 'patsy', 'argparse',
-    'pandas>=0.17.0', 'astropy','PyAstronomy', 'periodictable==1.5.2',
-    'setuptools', 'nose', 'coverage'],
+    'PyYAML', 'statsmodels', 'patsy', 'pandas>=0.17.0', 'astropy',
+    'PyAstronomy', 'periodictable==1.5.2', 'setuptools', 'nose', 'coverage'],
     zip_safe=False,
 )

@@ -19,7 +19,7 @@ A list of basic packages will be installed automatically with pip (see [requirem
 More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python3 and
 the version of MOOG is 2019.
 
-Note, there is a limit for long paths. 
+Note, there is a limit for long paths.
 
 # Usage
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `config.yml` file
@@ -36,12 +36,12 @@ For large lists of stars, it is preferable to use the terminal version of FASMA.
 The configuration options are added from a dictionary.
 
 ```
-from FASMA import fasma
+from FASMA import FASMA
 
 options = {'observations': '/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits',
            'minimize': True,
            'plot':True}
-result = fasma(**options)
+result = FASMA(**options)
 ```
 
 The output is a dictionary with the final parameters, and can be saved to a file (appended to previous results if needed).

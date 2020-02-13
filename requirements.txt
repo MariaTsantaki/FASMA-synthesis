@@ -1,11 +1,9 @@
 numpy>=1.7.0
 scipy>=0.16
 matplotlib
-seaborn
 PyYAML
 statsmodels
 patsy
-argparse
 pandas>=0.17.0
 PyAstronomy
 astropy

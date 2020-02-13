@@ -28,7 +28,7 @@
 
 \section{The configuration file}
 
-To use FASMA, configure the \texttt{config.cfg} which is in YAML format. Because this format is whitespace sensitive, you can check if the format is correct \href{http://www.yamllint.com/}{here}.
+To use FASMA, configure the \texttt{config.cfg} which is in YAML format. Because this format is whitespace sensitive, you can check if the format is correct here: http://www.yamllint.com/ .
 This file must be in the folder where FASMA runs. There are various configuration combinations depending on what the user wants. A mandatory requirement is the line list and the interval 
 file, where the whole path needs to be inserted. 
 
@@ -253,7 +253,7 @@ The module can be imported in scripts to be run automatic for large lists of sta
 {\footnotesize
 \begin{lstlisting}[language=Python]
 python
->>> import FASMA
+>>> from FASMA import FASMA
 >>> opt = {'minimize':True, 'observations':'Sun_HARPS.fits'} # Define the options here
 >>> driver = FASMA(**opt)
 >>> result = driver.result()
