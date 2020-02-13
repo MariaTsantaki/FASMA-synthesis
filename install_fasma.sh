@@ -3,11 +3,6 @@
 tar -zxvf FASMA/models/apogee_kurucz.tar.gz -C FASMA/models/
 tar -zxvf FASMA/models/marcs.tar.gz -C FASMA/models/
 echo "Atmosphere models installed in dir: models"
-echo "Installing dependencies..."
-pip install .
-echo "Dependencies installed"
-echo ""
-
 echo -n "Press the type of system you have: 'rh64', 'rh', 'maclap', 'macdesk' "
 read answer
 
@@ -39,4 +34,8 @@ if ! command -v FASMA/MOOG/MOOGSILENT &> /dev/null ; then
     exit 1
 fi
     echo "MOOGSILENT is installed."
-    echo "FASMA is successfully installed!"
+
+echo "Installing dependencies..."
+pip install .
+echo "Dependencies installed."
+echo "FASMA is successfully installed!"
