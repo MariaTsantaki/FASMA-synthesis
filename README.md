@@ -19,6 +19,8 @@ A list of basic packages will be installed automatically with pip (see [requirem
 More instructions about MOOG are [here](http://www.as.utexas.edu/~chris/moog.html). FASMA runs with python3 and
 the version of MOOG is 2019.
 
+Note, there is a limit for long paths. 
+
 # Usage
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `config.yml` file
 and then run in the working directory:
