@@ -23,10 +23,16 @@ A list of basic python packages will be installed automatically with pip (see [r
 
 More information about MOOG is [here](http://www.as.utexas.edu/~chris/moog.html).
 
-Note, there is a limit for long paths. If you do not have sudo access, replace the pip command with:
+If you do not have sudo access, replace the pip command with:
 
 ```
 pip install --user .
+```
+
+To uninstall FASMA:
+
+```
+pip uninstall FASMA
 ```
 
 # Usage
@@ -52,6 +58,8 @@ result = FASMA(**options)
 ```
 
 The output is a dictionary with the final parameters, and can be saved to a file (appended to previous results if needed).
+
+Note that the input spectra must have a specific format and should be corrected for radial velocity shifts. This is an example on how to correct for such [RV shifts](https://github.com/MariaTsantaki/RV_correction).
 
 ## Configuration file
 
@@ -103,7 +111,7 @@ For a set of parameters (Teff, logg, [M/H]), a model atmosphere is obtained by i
 
 The raw synthetic spectrum created by MOOG is saved in `summary.out`.
 
-The `linelist.moog` contains the line list in the format of MOOG and `result.out` is a summary of all the parameters used for the synthesis of the spectrum. 
+The `linelist.moog` contains the line list in the format of MOOG and `result.out` is a summary of all the parameters used for the synthesis of the spectrum.
 
 The MOOG configuration file is `batch.par` and its options are also set from the `config.yml` file.
 
