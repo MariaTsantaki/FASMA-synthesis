@@ -6,9 +6,20 @@ echo "Atmosphere models installed in dir: models"
 echo -n "Press the type of system you have: 'rh64', 'rh', 'maclap', 'macdesk' "
 read answer
 
-# Insert users pwd. Note: Path can not be too long!
-sed -i "22s/data/$(pwd | sed 's/\//#/g')\/FASMA\/MOOG\/data/" FASMA/MOOG/Moogsilent.f
-sed -i '22s/#/\//g' FASMA/MOOG/Moogsilent.f
+MOOGDATAPATH=$PWD/FASMA/MOOG/data/
+echo $MOOGDATAPATH
+
+# backup original file
+cp -f FASMA/MOOG/Moogsilent.f FASMA/MOOG/_Moogsilent.f
+
+head -n 21 FASMA/MOOG/_Moogsilent.f > FASMA/MOOG/Moogsilent.f
+
+printf $MOOGDATAPATH | awk 'BEGIN{RS="/";c=""} {if($RN>1) {printf ("     . %s\"/%s\"\n",c,$1);c="//"}}' >> FASMA/MOOG/Moogsilent.f
+
+tail -n +23 FASMA/MOOG/_Moogsilent.f>> FASMA/MOOG/Moogsilent.f
+
+#for debiugging
+cp -f FASMA/MOOG/Moogsilent.f FASMA/MOOG/__Moogsilent.f
 
 if [ "$answer" == "rh64" ] ;then
     make -C FASMA/MOOG/ -f Makefile.rh64silent clean ; make -C FASMA/MOOG/ -f Makefile.rh64silent
@@ -26,8 +37,8 @@ else
     echo "The input is not valid. Do it again."
 fi
 
-sed -i "22s/.*/     .  'data\/'/" FASMA/MOOG/Moogsilent.f
-
+#restore original file
+cp -f FASMA/MOOG/_Moogsilent.f FASMA/MOOG/Moogsilent.f
 
 if ! command -v FASMA/MOOG/MOOGSILENT &> /dev/null ; then
     echo "MOOGSILENT is not installed properly!"

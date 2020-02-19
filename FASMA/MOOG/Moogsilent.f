@@ -104,7 +104,7 @@ c*****or else you are out of luck!
 
 
 c*****format statements
-1001  format (60(' '))
+1001  format (1024(' '))
 1017  format ('x11 -bg black -title MOOGplot -geom 700x800+650+000')
 1018  format ('x11 -bg black -title MOOGplot -geom 1200x400+20+450')
 

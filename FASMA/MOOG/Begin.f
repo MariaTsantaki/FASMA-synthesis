@@ -68,7 +68,7 @@ c*****clear the text screen
 
 c*****open data files carried with the source code: Barklem damping
       nfbarklem = 35
-      num = 60
+      num = len(trim(moogpath))
       call getcount (num,moogpath)
       if (moogpath(num:num) .ne. '/') then
          num = num + 1
@@ -81,7 +81,7 @@ c*****open data files carried with the source code: Barklem damping
 
 c*****open data files carried with the source code: Barklem UV damping
       nfbarklemUV = 36
-      num = 60
+      num = len(trim(moogpath))
       call getcount (num,moogpath)
       if (moogpath(num:num) .ne. '/') then
          num = num + 1
