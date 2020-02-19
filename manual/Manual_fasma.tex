@@ -28,11 +28,13 @@
 
 \section{The configuration file}
 
-To use FASMA, configure the \texttt{config.cfg} which is in YAML format. Because this format is whitespace sensitive, you can check if the format is correct here: http://www.yamllint.com/ .
-This file must be in the folder where FASMA runs. There are various configuration combinations depending on what the user wants. A mandatory requirement is the line list and the interval 
-file, where the whole path needs to be inserted. 
+To use FASMA, configure the \texttt{config.cfg} which is in YAML format. The configuration file contains all the input parameters necessary for FASMA set by the user. 
+Because this format is whitespace sensitive, you can check if the format is correct here: http://www.yamllint.com/ . This file must be in the folder where FASMA runs. 
+There are various configuration combinations depending on what the user wants. A mandatory requirement is the line list and the interval file, where the whole path needs to be inserted. 
+{\bf The option Number 2 is recommended for the parameter determination.}
 
-\begin{itemize}
+\begin{enumerate}
+
  \item This is the simplest option for FASMA where a synthetic spectrum is created. The rest options are set to default.
  {\footnotesize
  \begin{lstlisting}[language=Python]
@@ -105,7 +107,7 @@ star:
   save: true
 \end{lstlisting}}
 
-\end{itemize}
+\end{enumerate}
 
 
 \subsection{Default options}
