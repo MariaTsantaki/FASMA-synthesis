@@ -11,6 +11,132 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+def eso_fits(hdulist):
+    '''A little demo utility to illustrate the ESO SDP 1D spectrum file format.
+    2017-Aug-08, archive(at)eso.org
+    The ESO 1D spectral format is compliant with the IVOA Spectrum data model.
+    Both the SPECTRUM 1.0 and SPECTRUM 2.0 versions are supported.
+    References:
+    ESO SDP standard: http://www.eso.org/sci/observing/phase3/p3sdpstd.pdf
+    ESO SDP FAQ page: http://www.eso.org/sci/observing/phase3/faq.html
+    This script:      http://archive.eso.org/cms/eso-data/help/1dspectra.html
+
+    Output
+    -----
+    wave : raw observed wavelength
+    flux : raw observed flux
+    '''
+
+    phu = hdulist[0].header           # Primary Header Unit: metadata
+    scihead = hdulist[1].header       # Header of the first FITS extension: metadata
+    scidata = hdulist[1].data         # Data in the first FITS extension: the spectrum
+
+    # Checking some compliance
+    # 1. keyword PRODCATG must be present in primary header unit
+    prodcatg = phu['PRODCATG']
+    # 2. value of keyword PRODCATG must match SCIENCE.SPECTRUM*
+    if not prodcatg.startswith('SCIENCE.SPECTRUM'):
+        errorMessage = "Expected header keyword: PRODCATG = 'SCIENCE.SPECTRUM'\nFound: PRODCATG = '%s'\nFile not compliant with the 1d spectrum specifications\nof the ESO Science Data Product standard." % prodcatg
+        print('filename = %s   NOT COMPLIANT' % filename)
+        print(errorMessage)
+        return None
+
+    # 3. Various keywords must be defined, among them the ones here below:
+    try:
+        origfile = phu['ORIGFILE']    # Original filename as assigned by the data provider
+        instrume = phu['INSTRUME']  # Name of the instrument
+        wavelmin = phu['WAVELMIN']  # Minimum wavelength in nm
+        wavelmax = phu['WAVELMAX']  # Maximum wavelength in nm
+        respower = phu['SPEC_RES']  # Spectral resolving power (lambda / delta_lambda)
+        snr      = phu['SNR']       # Signal to Noise Ratio
+        specaxisucd  = scihead['TUCD1'] # Gives the type of spectral axis (see SPECTRAL AXIS below)
+    except:
+        errorMessage='File not compliant with the 1D spectrum specifications of the ESO Science Data Product standard; some of the mandatory keywords were not found in primary header unit'
+        print('filename = %s   NOT COMPLIANT' % filename)
+        print('ERROR = %s' % (errorMessage))
+        return None
+
+    # SPECTRAL AXIS: could be either wavelength, frequency, or energy;
+    # if wavelength, the distinction between wavelength in air or in vacuum is provided by the presence of the obs.atmos token in the TUCD1.
+    # the variable spectype will carry to whole info.
+    spectype = None
+    if specaxisucd.startswith('em.wl'):
+        if specaxisucd == 'em.wl':
+            spectype = 'wavelength in vacuum (TUCD1=%s)' % specaxisucd
+        elif specaxisucd == 'em.wl;obs.atmos':
+            spectype = 'wavelength in air (TUCD1=%s)' % specaxisucd
+        else:
+            spectype = 'wavelength (TUCD1=%s)' % specaxisucd
+    elif specaxisucd.startswith('em.freq'):
+        spectype = 'frequency (TUCD1=%s)' % specaxisucd
+    elif specaxisucd.startswith('em.ener'):
+        spectype = 'energy (TUCD1=%s)' % specaxisucd
+
+    # TFIELDS is a required FITS binary table keyword
+    try:
+        tfields=int(scihead['TFIELDS'])
+    except:
+        print('File %s is not a valid ESO SDP 1d spectrum (TFIELDS keyword missing)' % (filename))
+        return None
+
+    # METADATA PART
+    # Reading name, unit, utype for each column (array) in the FITS binary table (extension 1).
+    name = []
+    unit = []
+    utype = [] # lowercase utype string: for case-insensitive matches
+    Utype = [] # original utype, with case preserved: for display
+    for i in range(1, tfields+1):
+        thisname = scihead['TTYPE'+str(i)]
+        try:
+            thisunit = scihead['TUNIT'+str(i)]
+        except:
+            thisunit=""
+        try:
+            thisutype=scihead['TUTYP'+str(i)]
+        except:
+            thisutype='no_utype_assigned:field_not_part_of_the_standard'
+        name.append(thisname)
+        unit.append(thisunit)
+        utype.append(thisutype.lower())
+        Utype.append(thisutype)
+
+    # Recognising the main scientific arrays (spectral, flux and flux error) and the "other" ones.
+    # A 1D spectrum can contain several flux (and fluxerror) arrays, but one is defined to be the best.
+    # The best one can be recognised by the (lowercased) utype which is either "spectrum.data.fluxaxis.value" or "spec:data.fluxaxis.value".
+    other_arrays = []  # It will contain the indeces of the fields not considered main arrays. FITS indeces starts from 1!
+    # Getting the indexes of the FITS columns
+    # for the main spectral array (ispec), flux array (iflux), and flux_error (ierr) array:
+    for i in range(1, tfields+1):
+        # Remember that the index of Python arrays starts from 0, while the FITS index from 1.
+        tutyp=utype[i-1]
+        # The ESO Science Data Product standard format
+        # prescribes the spectral axis to be stored in column 1;
+        # there would be no need to look for it, but we need the other_arrays anyway.
+        # The TUTYPn keywords follow either the Spectrum Data Model standard v1.1 for spectra with a single flux array,
+        # or the Spectral Data Model standard v2.0 for spectra with any number of flux arrays
+        # These data model standards are available from the International Virtual Observatory Alliance
+        # web site at: http://ivoa.net/documents/
+        if tutyp == 'spectrum.data.spectralaxis.value':
+            ispec = i
+        elif tutyp == 'spec:data.spectralaxis.value':
+            ispec = i
+        elif tutyp == 'spectrum.data.fluxaxis.value':
+            iflux = i
+        elif tutyp == 'spec:data.fluxaxis.value':
+            iflux = i
+        elif tutyp == 'spectrum.data.fluxaxis.accuracy.staterror':
+            ierr  = i
+        elif tutyp == 'spec:data.fluxaxis.accuracy.staterror':
+            ierr  = i
+        else:
+            # Storing the indeces of other, not considered main, arrays:
+            other_arrays.append( i )
+
+    # Main arrays:
+    wave = np.array(scidata[0][ispec - 1])
+    flux = np.array(scidata[0][iflux - 1])
+    return wave, flux
+
 
 def mad(data, axis=None):
     '''Function to calculate the median average deviation.
@@ -116,15 +242,28 @@ def read_observations(fname, start_synth, end_synth):
         elif fname[-5:] == '.fits':
             hdulist = fits.open(fname)
             header = hdulist[0].header
-            # Only 1-D spectrum accepted.
-            flux = hdulist[0].data  # flux data in the primary
-            flux = np.array(flux, dtype=np.float64)
-            start_wave = header['CRVAL1']  # initial wavelenght
-            # step = header['CD1_1'] # step in wavelenght
-            step = header['CDELT1']  # increment per pixel
-            n = len(flux)
-            w = start_wave + step * n
-            wave = np.linspace(start_wave, w, n, endpoint=False)
+            if 'PRODCATG' in header:
+                # ESO Product
+                if eso_fits(hdulist) is None:
+                    wave_obs, flux_obs, delta_l = (None, None, None)
+                    return wave_obs, flux_obs, delta_l
+                else:
+                    wave, flux = eso_fits(hdulist)
+            elif 'CRVAL1' in header:
+                # Only 1-D spectrum accepted.
+                flux = hdulist[0].data  # flux data in the primary
+                flux = np.array(flux, dtype=np.float64)
+                start_wave = header['CRVAL1']  # initial wavelenght
+                # step = header['CD1_1'] # step in wavelenght
+                step = header['CDELT1']  # increment per pixel
+                n = len(flux)
+                w = start_wave + step * n
+                wave = np.linspace(start_wave, w, n, endpoint=False)
+            else:
+                print('Spectrum is not in acceptable format.')
+                wave_obs, flux_obs, delta_l = (None, None, None)
+                return wave_obs, flux_obs, delta_l
+
         # These types are produced by FASMA (fits format).
         elif fname[-5:] == '.spec':
             hdulist = fits.open(fname)
@@ -195,7 +334,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     # if nothing exists, pass
     if (xobs is None) and (xinit is None):
         pass
-    # if there is not observed spectrum, plot only synthetic 
+    # if there is not observed spectrum, plot only synthetic
     if xobs is None:
         plt.plot(xinit, yinit, label='synthetic')
     # if all exist
