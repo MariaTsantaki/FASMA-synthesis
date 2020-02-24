@@ -408,11 +408,19 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     N = []
     ranges = []
     atomic = pd.DataFrame([])
+    merged = [[intervals.wave.iloc[0] - 2.0, intervals.wave.iloc[0] + 2.0]]
     for i, ri in enumerate(intervals.wave):
         r1 = float(ri) - 2.0
         r2 = float(ri) + 2.0
+        previous = merged[-1]
+        if r1 <= previous[1]:
+            previous[1] = max(previous[1], r2)
+        else:
+            merged.append([r1, r2])
         ranges.append([r1, r2])
-        a = lines[(lines.wl > r1) & (lines.wl < r2)]
+
+    for ri in merged[:]:
+        a = lines[(lines.wl > ri[0]) & (lines.wl < ri[1])]
         atomic = atomic.append(a)
         N.append(len(a))
 
@@ -420,10 +428,9 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     atomic = atomic.drop_duplicates()
     atomic.sort_values(by='wl', inplace=True)
     N = sum(N)
-    print('Linelist contains %s lines in %s intervals' % (N, len(ranges)))
-
     # Create line list for MOOG
+    print('Linelist contains %s lines in %s interval(s).' % (N, len(merged)))
     fmt = ['%9.3f', '%10.1f', '%9.2f', '%9.3f', '%9.3f', '%7.4s']
     header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
     np.savetxt('linelist.moog', atomic.values, fmt=fmt, header=header)
-    return ranges, atomic
+    return merged, atomic
