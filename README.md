@@ -63,7 +63,7 @@ FASMA produces a log file, `fasma.log`, which catches errors in order to inform 
 
 ## FASMA with scripts
 
-For large lists of stars, it is preferable to use FASMA inside scripts. The configuration options are inserted from a dictionary. The main function to use is `FASMA()`.
+For large lists of stars, it is preferable to use FASMA inside scripts. The configuration options are inserted from a dictionary. The main functions to use is `FASMA()` and the `result()` to obtain the output.
 
 ```python
 FASMA(cfgfile='config.yml', overwrite=None, **kwargs)
@@ -75,31 +75,29 @@ cfgfile : str
 overwrite : bool
   Overwrite the synthresults.dat file (default: False)
 **kwargs : dict
-  Options to pass to overwrite the default options
+  Options to overwrite the default configuration options
 
 Output
 
 synthresults.dat : file
   Easy readable table with results (tab separated)
-params : dict
-  output parameters in dictionary
 ```
-The above function can be used as in this example:
 
 ```python
-from FASMA import FASMA
+result()
 
-options = {'observations': '/home/user/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits',
-           'minimize': True,
-           'plot':True}
-result = FASMA(**options)
-feh = result['feh']
+Output
+
+result : dict
+  output parameters in dictionary
 ```
 
-The input options are presented in the next section and have the save terminology as in the configuration file. The result is a dictionary with the final parameters which are saved to a file (`synthresults.dat` or `synthresults_elements.dat`). The expected output dictionary of `FASMA()` includes the following:
+The expected output dictionary of `result()` includes the following:
 
 ```python
 if 'element' is True:
+  'linelist': str
+  'observations': str
   'teff': float
   'logg': float
   'feh': float
@@ -109,6 +107,11 @@ if 'element' is True:
   'element': str
   'abund': float
   'erabund': float
+  'chi2': str
+  'time': int
+  'model': str
+  'resolution': int
+  'snr': int
   'spectrum': {
   'wave' : float,
   'flux' : float}
@@ -116,23 +119,45 @@ if 'element' is True:
 
 ```python
 if 'minimize' is True:
-    'teff': float
-    'erteff': float
-    'logg': float
-    'erlogg': float
-    'feh': float
-    'erfeh': float
-    'vt': float
-    'ervt': float
-    'vmac': float
-    'ervmac': float
-    'vsini': float
-    'ervsini': float
-    'chi2': float
-    'spectrum': {
-    'wave' : float,
-    'flux' : float}
+  'linelist': str
+  'observations': str
+  'teff': float
+  'erteff': float
+  'logg': float
+  'erlogg': float
+  'feh': float
+  'erfeh': float
+  'vt': float
+  'ervt': float
+  'vmac': float
+  'ervmac': float
+  'vsini': float
+  'ervsini': float
+  'chi2': float
+  'time': int
+  'model': str
+  'resolution': int
+  'snr': int
+  'spectrum': {
+  'wave' : float,
+  'flux' : float}
 ```
+
+The above functions can be used as in this example:
+
+```python
+from FASMA import FASMA
+
+options = {'observations': '/home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits',
+           'minimize': True,
+           'plot':True}
+driver = FASMA(**options)
+result = driver.result()
+feh = result['feh']
+```
+
+The input options are presented in the next section and have the save terminology as in the configuration file. The result is a dictionary with the final parameters which are saved to a file (`synthresults.dat` or `synthresults_elements.dat`).
+
 
 ## Configuration file
 
@@ -212,8 +237,8 @@ star:
   vmac: 3.21
   vsini: 1.9
   vt: 1.0
-  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
-  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
+  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/linelist.lst
+  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals.lst
   resolution: 115000
   plot: true
   save: true
@@ -229,12 +254,28 @@ star:
   vsini: 1.9
   vt: 1.0
   element: 'Ti'
-  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/linelist.lst
-  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals.lst
+  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
+  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
   observations: /home/FASMA-synthesis/FASMA/spectra/Sun_HARPS.fits
   resolution: 115000
   plot: true
   save: true
+```
+5) For multiple stars:
+
+```yaml
+HD105:
+ element: 'Ti'
+ linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
+ intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
+ observations: /home/FASMA-synthesis/FASMA/spectra/HD105_HARPS.fits
+ resolution: 115000
+ HD1156:
+  element: 'Ti'
+  linelist: /home/FASMA-synthesis/FASMA/rawLinelist/elements.lst
+  intervals_file: /home/FASMA-synthesis/FASMA/rawLinelist/intervals_elements.lst
+  observations: /home/FASMA-synthesis/FASMA/spectra/HD1156_HARPS.fits
+  resolution: 115000
 ```
 
 # Default Options

@@ -48,7 +48,6 @@ class FASMA:
         if kwargs:
             self.configure(**kwargs)
         self.synthdriver()
-        result = self.result()
 
     def configure(cls, cfgfile='config.yml', **kwargs):
         '''Create configuration file from kwargs.
@@ -275,17 +274,11 @@ class FASMA:
                     'linelist',
                     'observations',
                     'Teff',
-                    'erTeff',
                     'logg',
-                    'erlogg',
                     '[M/H]',
-                    'er[M/H]',
                     'vmic',
-                    'ervmic',
                     'vmac',
-                    'ervmac',
                     'vsini',
-                    'ervsini',
                     'Li',
                     'erLi',
                     'Na',
@@ -650,38 +643,52 @@ class FASMA:
         else:
             if self.options['element']:
                 result = {
-                "teff": self.initial[0],
-                "logg": self.initial[1],
-                "feh": self.initial[2],
-                "vt": self.initial[3],
-                "vmac": self.initial[4],
-                "vsini": self.initial[5],
-                "element": self.options['element'],
-                "abund": self.abund[0],
-                "erabund": self.abund[1],
-                "spectrum": {
-                "wave" : self.xobs,
-                "flux" : self.yobs},
+                'linelist': self.linelist,
+                'observations': self.options['observations'],
+                'teff': self.initial[0],
+                'logg': self.initial[1],
+                'feh': self.initial[2],
+                'vt': self.initial[3],
+                'vmac': self.initial[4],
+                'vsini': self.initial[5],
+                'element': self.options['element'],
+                'abund': self.abund[0],
+                'erabund': self.abund[1],
+                'chi2': self.abund[-1],
+                'time': self.end_time,
+                'model': self.options['model'],
+                'resolution': self.options['resolution'],
+                'snr': self.options['snr'],
+                'spectrum': {
+                'wave' : self.xobs,
+                'flux' : self.yobs},
                 }
 
             if self.options['minimize']:
+
                 result = {
-                "teff": self.params[0],
-                "erteff": self.params[1],
-                "logg": self.params[2],
-                "erlogg": self.params[3],
-                "feh": self.params[4],
-                "erfeh": self.params[5],
-                "vt": self.params[6],
-                "ervt": self.params[7],
-                "vmac": self.params[8],
-                "ervmac": self.params[9],
-                "vsini": self.params[10],
-                "ervsini": self.params[11],
-                "chi2": self.params[12],
-                "spectrum": {
-                "wave" : self.xobs,
-                "flux" : self.yobs},
+                'linelist': self.linelist,
+                'observations': self.options['observations'],
+                'teff': self.params[0],
+                'erteff': self.params[1],
+                'logg': self.params[2],
+                'erlogg': self.params[3],
+                'feh': self.params[4],
+                'erfeh': self.params[5],
+                'vt': self.params[6],
+                'ervt': self.params[7],
+                'vmac': self.params[8],
+                'ervmac': self.params[9],
+                'vsini': self.params[10],
+                'ervsini': self.params[11],
+                'chi2': self.params[12],
+                'time': self.end_time,
+                'model': self.options['model'],
+                'resolution': self.options['resolution'],
+                'snr': self.options['snr'],
+                'spectrum': {
+                'wave' : self.xobs,
+                'flux' : self.yobs},
                 }
         return result
 
