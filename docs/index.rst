@@ -10,7 +10,7 @@ Welcome to FASMA's documentation!
    :maxdepth: 4
    :caption: Contents:
 
-   FASMA
+   fasma
 
 
 Indices and tables
