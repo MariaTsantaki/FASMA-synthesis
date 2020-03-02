@@ -2,7 +2,7 @@
 
 
 # FASMA 2.0
-Stellar spectral analysis package.
+**Stellar spectral analysis package.**
 
 FASMA delivers the atmospheric stellar parameters (effective temperature, surface gravity, metallicity, microturbulence, macroturbulence, and rotational velocity) based on the spectral synthesis technique. The principle of this technique relies on the comparison of synthetic spectra with observations to yield the best-fit parameters under a &chi;<sup>2</sup> minimization process. FASMA 2.0 is now updated to deliver also chemical abundances of 13 elements (Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, and Ni).
 
@@ -18,7 +18,7 @@ Contact here for bugs: tsantaki@arcetri.astro.it
 Installing FASMA requires 2 simple steps.
 
 **1)** Run the installation script `install_fasma.sh`, in the `FASMA-synthesis` folder, in order to unzip the model atmospheres and install MOOG (MOOG uses gfortan, f77, or g77 compilers). During this installation, the user will be asked about system requirements:
-"rh64" for 64-bit linux system, "rh" for 32-bit linux system, "maclap" for mac laptop, "macdesk" for mac desktop.
+'rh64' for 64-bit linux system, 'rh' for 32-bit linux system, 'maclap' for mac laptop, 'macdesk' for mac desktop.
 
 ```sh
 $ ./install_fasma.sh
@@ -63,22 +63,21 @@ FASMA produces a log file, `fasma.log`, which catches errors in order to inform 
 
 ## FASMA with scripts
 
-For large lists of stars, it is preferable to use FASMA inside scripts. The configuration options are inserted from a dictionary. The main function to use is FASMA().
+For large lists of stars, it is preferable to use FASMA inside scripts. The configuration options are inserted from a dictionary. The main function to use is `FASMA()`.
 
 ```python
 FASMA(cfgfile='config.yml', overwrite=None, **kwargs)
-Input
 
----
+Input
 
 cfgfile : str
   Configuration file (default: config.yml)
 overwrite : bool
   Overwrite the synthresults.dat file (default: False)
+**kwargs : dict
+  Options to pass to overwrite the default options
 
 Output
-
----
 
 synthresults.dat : file
   Easy readable table with results (tab separated)
@@ -97,42 +96,42 @@ result = FASMA(**options)
 feh = result['feh']
 ```
 
-The input options are presented in the next section and have the save terminology as in the configuration file. The result is a dictionary with the final parameters which are saved to a file (synthresults.dat or synthresults_elements.dat). The expected output dictionary of FASMA() includes the following:
+The input options are presented in the next section and have the save terminology as in the configuration file. The result is a dictionary with the final parameters which are saved to a file (`synthresults.dat` or `synthresults_elements.dat`). The expected output dictionary of `FASMA()` includes the following:
 
 ```python
 if 'element' is True:
-  "teff": float
-  "logg": float
-  "feh": float
-  "vt": float
-  "vmac": float
-  "vsini": float
-  "element": str
-  "abund": float
-  "erabund": float
-  "spectrum": {
-  "wave" : float,
-  "flux" : float}
+  'teff': float
+  'logg': float
+  'feh': float
+  'vt': float
+  'vmac': float
+  'vsini': float
+  'element': str
+  'abund': float
+  'erabund': float
+  'spectrum': {
+  'wave' : float,
+  'flux' : float}
 ```
 
 ```python
 if 'minimize' is True:
-    "teff": float
-    "erteff": float
-    "logg": float
-    "erlogg": float
-    "feh": float
-    "erfeh": float
-    "vt": float
-    "ervt": float
-    "vmac": float
-    "ervmac": float
-    "vsini": float
-    "ervsini": float
-    "chi2": float
-    "spectrum": {
-    "wave" : float,
-    "flux" : float}
+    'teff': float
+    'erteff': float
+    'logg': float
+    'erlogg': float
+    'feh': float
+    'erfeh': float
+    'vt': float
+    'ervt': float
+    'vmac': float
+    'ervmac': float
+    'vsini': float
+    'ervsini': float
+    'chi2': float
+    'spectrum': {
+    'wave' : float,
+    'flux' : float}
 ```
 
 ## Configuration file
@@ -174,7 +173,7 @@ star:
 
 The configuration file (yaml format) is space sensitive and it can include only the values which are other than the defaults. The user can check if the format is correct [here](http://www.yamllint.com/). This file must be in the folder where FASMA runs.
 
-There are various configuration combinations depending on what the user wants. **A mandatory requirement is the line list and the interval file, where the whole path needs to be inserted. The option Number 2 below is recommended for the parameter determination.**
+There are various configuration combinations depending on what the user wants. **A mandatory requirement is to insert the complete path of the line list and the interval file. The option Number 2 below is recommended for the parameter determination.**
 
 
 1) This is the simplest option for FASMA where a synthetic spectrum is created with solar values and plotted. The rest options not listed are set to default.
@@ -240,7 +239,7 @@ star:
 
 # Default Options
 
-The default options of FASMA can be changed in the configuration file `config.cfg` or inserted in the FASMA() function.
+The default options of FASMA can be changed in the configuration file `config.cfg` or inserted in the `FASMA()` function.
 
 1) The model atmospheres included in FASMA are: apogee_kurucz, and marcs.
 ```yaml
@@ -355,7 +354,7 @@ The user can adapt the above files (tab separated), such as adding more elements
 
 # Outputs
 
-**The delivered stellar parameters are saved in the `synthresults.dat` and for the chemical abundances in the `synthresults_elements.dat`.**
+**The delivered stellar parameters are saved in the `synthresults.dat` and the chemical abundances in the `synthresults_elements.dat`.**
 
 For a set of parameters (Teff, logg, [M/H]), a model atmosphere is obtained by interpolating from the model grid. The model atmosphere is created in the `out.atm` file. It is a tabulated form of the basic physical properties (temperature, pressure, etc.) at each layer of the atmosphere.
 
