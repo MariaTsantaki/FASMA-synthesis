@@ -28,7 +28,7 @@ author = 'Maria Tsantaki'
 # The full version, including alpha/beta/rc tags
 release = '2.0'
 
-
+master_doc = 'index'
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
