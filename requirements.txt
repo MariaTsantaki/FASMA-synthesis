@@ -1,7 +1,6 @@
 numpy>=1.7.0
 scipy>=0.16
 matplotlib
-Tkinter
 PyYAML
 statsmodels
 patsy
