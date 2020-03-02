@@ -9,7 +9,7 @@ FASMA delivers the atmospheric stellar parameters (effective temperature, surfac
 
 The python code runs with python 3 and is wrapped around the spectral synthesis package in fortran: [MOOG version 2019](http://www.as.utexas.edu/~chris/moog.html) (Sneden et al. 1973).
 
-The spectral synthesis technique requires model atmospheres for the calculation of the synthetic spectra by MOOG which is provided with FASMA. FASMA includes two grids of models: Kurucz and marcs.
+The spectral synthesis technique requires model atmospheres for the calculation of the synthetic spectra by MOOG which is provided with FASMA. FASMA includes two grids of models in MOOG readable format, [Kurucz](http://research.iac.es/proyecto/ATLAS-APOGEE/) and [marcs](https://marcs.astro.uu.se/) that cover the parameter space for both dwarf and giant stars with metallicity limit of -5.0 dex.
 The instructions below are also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf).
 
 Contact here for bugs: tsantaki@arcetri.astro.it
@@ -17,14 +17,14 @@ Contact here for bugs: tsantaki@arcetri.astro.it
 # Installation
 Installing FASMA requires 2 simple steps.
 
-1) Run the installation script `install_fasma.sh`, in the FASMA-synthesis folder, to unzip the model atmospheres and install MOOG (MOOG uses gfortan, f77, or g77 compilers). The user will be asked about system requirements:
+**1)** Run the installation script `install_fasma.sh`, in the `FASMA-synthesis` folder, in order to unzip the model atmospheres and install MOOG (MOOG uses gfortan, f77, or g77 compilers). During this installation, the user will be asked about system requirements:
 "rh64" for 64-bit linux system, "rh" for 32-bit linux system, "maclap" for mac laptop, "macdesk" for mac desktop.
 
 ```sh
 $ ./install_fasma.sh
 ```
 
-2) Then install FASMA with pip:
+**2)** Then install FASMA with pip:
 ```sh
 $ pip install .
 ```
@@ -44,35 +44,44 @@ $ pip uninstall FASMA
 ```
 
 # Usage
+
+## FASMA by the configuration file
+
 FASMA is so easy. You can run FASMA from the terminal by configuring the options in the `config.yml` file and then run in the working directory:
 
 ```sh
 $ fasma
 ```
 
-If the configuration file is called something else (recommended for different projects), then run:
+If the configuration file is called something else (e.g. myConf.cfg), then run:
 
 ```sh
 $ fasma myConf.cfg
 ```
 
-FASMA includes a log file, `fasma.log`, which catches errors in order to inform the user.
+FASMA produces a log file, `fasma.log`, which catches errors in order to inform the user.
+
+## FASMA with scripts
 
 For large lists of stars, it is preferable to use FASMA inside scripts. The configuration options are inserted from a dictionary. The main function to use is FASMA().
 
 ```python
 FASMA(cfgfile='config.yml', overwrite=None, **kwargs)
 Input
------
+
+---
+
 cfgfile : str
   Configuration file (default: config.yml)
 overwrite : bool
   Overwrite the synthresults.dat file (default: False)
 
 Output
-------
+
+---
+
 synthresults.dat : file
-  Easy readable table with results
+  Easy readable table with results (tab separated)
 params : dict
   output parameters in dictionary
 ```
@@ -88,10 +97,10 @@ result = FASMA(**options)
 feh = result['feh']
 ```
 
-The result is a dictionary with the final parameters which are saved to a file (synthresults.dat or synthresults_elements.dat). The expected output dictionary of FASMA() includes the following:
+The input options are presented in the next section and have the save terminology as in the configuration file. The result is a dictionary with the final parameters which are saved to a file (synthresults.dat or synthresults_elements.dat). The expected output dictionary of FASMA() includes the following:
 
 ```python
-if 'element':
+if 'element' is True:
   "teff": float
   "logg": float
   "feh": float
@@ -107,7 +116,7 @@ if 'element':
 ```
 
 ```python
-if 'minimize':
+if 'minimize' is True:
     "teff": float
     "erteff": float
     "logg": float
@@ -165,10 +174,10 @@ star:
 
 The configuration file (yaml format) is space sensitive and it can include only the values which are other than the defaults. The user can check if the format is correct [here](http://www.yamllint.com/). This file must be in the folder where FASMA runs.
 
-There are various configuration combinations depending on what the user wants. 8A mandatory requirement is the line list and the interval file, where the whole path needs to be inserted. The option Number 2 below is recommended for the parameter determination.*
+There are various configuration combinations depending on what the user wants. **A mandatory requirement is the line list and the interval file, where the whole path needs to be inserted. The option Number 2 below is recommended for the parameter determination.**
 
 
-1) This is the simplest option for FASMA where a synthetic spectrum is created with solar values and plotted. The rest options are set to default.
+1) This is the simplest option for FASMA where a synthetic spectrum is created with solar values and plotted. The rest options not listed are set to default.
 
  ```yaml
 star:
@@ -193,9 +202,9 @@ star:
   plot: true
 ```
 
-This example indicates that for the observed spectrum Sun_HARPS.fits with resolution 115000, FASMA will start the minimization process starting from solar values, keeping the parameters vmac and vt fixed and using the refine option (see below). This option was used to derive parameters in Tsantaki et al. (2018). The spectral regions for the synthesis are difined in the intervals.lst file with the option intervals_file. The final spectrum will be plotted. For the not listed options, FASMA uses the default ones.
+This example indicates that for the observed spectrum `Sun_HARPS.fits` with resolution 115000, FASMA will initialize the minimization process starting from solar values, keeping the parameters vmac and vt fixed and using the `refine` option (see below). This option was used to derive parameters in Tsantaki et al. (2018). The spectral regions for the synthesis are defined in the `intervals.lst` file with the option intervals_file. The final spectrum will be plotted. For the not listed options, FASMA uses the default ones.
 
- 3) For a given line list and a set of initial values, a synthetic spectrum is creared, saved in the 'results' folder, and plotted.
+ 3) For a given line list and a set of initial values, a synthetic spectrum is creared, saved in the `results` folder, and plotted.
 
  ```yaml
 star:
@@ -210,8 +219,8 @@ star:
   plot: true
   save: true
 ```
-4) This option will deliver the chemical abundance of Ti but can be adopted for any of the provided elements (Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni). 
- Note that for this option the line list and intervals are different than for the stellar parameters. The options 'minimize' and 'elements' contradict each other.
+4) This option will deliver the chemical abundance of Ti but can be adopted for any of the provided elements (Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni).
+ Note that for this option the line list and intervals are different than for the stellar parameters. The options `minimize` and `element` contradict each other.
 
  ```yaml
 star:
@@ -231,7 +240,7 @@ star:
 
 # Default Options
 
-The default options of FASMA can be changed in the configuration file config.cfg.
+The default options of FASMA can be changed in the configuration file `config.cfg` or inserted in the FASMA() function.
 
 1) The model atmospheres included in FASMA are: apogee_kurucz, and marcs.
 ```yaml
@@ -243,13 +252,13 @@ model:        marcs
 MOOGv:        2019
 ```
 
-3) If save = True, the output synthetic spectrum is saved in the folder results. The output is saved in a .spec format and is read with the astropy.io fits module.
+3) If save is True, the output synthetic spectrum is saved in the folder `results`. The output is saved in a .spec format and is read with the astropy.io fits module.
 
 ```yaml
 save:         False
 ```
 
-4) If any of these options is set to True, then they are fixed in the minimization process.
+4) If any of these options is set to True, then they are fixed during the minimization process.
 ```yaml
 teff:         False
 logg:         False
@@ -271,7 +280,7 @@ plot_res:     False
 damping:      1
 ```
 
-7) The wavelength step for the synthetic spectrum to be created and the flux limit to consider opacity distributions from the neighboring lines measured in Angstrom. These are the same options of MOOG.
+7) The wavelength step for the synthetic spectrum to be created (step_wave) and the flux limit to consider opacity distributions from the neighboring lines (step_flux), both measured in Angstrom. These are the same options in MOOG.
 ```yaml
 step_wave:    0.01
 step_flux:    3.0
@@ -282,24 +291,25 @@ step_flux:    3.0
 minimize:     False
 ```
 
-9) The refine option performs corrections on the derived parameters after the minimization for a more detailed analysis. After a first run, a second minimization starts with optimized microturbulence and macroturbulence values according to the parameters of the first run.
+9) The refine option performs corrections on the derived parameters after the minimization for a more detailed analysis. After a first run, a second minimization starts with optimized microturbulence and macroturbulence values according to the parameters of the first run. Refine will also remove bad flux points and missing lines.
 ```yaml
 refine:       False
 ```
 
-10) The name of the spectrum is given here. The full path of the spectrum should be given.
+10) The name of the spectrum is given here. The full path of the spectrum should be given. Note that the spectrum has to be in a specific format (see below).
 ```yaml
 observations: False
 ```
 
-11) This is the file which contains the intervals of the synthesis. FASMA already has specific intervals which correspond to the given line list. This file should be inside the rawLinelist folder.
+11) These files contain the lines with their atomic parameters (`linelist.lst`) and the intervals of the synthesis (`intervals.lst`). FASMA already has specific lists in the `rawLinelist` folder.
 The complete path should be given.
 
 ```yaml
+linelist:   linelist.lst
 intervals_file:   intervals.lst
 ```
 
-12) The signal-to-noise (SNR) values of the observed spectra can be given by the user (optional). They are used in the normalization process. Otherwise the SNR is calculated by the PyAstronomy function within FASMA.
+12) The signal-to-noise (SNR) value of the observed spectra can be given by the user (optional). It is used for the normalization process. Otherwise, the SNR is calculated by the PyAstronomy function within FASMA.
 ```yaml
 snr:          null
 ```
@@ -309,13 +319,12 @@ snr:          null
 resolution:   null
 ```
 
-14) The limb darkening coefficient for the vsini calculations. It is set fixed to 0.6 but can have different values depending on luminosity class.
+14) The limb darkening coefficient for the vsini broadening calculations. It is set fixed to 0.6 but can have different values depending on luminosity class.
 ```yaml
 limb:         0.6
 ```
 
-15) This option will start the minimization process to derive the chemical abundance of a specific element. The element has to be set from this list: Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni. In this case the line list and intervals are different than the standard derivation of the stellar parameters.
-They are also included in FASMA, elements.lst and intervals_elements.lst, respectively in the rawLinelist folder. For the derivation of the chemical abundance the minimize option should be False.
+15) This option will start the minimization process to derive the chemical abundance of a specific element. The element has to be set from this list: Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni. In this case the line list and intervals are different than the standard derivation of the stellar parameters and should be changed to `elements.lst` and `intervals_elements.lst`, respectively located in the `rawLinelist` folder. For the derivation of the chemical abundance the minimize option should be False.
 ```yaml
 element:     False
 ```
@@ -332,21 +341,21 @@ The main input is the stellar spectrum which has to be in a specific format.
 
 3) a table fits format (.spec). This is the format FASMA saves the output synthetic spectra if requested.  
 
-FASMA assumes the wavelength is in Angstrom and that the spectrum has been corrected for radial velocity shifts. This is an example on how to correct for such [RV shifts](https://github.com/MariaTsantaki/RV_correction).
+**FASMA assumes the wavelength is in Angstrom and that the spectrum has been corrected for radial velocity shifts.** This is an example on how to correct for such [RV shifts](https://github.com/MariaTsantaki/RV_correction).
 We advice the use of the fits format as reading them is much faster than the text files.
 
 ## Input line lists
 
 1) `linelist.lst` -- the line list for the derivation of stellar parameters as tested in [Tsantaki et al. (2018)](https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.5066T/abstract)
 2) `intervals.lst` -- the list of the spectral regions for the spectral synthesis
-3) `elements.lst` -- the line list for the derivation of the chemical abundances from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) and [Delgado-Mena et al. (2015)](https://www.aanda.org/articles/aa/abs/2014/02/aa21493-13/aa21493-13.html)
-4) `intervals_elements.lst` the lines of the specific elements where the intervals are calculated
+3) `elements.lst` -- the line list for the derivation of the chemical abundances from [VALD](http://vald.astro.uu.se/)
+4) `intervals_elements.lst` the lines of the specific elements where the intervals are calculated from [Adibekyan et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015A%26A...583A..94A/abstract) and [Delgado-Mena et al. (2015)](https://www.aanda.org/articles/aa/abs/2014/02/aa21493-13/aa21493-13.html)
 
-The user can adapt the above files, such as adding more elements to the line lists.
+The user can adapt the above files (tab separated), such as adding more elements to the line lists.
 
 # Outputs
 
-The delivered stellar parameters are saved in the `synthresults.dat` and for the chemical abundances in the `synthresults_elements.dat`.
+**The delivered stellar parameters are saved in the `synthresults.dat` and for the chemical abundances in the `synthresults_elements.dat`.**
 
 For a set of parameters (Teff, logg, [M/H]), a model atmosphere is obtained by interpolating from the model grid. The model atmosphere is created in the `out.atm` file. It is a tabulated form of the basic physical properties (temperature, pressure, etc.) at each layer of the atmosphere.
 
