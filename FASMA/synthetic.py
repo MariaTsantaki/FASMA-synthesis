@@ -408,10 +408,10 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     N = []
     ranges = []
     atomic = pd.DataFrame([])
-    merged = [[intervals.wave.iloc[0] - 2.0, intervals.wave.iloc[0] + 2.0]]
+    merged = [[intervals.wave.iloc[0] - 1.0, intervals.wave.iloc[0] + 1.0]]
     for i, ri in enumerate(intervals.wave):
-        r1 = float(ri) - 2.0
-        r2 = float(ri) + 2.0
+        r1 = float(ri) - 1.0
+        r2 = float(ri) + 1.0
         previous = merged[-1]
         if r1 <= previous[1]:
             previous[1] = max(previous[1], r2)

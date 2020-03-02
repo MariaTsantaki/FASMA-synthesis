@@ -6,7 +6,9 @@ from __future__ import division
 import numpy as np
 from copy import copy
 from .mpfit import mpfit
-
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 class MinimizeSynth:
     '''Minimize the chi square function between a synthetic spectrum to an observed.

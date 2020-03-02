@@ -46,7 +46,3 @@ if ! command -v FASMA/MOOG/MOOGSILENT &> /dev/null ; then
 fi
     echo "MOOGSILENT is installed."
 
-echo "Installing dependencies..."
-pip install .
-echo "Dependencies installed."
-echo "FASMA is successfully installed!"

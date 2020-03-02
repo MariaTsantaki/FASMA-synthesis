@@ -162,8 +162,8 @@ def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
     '''
 
     # Define the area of Normalization
-    start_norm = r[0] - 1.0
-    end_norm = r[1] + 1.0
+    start_norm = r[0] - 2.0
+    end_norm = r[1] + 2.0
     # Transform SNR to noise
     if snr is None:
         noise = 0.0

@@ -28,6 +28,7 @@ class FASMA:
         ------
         synthresults.dat : file
           Easy readable table with results
+        params : output parameters in dictionary
         '''
 
         self.cfgfile = cfgfile
@@ -142,7 +143,7 @@ class FASMA:
             raise StopIteration
 
         if self.options['element']:
-            el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+            el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
             if self.options['element'] not in el:
                 message = 'This element is not in the line list:', self.options['element']
                 print(message)
@@ -285,6 +286,8 @@ class FASMA:
                     'ervmac',
                     'vsini',
                     'ervsini',
+                    'Li',
+                    'erLi',
                     'Na',
                     'erNa',
                     'Mg',
@@ -440,7 +443,7 @@ class FASMA:
         self.logger.info('Minimization done.')
 
         # Make the output array to save results.
-        el = ['Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+        el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
         a = np.empty(2 * len(el) + 1)
         a[:] = np.nan
         ind1 = el.index(self.options['element'])
@@ -691,4 +694,4 @@ if __name__ == '__main__':
     else:
         cfgfile = 'config.yml'
 
-    driver = fasma(cfgfile=cfgfile, overwrite=None)
+    driver = FASMA(cfgfile=cfgfile, overwrite=None)
