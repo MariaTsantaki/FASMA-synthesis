@@ -36,7 +36,7 @@ There are spectral packages in the literature based on different methods to deri
 
 Our goal is to provide a tool to determine accurately and precisely the stellar parameters and chemical abundances to fulfill the above purposes. ``FASMA`` is a Python package to derive the main stellar atmospheric parameters based on the spectral synthesis technique. The principle of this technique relies on the comparison of synthetic spectra with observations to yield the best-fit parameters under a $\chi^{2}$ minimization process:
 
- $$\chi^{2} = \Sigma \frac{(obs_{i}) - synth_{i})<sup>2</sup>}{\sigma_{i}}$$
+ $$\chi^{2} = \Sigma \frac{(obs_{i}) - synth_{i})^{2}}{\sigma_{i}}$$
 
 where obs is the observed spectrum, synth the synthetic, and $\sigma$ the error on the observed flux for each spectral point, i. The best parameters are the ones that minimize the non-linear least-squares based on the Levenberg-Marquardt algorithm [@Marquardt:1963; @Markwardt:2009].
 
