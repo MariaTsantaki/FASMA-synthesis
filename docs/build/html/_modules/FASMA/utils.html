@@ -1,0 +1,677 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FASMA.utils &#8212; FASMA 2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for FASMA.utils</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.synthetic</span> <span class="kn">import</span> <span class="n">broadening</span><span class="p">,</span> <span class="n">_read_raw_moog</span>
+
+<span class="n">apogee_kurucz</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;teff&#39;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="mi">3500</span><span class="p">,</span>
+        <span class="mi">3750</span><span class="p">,</span>
+        <span class="mi">4000</span><span class="p">,</span>
+        <span class="mi">4250</span><span class="p">,</span>
+        <span class="mi">4500</span><span class="p">,</span>
+        <span class="mi">4750</span><span class="p">,</span>
+        <span class="mi">5000</span><span class="p">,</span>
+        <span class="mi">5250</span><span class="p">,</span>
+        <span class="mi">5500</span><span class="p">,</span>
+        <span class="mi">5750</span><span class="p">,</span>
+        <span class="mi">6000</span><span class="p">,</span>
+        <span class="mi">6250</span><span class="p">,</span>
+        <span class="mi">6500</span><span class="p">,</span>
+        <span class="mi">6750</span><span class="p">,</span>
+        <span class="mi">7000</span><span class="p">,</span>
+        <span class="mi">7250</span><span class="p">,</span>
+        <span class="mi">7500</span><span class="p">,</span>
+        <span class="mi">7750</span><span class="p">,</span>
+        <span class="mi">8000</span><span class="p">,</span>
+        <span class="mi">8250</span><span class="p">,</span>
+        <span class="mi">8500</span><span class="p">,</span>
+        <span class="mi">8750</span><span class="p">,</span>
+        <span class="mi">9000</span><span class="p">,</span>
+        <span class="mi">9250</span><span class="p">,</span>
+        <span class="mi">9500</span><span class="p">,</span>
+        <span class="mi">9750</span><span class="p">,</span>
+        <span class="mi">10000</span><span class="p">,</span>
+        <span class="mi">10250</span><span class="p">,</span>
+        <span class="mi">10500</span><span class="p">,</span>
+        <span class="mi">10750</span><span class="p">,</span>
+        <span class="mi">11000</span><span class="p">,</span>
+        <span class="mi">11250</span><span class="p">,</span>
+        <span class="mi">11500</span><span class="p">,</span>
+        <span class="mi">11750</span><span class="p">,</span>
+        <span class="mi">12000</span><span class="p">,</span>
+        <span class="mi">12250</span><span class="p">,</span>
+        <span class="mi">12500</span><span class="p">,</span>
+        <span class="mi">12750</span><span class="p">,</span>
+        <span class="mi">13000</span><span class="p">,</span>
+        <span class="mi">14000</span><span class="p">,</span>
+        <span class="mi">15000</span><span class="p">,</span>
+        <span class="mi">16000</span><span class="p">,</span>
+        <span class="mi">17000</span><span class="p">,</span>
+        <span class="mi">18000</span><span class="p">,</span>
+        <span class="mi">19000</span><span class="p">,</span>
+        <span class="mi">20000</span><span class="p">,</span>
+        <span class="mi">21000</span><span class="p">,</span>
+        <span class="mi">22000</span><span class="p">,</span>
+        <span class="mi">23000</span><span class="p">,</span>
+        <span class="mi">24000</span><span class="p">,</span>
+        <span class="mi">25000</span><span class="p">,</span>
+        <span class="mi">26000</span><span class="p">,</span>
+        <span class="mi">27000</span><span class="p">,</span>
+        <span class="mi">28000</span><span class="p">,</span>
+        <span class="mi">29000</span><span class="p">,</span>
+        <span class="mi">30000</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s1">&#39;feh&#39;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">4.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">4.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">3.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.75</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.25</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.25</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.75</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.25</span><span class="p">,</span>
+        <span class="mf">0.0</span><span class="p">,</span>
+        <span class="mf">0.25</span><span class="p">,</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="mf">0.75</span><span class="p">,</span>
+        <span class="mf">1.0</span><span class="p">,</span>
+        <span class="mf">1.5</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s1">&#39;logg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">marcs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;teff&#39;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="mi">2500</span><span class="p">,</span>
+        <span class="mi">2600</span><span class="p">,</span>
+        <span class="mi">2700</span><span class="p">,</span>
+        <span class="mi">2800</span><span class="p">,</span>
+        <span class="mi">2900</span><span class="p">,</span>
+        <span class="mi">3000</span><span class="p">,</span>
+        <span class="mi">3100</span><span class="p">,</span>
+        <span class="mi">3200</span><span class="p">,</span>
+        <span class="mi">3300</span><span class="p">,</span>
+        <span class="mi">3400</span><span class="p">,</span>
+        <span class="mi">3500</span><span class="p">,</span>
+        <span class="mi">3600</span><span class="p">,</span>
+        <span class="mi">3700</span><span class="p">,</span>
+        <span class="mi">3800</span><span class="p">,</span>
+        <span class="mi">3900</span><span class="p">,</span>
+        <span class="mi">4000</span><span class="p">,</span>
+        <span class="mi">4250</span><span class="p">,</span>
+        <span class="mi">4500</span><span class="p">,</span>
+        <span class="mi">4750</span><span class="p">,</span>
+        <span class="mi">5000</span><span class="p">,</span>
+        <span class="mi">5250</span><span class="p">,</span>
+        <span class="mi">5500</span><span class="p">,</span>
+        <span class="mi">5750</span><span class="p">,</span>
+        <span class="mi">6000</span><span class="p">,</span>
+        <span class="mi">6250</span><span class="p">,</span>
+        <span class="mi">6500</span><span class="p">,</span>
+        <span class="mi">6750</span><span class="p">,</span>
+        <span class="mi">7000</span><span class="p">,</span>
+        <span class="mi">7250</span><span class="p">,</span>
+        <span class="mi">7500</span><span class="p">,</span>
+        <span class="mi">7750</span><span class="p">,</span>
+        <span class="mi">8000</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s1">&#39;feh&#39;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">4.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.75</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.25</span><span class="p">,</span>
+        <span class="mf">0.0</span><span class="p">,</span>
+        <span class="mf">0.25</span><span class="p">,</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="mf">0.75</span><span class="p">,</span>
+        <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s1">&#39;logg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="GetModels"><a class="viewcode-back" href="../../source/index.html#FASMA.utils.GetModels">[docs]</a><span class="k">class</span> <span class="nc">GetModels</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Find the names of the closest grid points for a given effective</span>
+<span class="sd">    temperature, surface gravity, and iron abundance (proxy for metallicity).</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    teff : int</span>
+<span class="sd">      The effective temperature (K) for the model atmosphere</span>
+<span class="sd">    logg : float</span>
+<span class="sd">      The surface gravity (logarithmic in cgs) for the model atmosphere</span>
+<span class="sd">    feh : float</span>
+<span class="sd">      The metallicity for the model atmosphere</span>
+<span class="sd">    atmtype : str</span>
+<span class="sd">      The type of atmosphere models to use. Currently only Kurucz from &#39;95.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">feh</span><span class="p">,</span> <span class="n">atmtype</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teff</span> <span class="o">=</span> <span class="n">teff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logg</span> <span class="o">=</span> <span class="n">logg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feh</span> <span class="o">=</span> <span class="n">feh</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atmtype</span> <span class="o">=</span> <span class="n">atmtype</span>
+
+        <span class="n">atmmodels</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">apogee_kurucz</span><span class="p">,</span> <span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;marcs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">marcs</span><span class="p">,</span> <span class="s1">&#39;marcs&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">atmtype</span> <span class="ow">in</span> <span class="n">atmmodels</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">atmmodels</span><span class="p">[</span><span class="n">atmtype</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s1">&#39;You request for atmospheric models: </span><span class="si">%s</span><span class="s1"> is not available&#39;</span> <span class="o">%</span> <span class="n">atmtype</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Checking for bounds in Teff, logg, and [Fe/H]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">teff</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">teff</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Teff out of bounds: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">teff</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logg</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logg</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;logg out of bounds: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">logg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feh</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feh</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;[Fe/H] out of bounds: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">feh</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_model_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create the path for atmosphere models given Teff, logg, and [Fe/H]</span>
+
+<span class="sd">        Inputs</span>
+<span class="sd">        ------</span>
+<span class="sd">        teff_model : int</span>
+<span class="sd">          The Teff from the model grid</span>
+<span class="sd">        logg_model : float</span>
+<span class="sd">          The logg from the model grid</span>
+<span class="sd">        feh_model : float</span>
+<span class="sd">          The [Fe/H] from the model grid</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        name : str</span>
+<span class="sd">          The path to the atmosphere model</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">cwd</span> <span class="o">+</span> <span class="s1">&#39;/models/</span><span class="si">%s</span><span class="s1">/&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">atmtype</span>
+        <span class="k">if</span> <span class="n">feh_model</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;m</span><span class="si">%s</span><span class="s1">/&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">feh_model</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;p</span><span class="si">%s</span><span class="s1">/&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">feh_model</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%i</span><span class="s1">g</span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">teff_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">logg_model</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">feh_model</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;m</span><span class="si">%s</span><span class="s1">.gz&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">feh_model</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s1">&#39;p</span><span class="si">%s</span><span class="s1">.gz&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">feh_model</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">_model_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Check if a model exists. If not lower/raise Teff</span>
+
+<span class="sd">        Inputs</span>
+<span class="sd">        ------</span>
+<span class="sd">        teff_model : int</span>
+<span class="sd">          The Teff from the model grid</span>
+<span class="sd">        logg_model : float</span>
+<span class="sd">          The logg from the model grid</span>
+<span class="sd">        feh_model : float</span>
+<span class="sd">          The [Fe/H] from the model grid</span>
+<span class="sd">        upper : bool</span>
+<span class="sd">          If True, then search for Teff higher than previous. False otherwise. (Default: True)</span>
+
+<span class="sd">        Outputs</span>
+<span class="sd">        -------</span>
+<span class="sd">        fname : str</span>
+<span class="sd">          Path for the model</span>
+<span class="sd">        teff_model : int</span>
+<span class="sd">          The new Teff. Same Teff is returned if the model exists at the right place</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">(</span><span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">fname</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Models do not exist.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># Change the Teff (up or down) to compensate for the gap</span>
+        <span class="n">teff_model0</span> <span class="o">=</span> <span class="n">teff_model</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">teff_model</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">upper</span> <span class="k">else</span> <span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">teff_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="n">teff_model</span> <span class="o">=</span> <span class="n">teff_model0</span>
+                <span class="k">break</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">(</span><span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">fname</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span>
+
+        <span class="c1"># Change logg to compensate for missing values</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">logg_model</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">logg_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">(</span><span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">fname</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span>
+
+    <span class="k">def</span> <span class="nf">_looping_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">):</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">teff_m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">teff_model</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">logg_m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">logg_model</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">feh_m</span> <span class="ow">in</span> <span class="n">feh_model</span><span class="p">:</span>
+                    <span class="n">upper</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teff</span> <span class="o">&lt;</span> <span class="n">teff_m</span> <span class="k">else</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_exists</span><span class="p">(</span><span class="n">teff_m</span><span class="p">,</span> <span class="n">logg_m</span><span class="p">,</span> <span class="n">feh_m</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                    <span class="n">fname</span><span class="p">,</span> <span class="n">Te</span><span class="p">,</span> <span class="n">ge</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_exists</span><span class="p">(</span><span class="n">teff_m</span><span class="p">,</span> <span class="n">logg_m</span><span class="p">,</span> <span class="n">feh_m</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+                    <span class="n">teff_model</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Te</span>
+                    <span class="n">logg_model</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ge</span>
+                    <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">models</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span>
+
+<div class="viewcode-block" id="GetModels.neighbour"><a class="viewcode-back" href="../../source/index.html#FASMA.utils.GetModels.neighbour">[docs]</a>    <span class="k">def</span> <span class="nf">neighbour</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return the K surrounding neighbours of an array, given a certain value.</span>
+
+<span class="sd">        Inputs</span>
+<span class="sd">        ------</span>
+<span class="sd">        arr : array_like</span>
+<span class="sd">          The array from which some neighbours should be found (assumed sorted).</span>
+<span class="sd">        val : float</span>
+<span class="sd">          The value to found neighbours around in arr</span>
+<span class="sd">        k : int</span>
+<span class="sd">          The number of neighbours to find</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        array : list</span>
+<span class="sd">          A list with the k surrounding neighbours</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">islice</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">))):</span>
+            <span class="k">if</span> <span class="n">l1</span> <span class="o">&lt;=</span> <span class="n">val</span> <span class="o">&lt;=</span> <span class="n">l2</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">ai</span> <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">[</span><span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]]</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">ai</span> <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">arr</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]]</span></div>
+
+<div class="viewcode-block" id="GetModels.getmodels"><a class="viewcode-back" href="../../source/index.html#FASMA.utils.GetModels.getmodels">[docs]</a>    <span class="k">def</span> <span class="nf">getmodels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the atmosphere models surrounding the requested atmospheric</span>
+<span class="sd">        parameters. This function should be called before using the interpolation</span>
+<span class="sd">        code within FASMA.</span>
+
+<span class="sd">        output</span>
+<span class="sd">        ------</span>
+<span class="sd">        models : list</span>
+<span class="sd">          List with path to 8 models the two closest in each parameter space (4x2x2)</span>
+<span class="sd">        teff_model : list</span>
+<span class="sd">          The four closest effective temperatures in the grid</span>
+<span class="sd">        logg_model : list</span>
+<span class="sd">          The two closest surface gravities in the grid</span>
+<span class="sd">        feh_model : list</span>
+<span class="sd">          The two closest metallicities in the grid</span>
+
+<span class="sd">        The last three return values are used for the interpolation to do some</span>
+<span class="sd">        mapping. If only the paths to the models are needed, do not pay attention</span>
+<span class="sd">        to them.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Get list of parameter values</span>
+        <span class="n">teff_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighbour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">teff</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">teff_model</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Means we are close to an edge</span>
+            <span class="n">teff_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighbour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">teff</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">logg_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighbour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">logg</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">feh_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">neighbour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">feh</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">ratio</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">logg</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">logg_model</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">teff0</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">teff_model</span><span class="p">)</span>
+        <span class="n">logg0</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">logg_model</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_looping_models</span><span class="p">(</span><span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">models</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_looping_models</span><span class="p">(</span>
+            <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">logg_model</span> <span class="o">!=</span> <span class="n">logg0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">logg_model</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># We have the same values, change one</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">][</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">teff_model</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">teff0</span><span class="p">)</span>
+            <span class="n">models</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_looping_models</span><span class="p">(</span>
+                <span class="n">teff_model</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">,</span> <span class="n">feh_model</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logg</span> <span class="o">=</span> <span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ratio</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">logg_model</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">logg_model</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;models&#39;</span><span class="p">:</span> <span class="n">models</span><span class="p">,</span>
+            <span class="s1">&#39;teff&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">teff</span><span class="p">,</span> <span class="n">teff_model</span><span class="p">),</span>
+            <span class="s1">&#39;logg&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logg</span><span class="p">,</span> <span class="n">logg_model</span><span class="p">),</span>
+            <span class="s1">&#39;feh&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feh</span><span class="p">,</span> <span class="n">feh_model</span><span class="p">),</span>
+        <span class="p">}</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_update_par_synth</span><span class="p">(</span><span class="n">start_wave</span><span class="p">,</span> <span class="n">end_wave</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Update the parameter file (batch.par) with new linelists, atmosphere</span>
+<span class="sd">    models, or others.</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    -----</span>
+<span class="sd">    atmosphere_model    :   Location of your model atmosphere file</span>
+<span class="sd">    line_list           :   Location of your line list</span>
+
+<span class="sd">    Additional keyword arguments</span>
+<span class="sd">    ----------------------------</span>
+<span class="sd">    These additional keyword arguments allow the user to have full control</span>
+<span class="sd">    over what is put into the MOOG input file. The default values are:</span>
+
+<span class="sd">    terminal        &#39;x11&#39;</span>
+<span class="sd">    atmosphere      1</span>
+<span class="sd">    molecules       2</span>
+<span class="sd">    trudamp         1</span>
+<span class="sd">    lines           1</span>
+<span class="sd">    flux/int        1</span>
+<span class="sd">    damping         1</span>
+<span class="sd">    units           0</span>
+<span class="sd">    iraf            0</span>
+<span class="sd">    plot            0</span>
+<span class="sd">    obspectrum      1       Unless obspectrum is provided to the function.</span>
+<span class="sd">    opacit          0</span>
+<span class="sd">    freeform        0</span>
+<span class="sd">    strong          0       Unless a strong lines list is provided.</span>
+<span class="sd">    plotpars        0       0.75 Gaussian smoothing by default. Show full</span>
+<span class="sd">                            synthesized spectral range with y:[0, 1.2]vsini</span>
+<span class="sd">    histogram       0</span>
+<span class="sd">    synlimits               Defaults to the wavelength range provided and</span>
+<span class="sd">                            the given wavelength step size, and the delta</span>
+<span class="sd">                            defaults to the wavelength step size.</span>
+
+<span class="sd">    Outputs</span>
+<span class="sd">    -------</span>
+<span class="sd">    And updated parameter file</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">default_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;plotpars&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;plot&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;atmosphere&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;molecules&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;lines&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;trudamp&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;strong&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;opacit&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;terminal&#39;</span><span class="p">:</span> <span class="s1">&#39;x11&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;flux/int&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;obspectrum&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;model_in&#39;</span><span class="p">:</span> <span class="s1">&#39;out.atm&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;lines_in&#39;</span><span class="p">:</span> <span class="s1">&#39;linelist.moog&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;smoothed_out&#39;</span><span class="p">:</span> <span class="s1">&#39;smooth.out&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;summary&#39;</span><span class="p">:</span> <span class="s1">&#39;summary.out&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1"># Fill the keyword arguments with the defaults if they don&#39;t exist already</span>
+    <span class="n">moog_contents</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;synth</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;terminal           </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;model_in          &#39;</span><span class="si">%s</span><span class="s2">&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;summary_out       &#39;</span><span class="si">%s</span><span class="s2">&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;smoothed_out      &#39;</span><span class="si">%s</span><span class="s2">&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;standard_out      &#39;result.out&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;lines_in          &#39;linelist.moog&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;synlimits</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;      </span><span class="si">%s</span><span class="s2">      </span><span class="si">%s</span><span class="s2">       </span><span class="si">%s</span><span class="s2">      </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;damping        </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="o">%</span> <span class="p">(</span>
+            <span class="n">default_kwargs</span><span class="p">[</span><span class="s1">&#39;terminal&#39;</span><span class="p">],</span>
+            <span class="n">default_kwargs</span><span class="p">[</span><span class="s1">&#39;model_in&#39;</span><span class="p">],</span>
+            <span class="n">default_kwargs</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">],</span>
+            <span class="n">default_kwargs</span><span class="p">[</span><span class="s1">&#39;smoothed_out&#39;</span><span class="p">],</span>
+            <span class="n">start_wave</span><span class="p">,</span>
+            <span class="n">end_wave</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">][</span><span class="s1">&#39;step_wave&#39;</span><span class="p">],</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">][</span><span class="s1">&#39;step_flux&#39;</span><span class="p">],</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">][</span><span class="s1">&#39;damping&#39;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fill the keyword arguments with the defaults if they don&#39;t exist already</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">default_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="n">settings</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;plotpars,plot,atmosphere,molecules,trudamp,lines,strong,flux/int,damping,&#39;</span>
+        <span class="s1">&#39;units,iraf,opacit,freeform,observed_in,obspectrum,histogram,&#39;</span>
+        <span class="s1">&#39;synlimits&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># plot and plotpar values are the same</span>
+    <span class="k">if</span> <span class="s1">&#39;plotpars&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;plotpars&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;plot&#39;</span><span class="p">)</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;plotpars&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">moog_contents</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">setting</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">14</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">setting</span><span class="p">)),</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">setting</span><span class="p">],</span>
+            <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;batch.par&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">moog</span><span class="p">:</span>
+        <span class="n">moog</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="n">moog_contents</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_run_moog</span><span class="p">(</span><span class="n">par</span><span class="o">=</span><span class="s1">&#39;batch.par&#39;</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;synth&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Run MOOGSILENT with the given parameter file</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    par : str</span>
+<span class="sd">      The input file for MOOG (default: batch.par)</span>
+<span class="sd">    driver : str</span>
+<span class="sd">      Which driver to use MOOG in. Choices are: &#39;abfind&#39;, &#39;synth&#39;. (Default: &#39;synth&#39;)</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">      Run MOOG once in silent mode</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">driver</span> <span class="o">==</span> <span class="s1">&#39;abfind&#39;</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;/MOOG/./MOOGSILENT &gt; /dev/null&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">driver</span> <span class="o">==</span> <span class="s1">&#39;synth&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;stupid.tmp&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="s1">&#39;batch.par</span><span class="se">\n</span><span class="s1">q&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;/MOOG/./MOOGSILENT &lt; stupid.tmp &gt; /dev/null 2&gt;&amp;1&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;stupid.tmp&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="fun_moog_synth"><a class="viewcode-back" href="../../source/index.html#FASMA.utils.fun_moog_synth">[docs]</a><span class="k">def</span> <span class="nf">fun_moog_synth</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">atmtype</span><span class="p">,</span>
+    <span class="n">abund</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">par</span><span class="o">=</span><span class="s1">&#39;batch.par&#39;</span><span class="p">,</span>
+    <span class="n">ranges</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">results</span><span class="o">=</span><span class="s1">&#39;summary.out&#39;</span><span class="p">,</span>
+    <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;synth&#39;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="mi">2014</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">options</span>
+<span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Run MOOG and create synthetic spectrum for the synth driver.</span>
+<span class="sd">    :x: A tuple/list with values (teff, logg, [Fe/H], vt, vmic, vmac)</span>
+<span class="sd">    :atmtype: model atmosphere</span>
+<span class="sd">    :abund: abundance of specific species</span>
+<span class="sd">    :ranges: array of intervals for the synthesis</span>
+<span class="sd">    :par: The parameter file (batch.par)</span>
+<span class="sd">    :results: The summary file</span>
+<span class="sd">    :driver: Which driver to use when running MOOG</span>
+<span class="sd">    :version: The version of MOOG</span>
+<span class="sd">    :returns: w, f : wavelength and flux</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="kn">from</span> <span class="nn">.interpolation</span> <span class="kn">import</span> <span class="n">interpolator</span>
+
+    <span class="n">fnames</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;summary.out&#39;</span><span class="p">,</span> <span class="s1">&#39;result.out&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fnames</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># Create an atmosphere model from input parameters</span>
+    <span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">feh</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">vmac</span><span class="p">,</span> <span class="n">vsini</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="n">teff</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span>
+    <span class="n">logg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">logg</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">feh</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">feh</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">vsini</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">vsini</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">vmac</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">vmac</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">interpolator</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">atmtype</span><span class="o">=</span><span class="n">atmtype</span><span class="p">,</span> <span class="n">abund</span><span class="o">=</span><span class="n">abund</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Create synthetic spectrum for each of the intervals</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ranges</span><span class="p">):</span>
+        <span class="n">_update_par_synth</span><span class="p">(</span><span class="n">ri</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ri</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">_run_moog</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s1">&#39;synth&#39;</span><span class="p">)</span>
+        <span class="n">x_synth</span><span class="p">,</span> <span class="n">y_synth</span> <span class="o">=</span> <span class="n">_read_raw_moog</span><span class="p">(</span><span class="s1">&#39;summary.out&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_synth</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;This region does not exits in synthetic spectrum: &#39;</span><span class="p">,</span> <span class="n">ri</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Or the region is to wide for synthesis.&#39;</span><span class="p">)</span>
+
+        <span class="n">spec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">broadening</span><span class="p">(</span>
+                <span class="n">x_synth</span><span class="p">,</span>
+                <span class="n">y_synth</span><span class="p">,</span>
+                <span class="n">vsini</span><span class="p">,</span>
+                <span class="n">vmac</span><span class="p">,</span>
+                <span class="n">resolution</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;resolution&#39;</span><span class="p">],</span>
+                <span class="n">epsilon</span><span class="o">=</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;limb&#39;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Gather all individual spectra to one</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">spec</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">spec</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FASMA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../FASMA.tests.html">FASMA.tests package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, FASMA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

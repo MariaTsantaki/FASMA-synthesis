@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FASMA.interpolation &#8212; FASMA 2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for FASMA.interpolation</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">periodictable</span> <span class="kn">import</span> <span class="n">elements</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">griddata</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">from</span> <span class="nn">.solar_abundance</span> <span class="kn">import</span> <span class="n">solar</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">GetModels</span>
+
+
+<div class="viewcode-block" id="read_model"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.read_model">[docs]</a><span class="k">def</span> <span class="nf">read_model</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read the KURUCZ model atmosphere.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname : str</span>
+<span class="sd">      The gz file of the model atmosphere.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    model : ndarray</span>
+<span class="sd">      The correct atmosphere, the columns and tauross in a tuple</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">23</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="solar_abundance"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.solar_abundance">[docs]</a><span class="k">def</span> <span class="nf">solar_abundance</span><span class="p">(</span><span class="n">element</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;For a given atomic number, return solar abundance from Asplund et al. 2009.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    element : str</span>
+<span class="sd">      The name of an element</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    index : int</span>
+<span class="sd">      The atomic number of the element</span>
+<span class="sd">    abundance : float</span>
+<span class="sd">      The solar abundance of the atom in dex</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">abundance</span> <span class="o">=</span> <span class="n">solar</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">abundance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">elements</span><span class="o">.</span><span class="n">symbol</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="n">number</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">,</span> <span class="n">abundance</span></div>
+
+
+<div class="viewcode-block" id="interpolator_kurucz"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.interpolator_kurucz">[docs]</a><span class="k">def</span> <span class="nf">interpolator_kurucz</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">atmtype</span><span class="o">=</span><span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Interpolation for Kurucz model atmospheres.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    params : ndarray</span>
+<span class="sd">      Stellar parameters for the Interpolation.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    newatm : ndarray</span>
+<span class="sd">      The interpolated atmosphere, the columns and tauross in a tuple</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">GetModels</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">atmtype</span><span class="o">=</span><span class="n">atmtype</span><span class="p">)</span>
+    <span class="n">mdict</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">getmodels</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">mdict</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">mnames</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;models&#39;</span><span class="p">]</span>
+    <span class="n">teff</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;teff&#39;</span><span class="p">]</span>
+    <span class="n">logg</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;logg&#39;</span><span class="p">]</span>
+    <span class="n">feh</span> <span class="o">=</span> <span class="n">mdict</span><span class="p">[</span><span class="s1">&#39;feh&#39;</span><span class="p">]</span>
+    <span class="c1"># Making the surrounding grid points</span>
+    <span class="n">gridpoints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">teff</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">grav</span> <span class="ow">in</span> <span class="n">logg</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">metal</span> <span class="ow">in</span> <span class="n">feh</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">gridpoints</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">temp</span><span class="p">,</span> <span class="n">grav</span><span class="p">,</span> <span class="n">metal</span><span class="p">))</span>
+    <span class="n">gridpoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gridpoints</span><span class="p">)</span>
+    <span class="c1"># Define the points to obtain at the end</span>
+    <span class="n">teff</span> <span class="o">=</span> <span class="n">teff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">logg</span> <span class="o">=</span> <span class="n">logg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">feh</span> <span class="o">=</span> <span class="n">feh</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;rescale&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="c1"># Reading the models</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mname</span> <span class="ow">in</span> <span class="n">mnames</span><span class="p">:</span>
+        <span class="n">tatm</span> <span class="o">=</span> <span class="n">read_model</span><span class="p">(</span><span class="n">mname</span><span class="p">)</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tatm</span><span class="p">)</span>
+
+    <span class="n">layers</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">]))</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">newatm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="n">tlayer</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="p">[</span><span class="n">layer</span><span class="p">,</span> <span class="n">column</span><span class="p">]</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">]</span>
+            <span class="n">newatm</span><span class="p">[</span><span class="n">layer</span><span class="p">,</span> <span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+                <span class="n">gridpoints</span><span class="p">,</span> <span class="n">tlayer</span><span class="p">,</span> <span class="p">(</span><span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">feh</span><span class="p">),</span> <span class="o">**</span><span class="n">options</span>
+            <span class="p">)</span>
+    <span class="n">vt_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">))</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e5</span>
+    <span class="n">newatm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">newatm</span><span class="p">,</span> <span class="n">vt_array</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">newatm</span></div>
+
+
+<div class="viewcode-block" id="interpolator_marcs"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.interpolator_marcs">[docs]</a><span class="k">def</span> <span class="nf">interpolator_marcs</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">fesun</span><span class="o">=</span><span class="mf">7.47</span><span class="p">,</span> <span class="n">microlim</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Interpolation for marcs models. The function is taken from STEPAR</span>
+<span class="sd">    (Tabernero et al. 2019) to deal the gaps in the grid.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    params : ndarray</span>
+<span class="sd">      Stellar parameters for the Interpolation.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    newatm : ndarray</span>
+<span class="sd">      The interpolated atmosphere, the columns and tauross in a tuple</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="kn">import</span> <span class="nn">_pickle</span> <span class="k">as</span> <span class="nn">pic</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="n">fname</span> <span class="o">=</span> <span class="s2">&quot;models/marcs/MARCS1M.bin&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">gridMODS</span><span class="p">:</span>
+        <span class="n">tmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">gmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">mmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">ltaumod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">Temod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">lpgmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">lpemod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">rhoxmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+        <span class="n">kmod</span> <span class="o">=</span> <span class="n">pic</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gridMODS</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">Teff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">logg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">metal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">micro</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tmod</span> <span class="o">-</span> <span class="n">Teff</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">251.0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mmod</span> <span class="o">-</span> <span class="n">metal</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">0.251</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gmod</span> <span class="o">-</span> <span class="n">logg</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">lT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">lm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">lg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">micro</span> <span class="o">&gt;</span> <span class="n">microlim</span><span class="p">:</span>
+        <span class="n">micro</span> <span class="o">=</span> <span class="n">microlim</span>
+    <span class="k">if</span> <span class="n">lT</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">lm</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">lg</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">micro</span> <span class="o">&lt;=</span> <span class="n">microlim</span> <span class="ow">and</span> <span class="n">micro</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">dT</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+        <span class="n">dm</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span>
+        <span class="n">testt</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">Teff</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">Teff</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dT</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+        <span class="n">testm</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">metal</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">metal</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dm</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+        <span class="n">testg</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">logg</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">logg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dg</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">testt</span> <span class="ow">and</span> <span class="n">testm</span> <span class="ow">and</span> <span class="n">testg</span><span class="p">:</span>
+            <span class="n">testint</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">testint</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">testint</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">testint</span><span class="p">:</span>
+        <span class="n">teint</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">]),</span>
+            <span class="n">Temod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span>
+            <span class="p">(</span><span class="n">Teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">metal</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+            <span class="n">rescale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">teint</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">lpgint</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">]),</span>
+                <span class="n">lpgmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">Teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">metal</span><span class="p">),</span>
+                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+                <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="n">rescale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">lpeint</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">]),</span>
+                <span class="n">lpemod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">Teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">metal</span><span class="p">),</span>
+                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+                <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="n">rescale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">rhoxint</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">]),</span>
+                <span class="n">rhoxmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">Teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">metal</span><span class="p">),</span>
+                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+                <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="n">rescale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">kint</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">tmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">gmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">mmod</span><span class="p">[</span><span class="n">sel</span><span class="p">]),</span>
+                <span class="n">kmod</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">Teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">metal</span><span class="p">),</span>
+                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+                <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                <span class="n">rescale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">nlayers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kint</span><span class="p">)</span>
+            <span class="n">newatm</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nlayers</span><span class="p">):</span>
+                <span class="n">newatm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">rhoxint</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">teint</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="mf">10.0</span> <span class="o">**</span> <span class="n">lpgint</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="mf">10.0</span> <span class="o">**</span> <span class="n">lpeint</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">kint</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="n">newatm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">newatm</span><span class="p">)</span>
+            <span class="n">vt_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlayers</span><span class="p">)</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e5</span>
+            <span class="n">newatm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">newatm</span><span class="p">,</span> <span class="n">vt_array</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]))</span>
+            <span class="k">return</span> <span class="n">newatm</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="interpolator"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.interpolator">[docs]</a><span class="k">def</span> <span class="nf">interpolator</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">,</span> <span class="n">abund</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">atmtype</span><span class="o">=</span><span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function to connect all. For a given set of params, return a model atmosphere.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    params : list of length 3</span>
+<span class="sd">      Teff, logg, [Fe/H].</span>
+<span class="sd">    abund : float</span>
+<span class="sd">      abundance of a given element to added in the atmosphere.</span>
+<span class="sd">    element : float</span>
+<span class="sd">      any element to change abundance in the atmosphere.</span>
+<span class="sd">    save : bool</span>
+<span class="sd">      Whether the new atmosphere should be saved. Default is True.</span>
+<span class="sd">    atmtype : str</span>
+<span class="sd">      The atmosphere models being used. Default is apogee_kurucz.</span>
+<span class="sd">    result : bool</span>
+<span class="sd">      return the new atmosphere. Default is False.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    newatm : ndarray</span>
+<span class="sd">      New interpolated atmosphere.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">atmtype</span> <span class="o">==</span> <span class="s1">&#39;marcs&#39;</span><span class="p">:</span>
+        <span class="n">newatm</span> <span class="o">=</span> <span class="n">interpolator_marcs</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">fesun</span><span class="o">=</span><span class="mf">7.47</span><span class="p">,</span> <span class="n">microlim</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">atmtype</span> <span class="o">==</span> <span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">:</span>
+        <span class="n">newatm</span> <span class="o">=</span> <span class="n">interpolator_kurucz</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">atmtype</span><span class="o">=</span><span class="n">atmtype</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s1">&#39;Could not find </span><span class="si">%s</span><span class="s1"> models&#39;</span><span class="p">,</span> <span class="n">atmtype</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">newatm</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s1">&#39;Could not find </span><span class="si">%s</span><span class="s1"> models&#39;</span><span class="p">,</span> <span class="n">atmtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">save_model</span><span class="p">(</span><span class="n">newatm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">abund</span><span class="o">=</span><span class="n">abund</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="n">elem</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">atmtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">newatm</span><span class="p">,</span> <span class="n">params</span></div>
+
+
+<div class="viewcode-block" id="save_model"><a class="viewcode-back" href="../../source/index.html#FASMA.interpolation.save_model">[docs]</a><span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">abund</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">elem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">,</span> <span class="n">fout</span><span class="o">=</span><span class="s1">&#39;out.atm&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Save the model atmosphere in the right format.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    model : ndarray</span>
+<span class="sd">      The interpolated model atmosphere.</span>
+<span class="sd">    params : list</span>
+<span class="sd">      Teff, logg, [M/H], vt of the interpolated atmosphere.</span>
+<span class="sd">    abund : float</span>
+<span class="sd">      abundance of a given element to added in the atmosphere.</span>
+<span class="sd">    element : float</span>
+<span class="sd">      any element to change abundance in the atmosphere.</span>
+<span class="sd">    type : str</span>
+<span class="sd">      Type of atmospheric parameters. Default is apogee_kurucz</span>
+<span class="sd">    fout : str</span>
+<span class="sd">      Name of the saved atmosphere. Default is out.atm</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    Saved atmospheric model in file.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">feh</span><span class="p">,</span> <span class="n">vt</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">,</span> <span class="s1">&#39;marcs&#39;</span><span class="p">]:</span>
+        <span class="c1"># The name in the header shows the format of the model not the type.</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;KURUCZ</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;Teff= </span><span class="si">%i</span><span class="s1">   log g= </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;NTAU        </span><span class="si">%i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">elem</span><span class="p">:</span>
+        <span class="c1"># Get atomic number and solar abundance, only one element per time.</span>
+        <span class="n">num</span><span class="p">,</span> <span class="n">solabund</span> <span class="o">=</span> <span class="n">solar_abundance</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="n">footer</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;    </span><span class="si">%.3e</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;NATOMS     2  </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;      26.0    </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;      </span><span class="si">%.1f</span><span class="s1">    </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;NMOL      19</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;         8.1    822.0     22.1&#39;</span>
+            <span class="o">%</span> <span class="p">(</span><span class="n">vt</span> <span class="o">*</span> <span class="mf">1e5</span><span class="p">,</span> <span class="n">feh</span><span class="p">,</span> <span class="mf">7.47</span> <span class="o">+</span> <span class="n">feh</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">solabund</span> <span class="o">+</span> <span class="n">abund</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">footer</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;    </span><span class="si">%.3e</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;NATOMS     1  </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;      26.0    </span><span class="si">%.2f</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;NMOL      19</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;         8.1    822.0     22.1&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">vt</span> <span class="o">*</span> <span class="mf">1e5</span><span class="p">,</span> <span class="n">feh</span><span class="p">,</span> <span class="mf">7.47</span> <span class="o">+</span> <span class="n">feh</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">_fmt</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">%15.8E</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%8.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%.3E</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%.3E</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%.3E</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%.3E</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%.3E</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">model</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">_fmt</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">model</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">model</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span>
+        <span class="n">fout</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span> <span class="n">footer</span><span class="o">=</span><span class="n">footer</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">_fmt</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FASMA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../FASMA.tests.html">FASMA.tests package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, FASMA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

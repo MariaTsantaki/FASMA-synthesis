@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FASMA.observations &#8212; FASMA 2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for FASMA.observations</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf8 -*-</span>
+
+<span class="c1"># My imports</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">InterpolatedUnivariateSpline</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;TkAgg&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<div class="viewcode-block" id="eso_fits"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.eso_fits">[docs]</a><span class="k">def</span> <span class="nf">eso_fits</span><span class="p">(</span><span class="n">hdulist</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A little demo utility to illustrate the ESO SDP 1D spectrum file format.</span>
+<span class="sd">    2017-Aug-08, archive(at)eso.org</span>
+<span class="sd">    The ESO 1D spectral format is compliant with the IVOA Spectrum data model.</span>
+<span class="sd">    Both the SPECTRUM 1.0 and SPECTRUM 2.0 versions are supported.</span>
+<span class="sd">    References:</span>
+<span class="sd">    ESO SDP standard: http://www.eso.org/sci/observing/phase3/p3sdpstd.pdf</span>
+<span class="sd">    ESO SDP FAQ page: http://www.eso.org/sci/observing/phase3/faq.html</span>
+<span class="sd">    This script:      http://archive.eso.org/cms/eso-data/help/1dspectra.html</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    wave : raw observed wavelength</span>
+<span class="sd">    flux : raw observed flux</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">phu</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>           <span class="c1"># Primary Header Unit: metadata</span>
+    <span class="n">scihead</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>       <span class="c1"># Header of the first FITS extension: metadata</span>
+    <span class="n">scidata</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>         <span class="c1"># Data in the first FITS extension: the spectrum</span>
+
+    <span class="c1"># Checking some compliance</span>
+    <span class="c1"># 1. keyword PRODCATG must be present in primary header unit</span>
+    <span class="n">prodcatg</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;PRODCATG&#39;</span><span class="p">]</span>
+    <span class="c1"># 2. value of keyword PRODCATG must match SCIENCE.SPECTRUM*</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prodcatg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;SCIENCE.SPECTRUM&#39;</span><span class="p">):</span>
+        <span class="n">errorMessage</span> <span class="o">=</span> <span class="s2">&quot;Expected header keyword: PRODCATG = &#39;SCIENCE.SPECTRUM&#39;</span><span class="se">\n</span><span class="s2">Found: PRODCATG = &#39;</span><span class="si">%s</span><span class="s2">&#39;</span><span class="se">\n</span><span class="s2">File not compliant with the 1d spectrum specifications</span><span class="se">\n</span><span class="s2">of the ESO Science Data Product standard.&quot;</span> <span class="o">%</span> <span class="n">prodcatg</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;filename = </span><span class="si">%s</span><span class="s1">   NOT COMPLIANT&#39;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">errorMessage</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># 3. Various keywords must be defined, among them the ones here below:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">origfile</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;ORIGFILE&#39;</span><span class="p">]</span>    <span class="c1"># Original filename as assigned by the data provider</span>
+        <span class="n">instrume</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;INSTRUME&#39;</span><span class="p">]</span>  <span class="c1"># Name of the instrument</span>
+        <span class="n">wavelmin</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;WAVELMIN&#39;</span><span class="p">]</span>  <span class="c1"># Minimum wavelength in nm</span>
+        <span class="n">wavelmax</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;WAVELMAX&#39;</span><span class="p">]</span>  <span class="c1"># Maximum wavelength in nm</span>
+        <span class="n">respower</span> <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;SPEC_RES&#39;</span><span class="p">]</span>  <span class="c1"># Spectral resolving power (lambda / delta_lambda)</span>
+        <span class="n">snr</span>      <span class="o">=</span> <span class="n">phu</span><span class="p">[</span><span class="s1">&#39;SNR&#39;</span><span class="p">]</span>       <span class="c1"># Signal to Noise Ratio</span>
+        <span class="n">specaxisucd</span>  <span class="o">=</span> <span class="n">scihead</span><span class="p">[</span><span class="s1">&#39;TUCD1&#39;</span><span class="p">]</span> <span class="c1"># Gives the type of spectral axis (see SPECTRAL AXIS below)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">errorMessage</span><span class="o">=</span><span class="s1">&#39;File not compliant with the 1D spectrum specifications of the ESO Science Data Product standard; some of the mandatory keywords were not found in primary header unit&#39;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;filename = </span><span class="si">%s</span><span class="s1">   NOT COMPLIANT&#39;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">errorMessage</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># SPECTRAL AXIS: could be either wavelength, frequency, or energy;</span>
+    <span class="c1"># if wavelength, the distinction between wavelength in air or in vacuum is provided by the presence of the obs.atmos token in the TUCD1.</span>
+    <span class="c1"># the variable spectype will carry to whole info.</span>
+    <span class="n">spectype</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">specaxisucd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;em.wl&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">specaxisucd</span> <span class="o">==</span> <span class="s1">&#39;em.wl&#39;</span><span class="p">:</span>
+            <span class="n">spectype</span> <span class="o">=</span> <span class="s1">&#39;wavelength in vacuum (TUCD1=</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">specaxisucd</span>
+        <span class="k">elif</span> <span class="n">specaxisucd</span> <span class="o">==</span> <span class="s1">&#39;em.wl;obs.atmos&#39;</span><span class="p">:</span>
+            <span class="n">spectype</span> <span class="o">=</span> <span class="s1">&#39;wavelength in air (TUCD1=</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">specaxisucd</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">spectype</span> <span class="o">=</span> <span class="s1">&#39;wavelength (TUCD1=</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">specaxisucd</span>
+    <span class="k">elif</span> <span class="n">specaxisucd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;em.freq&#39;</span><span class="p">):</span>
+        <span class="n">spectype</span> <span class="o">=</span> <span class="s1">&#39;frequency (TUCD1=</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">specaxisucd</span>
+    <span class="k">elif</span> <span class="n">specaxisucd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;em.ener&#39;</span><span class="p">):</span>
+        <span class="n">spectype</span> <span class="o">=</span> <span class="s1">&#39;energy (TUCD1=</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">specaxisucd</span>
+
+    <span class="c1"># TFIELDS is a required FITS binary table keyword</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tfields</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">scihead</span><span class="p">[</span><span class="s1">&#39;TFIELDS&#39;</span><span class="p">])</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;File </span><span class="si">%s</span><span class="s1"> is not a valid ESO SDP 1d spectrum (TFIELDS keyword missing)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># METADATA PART</span>
+    <span class="c1"># Reading name, unit, utype for each column (array) in the FITS binary table (extension 1).</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">utype</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># lowercase utype string: for case-insensitive matches</span>
+    <span class="n">Utype</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># original utype, with case preserved: for display</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tfields</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">thisname</span> <span class="o">=</span> <span class="n">scihead</span><span class="p">[</span><span class="s1">&#39;TTYPE&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">thisunit</span> <span class="o">=</span> <span class="n">scihead</span><span class="p">[</span><span class="s1">&#39;TUNIT&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">thisunit</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">thisutype</span><span class="o">=</span><span class="n">scihead</span><span class="p">[</span><span class="s1">&#39;TUTYP&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">thisutype</span><span class="o">=</span><span class="s1">&#39;no_utype_assigned:field_not_part_of_the_standard&#39;</span>
+        <span class="n">name</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thisname</span><span class="p">)</span>
+        <span class="n">unit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thisunit</span><span class="p">)</span>
+        <span class="n">utype</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thisutype</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="n">Utype</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thisutype</span><span class="p">)</span>
+
+    <span class="c1"># Recognising the main scientific arrays (spectral, flux and flux error) and the &quot;other&quot; ones.</span>
+    <span class="c1"># A 1D spectrum can contain several flux (and fluxerror) arrays, but one is defined to be the best.</span>
+    <span class="c1"># The best one can be recognised by the (lowercased) utype which is either &quot;spectrum.data.fluxaxis.value&quot; or &quot;spec:data.fluxaxis.value&quot;.</span>
+    <span class="n">other_arrays</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># It will contain the indeces of the fields not considered main arrays. FITS indeces starts from 1!</span>
+    <span class="c1"># Getting the indexes of the FITS columns</span>
+    <span class="c1"># for the main spectral array (ispec), flux array (iflux), and flux_error (ierr) array:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tfields</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Remember that the index of Python arrays starts from 0, while the FITS index from 1.</span>
+        <span class="n">tutyp</span><span class="o">=</span><span class="n">utype</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># The ESO Science Data Product standard format</span>
+        <span class="c1"># prescribes the spectral axis to be stored in column 1;</span>
+        <span class="c1"># there would be no need to look for it, but we need the other_arrays anyway.</span>
+        <span class="c1"># The TUTYPn keywords follow either the Spectrum Data Model standard v1.1 for spectra with a single flux array,</span>
+        <span class="c1"># or the Spectral Data Model standard v2.0 for spectra with any number of flux arrays</span>
+        <span class="c1"># These data model standards are available from the International Virtual Observatory Alliance</span>
+        <span class="c1"># web site at: http://ivoa.net/documents/</span>
+        <span class="k">if</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spectrum.data.spectralaxis.value&#39;</span><span class="p">:</span>
+            <span class="n">ispec</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spec:data.spectralaxis.value&#39;</span><span class="p">:</span>
+            <span class="n">ispec</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spectrum.data.fluxaxis.value&#39;</span><span class="p">:</span>
+            <span class="n">iflux</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spec:data.fluxaxis.value&#39;</span><span class="p">:</span>
+            <span class="n">iflux</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spectrum.data.fluxaxis.accuracy.staterror&#39;</span><span class="p">:</span>
+            <span class="n">ierr</span>  <span class="o">=</span> <span class="n">i</span>
+        <span class="k">elif</span> <span class="n">tutyp</span> <span class="o">==</span> <span class="s1">&#39;spec:data.fluxaxis.accuracy.staterror&#39;</span><span class="p">:</span>
+            <span class="n">ierr</span>  <span class="o">=</span> <span class="n">i</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Storing the indeces of other, not considered main, arrays:</span>
+            <span class="n">other_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">i</span> <span class="p">)</span>
+
+    <span class="c1"># Main arrays:</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">scidata</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">ispec</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">scidata</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">iflux</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">wave</span><span class="p">,</span> <span class="n">flux</span></div>
+
+
+<div class="viewcode-block" id="mad"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.mad">[docs]</a><span class="k">def</span> <span class="nf">mad</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function to calculate the median average deviation.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="p">)),</span> <span class="n">axis</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="local_norm"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.local_norm">[docs]</a><span class="k">def</span> <span class="nf">local_norm</span><span class="p">(</span><span class="n">obs_fname</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">lol</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Very local Normalization function. Makes a linear fit from the maximum points</span>
+<span class="sd">    of each segment.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    obs_fname : observations file</span>
+<span class="sd">    r : range of the interval</span>
+<span class="sd">    plot: True to visual check if normalization is correct, default: False</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    wave : wavelength</span>
+<span class="sd">    new_flux : normalized flux</span>
+<span class="sd">    delta_l : wavelenghth spacing</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Define the area of Normalization</span>
+    <span class="n">start_norm</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.0</span>
+    <span class="n">end_norm</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span>
+    <span class="c1"># Transform SNR to noise</span>
+    <span class="k">if</span> <span class="n">snr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">snr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">snr</span><span class="p">)</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span>
+    <span class="c1"># Read observations</span>
+    <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span> <span class="o">=</span> <span class="n">read_observations</span><span class="p">(</span><span class="n">obs_fname</span><span class="p">,</span> <span class="n">start_norm</span><span class="p">,</span> <span class="n">end_norm</span><span class="p">)</span>
+
+    <span class="n">flux_obs</span> <span class="o">=</span> <span class="n">flux_obs</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">flux_obs</span><span class="p">)</span>
+    <span class="c1"># Clean for cosmic rays</span>
+    <span class="n">med</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">flux_obs</span><span class="p">)</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">mad</span><span class="p">(</span><span class="n">flux_obs</span><span class="p">)</span>
+    <span class="n">flux_clean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flux_obs</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">med</span> <span class="o">+</span> <span class="p">(</span><span class="n">sig</span> <span class="o">*</span> <span class="mf">3.0</span><span class="p">)),</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">med</span><span class="p">)</span>
+    <span class="n">flux_obs</span> <span class="o">=</span> <span class="n">flux_clean</span>
+
+    <span class="c1"># Normalization process</span>
+    <span class="n">pol_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">fit_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">pol_fit</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">condition</span> <span class="o">=</span> <span class="n">flux_obs</span> <span class="o">-</span> <span class="n">fit_line</span><span class="p">(</span><span class="n">wave_obs</span><span class="p">)</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">cont_wl</span> <span class="o">=</span> <span class="n">wave_obs</span><span class="p">[</span><span class="n">condition</span><span class="p">]</span>
+        <span class="n">cont_fl</span> <span class="o">=</span> <span class="n">flux_obs</span><span class="p">[</span><span class="n">condition</span><span class="p">]</span>
+        <span class="n">pol_fit_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">cont_wl</span><span class="p">,</span> <span class="n">cont_fl</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fit_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">pol_fit_new</span><span class="p">)</span>
+
+    <span class="n">new_flux</span> <span class="o">=</span> <span class="n">flux_obs</span> <span class="o">/</span> <span class="n">fit_line</span><span class="p">(</span><span class="n">wave_obs</span><span class="p">)</span>
+    <span class="c1"># Cut to original region</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">wave_obs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">wave_obs</span> <span class="o">&gt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wave_obs</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">])))]</span>
+    <span class="n">new_flux</span> <span class="o">=</span> <span class="n">new_flux</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">wave_obs</span> <span class="o">&gt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wave_obs</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">])))]</span>
+
+    <span class="c1"># This plot is silent</span>
+    <span class="k">if</span> <span class="n">plot</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;raw spectrum&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cont_points_wl</span><span class="p">,</span> <span class="n">cont_points_fl</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Wavelength $\AA</span><span class="si">{}</span><span class="s1">$&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Normalized flux&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">start_norm</span><span class="p">,</span> <span class="n">end_norm</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave</span><span class="p">,</span> <span class="n">new_flux</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;normalized&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Wavelength $\AA</span><span class="si">{}</span><span class="s1">$&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Normalized flux&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">wave</span><span class="p">,</span> <span class="n">new_flux</span><span class="p">,</span> <span class="n">delta_l</span></div>
+
+
+<div class="viewcode-block" id="read_observations"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.read_observations">[docs]</a><span class="k">def</span> <span class="nf">read_observations</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">start_synth</span><span class="p">,</span> <span class="n">end_synth</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read observed spectrum of different types and return wavelength and flux.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname : filename of the spectrum. These are the approved formats: &#39;.dat&#39;, &#39;.txt&#39;,</span>
+<span class="sd">    &#39;.spec&#39;, &#39;.fits&#39;.</span>
+<span class="sd">    start_synth : starting wavelength where the observed spectrum is cut</span>
+<span class="sd">    end_synth : ending wavelength where the observed spectrum is cut</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    wave_obs : raw observed wavelength</span>
+<span class="sd">    flux_obs : raw observed flux</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">extension</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;.spec&#39;</span><span class="p">,</span> <span class="s1">&#39;.fits&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">extension</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fname</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.dat&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">fname</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.txt&#39;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="p">(</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">())</span>  <span class="c1"># skip header</span>
+                <span class="n">wave</span><span class="p">,</span> <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">fname</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.fits&#39;</span><span class="p">:</span>
+            <span class="n">hdulist</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+            <span class="k">if</span> <span class="s1">&#39;PRODCATG&#39;</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+                <span class="c1"># ESO Product</span>
+                <span class="k">if</span> <span class="n">eso_fits</span><span class="p">(</span><span class="n">hdulist</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">wave</span><span class="p">,</span> <span class="n">flux</span> <span class="o">=</span> <span class="n">eso_fits</span><span class="p">(</span><span class="n">hdulist</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s1">&#39;CRVAL1&#39;</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+                <span class="c1"># Only 1-D spectrum accepted.</span>
+                <span class="n">flux</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>  <span class="c1"># flux data in the primary</span>
+                <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="n">start_wave</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;CRVAL1&#39;</span><span class="p">]</span>  <span class="c1"># initial wavelenght</span>
+                <span class="c1"># step = header[&#39;CD1_1&#39;] # step in wavelenght</span>
+                <span class="n">step</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;CDELT1&#39;</span><span class="p">]</span>  <span class="c1"># increment per pixel</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">start_wave</span> <span class="o">+</span> <span class="n">step</span> <span class="o">*</span> <span class="n">n</span>
+                <span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">start_wave</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectrum is not in acceptable format.&#39;</span><span class="p">)</span>
+                <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span>
+
+        <span class="c1"># These types are produced by FASMA (fits format).</span>
+        <span class="k">elif</span> <span class="n">fname</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.spec&#39;</span><span class="p">:</span>
+            <span class="n">hdulist</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">hdulist</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">flux</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;flux&#39;</span><span class="p">]</span>
+            <span class="n">wave</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span>
+        <span class="c1"># Cut observations to the intervals of the synthesis</span>
+        <span class="n">delta_l</span> <span class="o">=</span> <span class="n">wave</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">wave</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">wave_obs</span> <span class="o">=</span> <span class="n">wave</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">wave</span> <span class="o">&gt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">start_synth</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wave</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">end_synth</span><span class="p">)))</span>
+        <span class="p">]</span>
+        <span class="n">flux_obs</span> <span class="o">=</span> <span class="n">flux</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">wave</span> <span class="o">&gt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">start_synth</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wave</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">end_synth</span><span class="p">)))</span>
+        <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectrum is not in acceptable format. Convert to ascii or fits.&#39;</span><span class="p">)</span>
+        <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wave_obs</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="n">delta_l</span></div>
+
+
+<div class="viewcode-block" id="read_obs_intervals"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.read_obs_intervals">[docs]</a><span class="k">def</span> <span class="nf">read_obs_intervals</span><span class="p">(</span><span class="n">obs_fname</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">snr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read only the spectral chunks from the observed spectrum and normalize</span>
+<span class="sd">    the regions.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname : filename of the spectrum.</span>
+<span class="sd">    r : ranges of wavelength intervals where the observed spectrum is cut</span>
+<span class="sd">    (starting and ending wavelength)</span>
+<span class="sd">    snr: signal-to-noise</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    xobs : observed normalized wavelength</span>
+<span class="sd">    yobs : observed normalized flux</span>
+<span class="sd">    delta_l : wavelenghth spacing</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">lol</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># This is here for no reason. Just for fun</span>
+    <span class="c1"># Obtain the normalized spectrum for all regions</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">[</span><span class="n">local_norm</span><span class="p">(</span><span class="n">obs_fname</span><span class="p">,</span> <span class="n">ri</span><span class="p">,</span> <span class="n">snr</span><span class="p">,</span> <span class="n">lol</span><span class="p">)</span> <span class="k">for</span> <span class="n">ri</span> <span class="ow">in</span> <span class="n">r</span><span class="p">]</span>
+    <span class="n">xobs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">yobs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">delta_l</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">yobs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: Flux contains 0 values.&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SNR: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">snr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">xobs</span><span class="p">,</span> <span class="n">yobs</span><span class="p">,</span> <span class="n">delta_l</span></div>
+
+
+<div class="viewcode-block" id="plot"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.plot">[docs]</a><span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="n">xobs</span><span class="p">,</span> <span class="n">yobs</span><span class="p">,</span> <span class="n">xinit</span><span class="p">,</span> <span class="n">yinit</span><span class="p">,</span> <span class="n">xfinal</span><span class="p">,</span> <span class="n">yfinal</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function to plot synthetic and observed spectra.</span>
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    xobs : observed wavelength</span>
+<span class="sd">    yobs : observed flux</span>
+<span class="sd">    xinit : synthetic wavelength with initial parameters</span>
+<span class="sd">    yinit : synthetic flux with initial parameters</span>
+<span class="sd">    xfinal : synthetic wavelength with final parameters</span>
+<span class="sd">    yfinal : synthetic flux with final parameters</span>
+<span class="sd">    res: Flag to plot residuals</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    plots</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># if nothing exists, pass</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">xobs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">xinit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="c1"># if there is not observed spectrum, plot only synthetic</span>
+    <span class="k">if</span> <span class="n">xobs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xinit</span><span class="p">,</span> <span class="n">yinit</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;synthetic&#39;</span><span class="p">)</span>
+    <span class="c1"># if all exist</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xinit</span><span class="p">,</span> <span class="n">yinit</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;initial synthetic&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xobs</span><span class="p">,</span> <span class="n">yobs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">xfinal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xfinal</span><span class="p">,</span> <span class="n">yfinal</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;final synthetic&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="n">sl</span> <span class="o">=</span> <span class="n">InterpolatedUnivariateSpline</span><span class="p">(</span><span class="n">xfinal</span><span class="p">,</span> <span class="n">yfinal</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ymodel</span> <span class="o">=</span> <span class="n">sl</span><span class="p">(</span><span class="n">xobs</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xobs</span><span class="p">,</span> <span class="p">(</span><span class="n">yobs</span> <span class="o">-</span> <span class="n">ymodel</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;residuals x10&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Wavelength $\AA</span><span class="si">{}</span><span class="s1">$&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Normalized flux&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="snr"><a class="viewcode-back" href="../../source/index.html#FASMA.observations.snr">[docs]</a><span class="k">def</span> <span class="nf">snr</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Calculate SNR using for various intervals.</span>
+<span class="sd">    Input</span>
+<span class="sd">    ----</span>
+<span class="sd">    fname : spectrum</span>
+<span class="sd">    plot : plot snr fit</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    snr : snr value averaged from the continuum intervals</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="kn">from</span> <span class="nn">PyAstronomy</span> <span class="kn">import</span> <span class="n">pyasl</span>
+
+    <span class="k">def</span> <span class="nf">sub_snr</span><span class="p">(</span><span class="n">snr_region</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Measure the SNR on a small interval</span>
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        interval : list</span>
+<span class="sd">          Upper and lower limit on wavelength</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        SNR : float</span>
+<span class="sd">          The SNR in the small interval</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">snr_region</span>
+        <span class="n">wave_cut</span><span class="p">,</span> <span class="n">flux_cut</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">read_observations</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wave_cut</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">num_points</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Clean for cosmic rays</span>
+            <span class="n">med</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">flux_cut</span><span class="p">)</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">mad</span><span class="p">(</span><span class="n">flux_cut</span><span class="p">)</span>
+            <span class="n">flux_obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flux_cut</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">med</span> <span class="o">+</span> <span class="p">(</span><span class="n">sig</span> <span class="o">*</span> <span class="mf">3.0</span><span class="p">)),</span> <span class="n">flux_cut</span><span class="p">,</span> <span class="n">med</span><span class="p">)</span>
+            <span class="n">pol_fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">wave_cut</span><span class="p">,</span> <span class="n">flux_obs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">fit_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">pol_fit</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">flux_obs</span> <span class="o">-</span> <span class="n">fit_line</span><span class="p">(</span><span class="n">wave_cut</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">sig</span>
+                <span class="n">cont_points_wl</span> <span class="o">=</span> <span class="n">wave_cut</span><span class="p">[</span><span class="n">condition</span><span class="p">]</span>
+                <span class="n">cont_points_fl</span> <span class="o">=</span> <span class="n">flux_obs</span><span class="p">[</span><span class="n">condition</span><span class="p">]</span>
+            <span class="n">num_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cont_points_fl</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_points</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">snrEstimate</span> <span class="o">=</span> <span class="n">pyasl</span><span class="o">.</span><span class="n">estimateSNR</span><span class="p">(</span>
+                <span class="n">cont_points_wl</span><span class="p">,</span> <span class="n">cont_points_fl</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">controlPlot</span><span class="o">=</span><span class="n">plot</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">snrEstimate</span><span class="p">[</span><span class="s2">&quot;SNR-Estimate&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="c1"># These regions are relatively free from absorption.</span>
+    <span class="n">snr_regions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="mi">5744</span><span class="p">,</span> <span class="mi">5746</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6048</span><span class="p">,</span> <span class="mi">6052</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6068</span><span class="p">,</span> <span class="mi">6076</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6682</span><span class="p">,</span> <span class="mi">6686</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6649</span><span class="p">,</span> <span class="mi">6652</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">6614</span><span class="p">,</span> <span class="mi">6616</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">5438.5</span><span class="p">,</span> <span class="mi">5440</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">5449.5</span><span class="p">,</span> <span class="mi">5051</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">5458</span><span class="p">,</span> <span class="mf">5459.25</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">5498.3</span><span class="p">,</span> <span class="mi">5500</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">5541.5</span><span class="p">,</span> <span class="mf">5542.5</span><span class="p">],</span>
+    <span class="p">]</span>
+
+    <span class="n">snr</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_snr</span><span class="p">(</span><span class="n">snr_region</span><span class="p">)</span> <span class="k">for</span> <span class="n">snr_region</span> <span class="ow">in</span> <span class="n">snr_regions</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">snr</span><span class="p">):</span>
+        <span class="n">snr</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr</span> <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">snr_clean</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">snr</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
+        <span class="n">snr_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">snr_clean</span><span class="p">)</span>
+        <span class="n">snr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">snr_total</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">snr</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FASMA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../FASMA.tests.html">FASMA.tests package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, FASMA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

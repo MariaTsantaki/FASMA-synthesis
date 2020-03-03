@@ -1,0 +1,536 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FASMA.synthetic &#8212; FASMA 2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for FASMA.synthetic</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf8 -*-</span>
+
+<span class="c1"># My imports</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">astropy.io</span> <span class="kn">import</span> <span class="n">fits</span>
+
+
+<div class="viewcode-block" id="save_synth_spec"><a class="viewcode-back" href="../../source/index.html#FASMA.synthetic.save_synth_spec">[docs]</a><span class="k">def</span> <span class="nf">save_synth_spec</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Save synthetic spectrum of all intervals</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    ----</span>
+<span class="sd">    x : ndarray</span>
+<span class="sd">      Wavelength</span>
+<span class="sd">    y : ndarray</span>
+<span class="sd">      Flux</span>
+<span class="sd">    initial : list</span>
+<span class="sd">      Set of parameters to name the new file, else it is named &#39;synthetic.spec&#39;.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname fits file</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Create header</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Header</span><span class="p">()</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;CRVAL1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;CDELT1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">initial</span><span class="p">:</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;resolution&#39;</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s1">&#39;.spec&#39;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;synthetic.spec&#39;</span>
+
+    <span class="n">tbhdu</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">BinTableHDU</span><span class="o">.</span><span class="n">from_columns</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">fits</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;wavelength&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">x</span><span class="p">),</span>
+            <span class="n">fits</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">y</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tbhdu</span><span class="o">.</span><span class="n">writeto</span><span class="p">(</span><span class="s1">&#39;results/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Synthetic spectrum saved: results/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="broadening"><a class="viewcode-back" href="../../source/index.html#FASMA.synthetic.broadening">[docs]</a><span class="k">def</span> <span class="nf">broadening</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">vsini</span><span class="p">,</span> <span class="n">vmac</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.60</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;This function broadens the given data using velocity kernels,</span>
+<span class="sd">    e.g. instrumental profile, vsini and vmac.</span>
+<span class="sd">    Based on http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html</span>
+<span class="sd">    Input</span>
+<span class="sd">    ----</span>
+<span class="sd">    x : ndarray</span>
+<span class="sd">      wavelength</span>
+<span class="sd">    y : ndarray</span>
+<span class="sd">      flux</span>
+<span class="sd">    resolution : float</span>
+<span class="sd">      Instrumental resolution (lambda /delta lambda)</span>
+<span class="sd">    vsini : float</span>
+<span class="sd">      vsini in km/s</span>
+<span class="sd">    vmac : float</span>
+<span class="sd">      vmac in km/s</span>
+<span class="sd">    epsilon : limb-darkening parameter</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    -----</span>
+<span class="sd">    y_broad : ndarray</span>
+<span class="sd">      Broadened flux</span>
+<span class="sd">    x : ndarray</span>
+<span class="sd">      Same wavelength</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="kn">from</span> <span class="nn">PyAstronomy</span> <span class="kn">import</span> <span class="n">pyasl</span>
+    <span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">fftconvolve</span>
+    <span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">quad</span>
+
+    <span class="k">def</span> <span class="nf">instrumental_profile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">resolution</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Inputs</span>
+<span class="sd">        -----</span>
+<span class="sd">        x, y : The abscissa and ordinate of the data.</span>
+<span class="sd">        sigma : The width (i.e., standard deviation) of the Gaussian profile</span>
+<span class="sd">        used in the convolution.</span>
+<span class="sd">        edgeHandling : None, &quot;firstlast&quot;. Determines the way edges will be</span>
+<span class="sd">        handled. If None, nothing will be done about it. If set to &quot;firstlast&quot;,</span>
+<span class="sd">        the spectrum will be extended by using the first and last value at the</span>
+<span class="sd">        start or end. Note that this is not necessarily appropriate.</span>
+<span class="sd">        The default is None.</span>
+<span class="sd">        maxsig : The extent of the broadening kernel in terms of standrad</span>
+<span class="sd">        deviations. By default, the Gaussian broadening kernel will be extended</span>
+<span class="sd">        over the entire given spectrum, which can cause slow evaluation in the</span>
+<span class="sd">        case of large spectra. A reasonable choice could, e.g., be five.</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        -----</span>
+<span class="sd">        y_inst : convolved flux</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Deal with zero or None values seperately</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">resolution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">resolution</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">y_inst</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y_inst</span> <span class="o">=</span> <span class="n">pyasl</span><span class="o">.</span><span class="n">instrBroadGaussFast</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">edgeHandling</span><span class="o">=</span><span class="s2">&quot;firstlast&quot;</span><span class="p">,</span> <span class="n">fullout</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">maxsig</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">y_inst</span>
+
+    <span class="k">def</span> <span class="nf">vsini_broadening</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">vsini</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply rotational broadening to a spectrum assuming a linear limb darkening</span>
+<span class="sd">        law. The adopted limb darkening law is the linear one, parameterize by the</span>
+<span class="sd">        linear limb darkening parameter: epsilon = 0.6.</span>
+<span class="sd">        The effect of rotational broadening on the spectrum is</span>
+<span class="sd">        wavelength dependent, because the Doppler shift depends</span>
+<span class="sd">        on wavelength. This function neglects this dependence, which</span>
+<span class="sd">        is weak if the wavelength range is not too large.</span>
+<span class="sd">        Code from: http://www.phoebe-project.org/2.0/</span>
+<span class="sd">        .. note:: numpy.convolve is used to carry out the convolution</span>
+<span class="sd">              and &quot;mode = same&quot; is used. Therefore, the output</span>
+<span class="sd">              will be of the same size as the input, but it</span>
+<span class="sd">              will show edge effects.</span>
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        wvl : The wavelength</span>
+<span class="sd">        flux : The flux</span>
+<span class="sd">        epsilon : Linear limb-darkening coefficient (0-1).</span>
+<span class="sd">        vsini : Projected rotational velocity in km/s.</span>
+<span class="sd">        effWvl : The wavelength at which the broadening kernel is evaluated.</span>
+<span class="sd">        If not specified, the mean wavelength of the input will be used.</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        y_rot : convolved flux</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">vsini</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">y_rot</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y_rot</span> <span class="o">=</span> <span class="n">pyasl</span><span class="o">.</span><span class="n">rotBroad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">vsini</span><span class="p">,</span> <span class="n">edgeHandling</span><span class="o">=</span><span class="s1">&#39;firstlast&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y_rot</span>
+
+    <span class="k">def</span> <span class="nf">vmacro_kernel</span><span class="p">(</span><span class="n">dlam</span><span class="p">,</span> <span class="n">Ar</span><span class="p">,</span> <span class="n">At</span><span class="p">,</span> <span class="n">Zr</span><span class="p">,</span> <span class="n">Zt</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Macroturbulent velocity kernel.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">dlam</span><span class="p">[</span><span class="n">dlam</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-8</span>
+        <span class="k">if</span> <span class="n">Zr</span> <span class="o">!=</span> <span class="n">Zt</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="mi">2</span>
+                        <span class="o">*</span> <span class="n">Ar</span>
+                        <span class="o">*</span> <span class="n">idlam</span>
+                        <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">Zr</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="o">*</span> <span class="n">quad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Zr</span> <span class="o">/</span> <span class="n">idlam</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="mi">2</span>
+                        <span class="o">*</span> <span class="n">At</span>
+                        <span class="o">*</span> <span class="n">idlam</span>
+                        <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">Zt</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="o">*</span> <span class="n">quad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Zt</span> <span class="o">/</span> <span class="n">idlam</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">idlam</span> <span class="ow">in</span> <span class="n">dlam</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">(</span>
+                        <span class="mi">2</span> <span class="o">*</span> <span class="n">Ar</span> <span class="o">*</span> <span class="n">idlam</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">Zr</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">At</span> <span class="o">*</span> <span class="n">idlam</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">Zt</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">*</span> <span class="n">quad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">u</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Zr</span> <span class="o">/</span> <span class="n">idlam</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">idlam</span> <span class="ow">in</span> <span class="n">dlam</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">vmac_broadening</span><span class="p">(</span><span class="n">wave</span><span class="p">,</span> <span class="n">flux</span><span class="p">,</span> <span class="n">vmacro_rad</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Apply macroturbulent broadening.</span>
+<span class="sd">        The macroturbulent kernel is defined as in [Gray2005].</span>
+<span class="sd">        These functions are taken from iSpec (Blanco-Cuaresma et al. 2014)</span>
+
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        :parameter wave: Wavelength of the spectrum</span>
+<span class="sd">        :parameter flux: Flux of the spectrum</span>
+<span class="sd">        :parameter vmacro_rad: macroturbulent broadening, radial component</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        y_mac : broadened flux</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># radial component is equal to the tangential component</span>
+        <span class="n">vmacro_tan</span> <span class="o">=</span> <span class="n">vmacro_rad</span>
+        <span class="k">if</span> <span class="n">vmacro_rad</span> <span class="o">==</span> <span class="n">vmacro_tan</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">flux</span>
+
+        <span class="c1"># Define central wavelength</span>
+        <span class="n">lambda0</span> <span class="o">=</span> <span class="p">(</span><span class="n">wave</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">wave</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">vmac_rad</span> <span class="o">=</span> <span class="n">vmacro_rad</span> <span class="o">/</span> <span class="p">(</span><span class="mf">299792458.0</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">*</span> <span class="n">lambda0</span>
+        <span class="n">vmac_tan</span> <span class="o">=</span> <span class="n">vmac_rad</span>
+
+        <span class="c1"># Make sure the wavelength range is equidistant before applying the</span>
+        <span class="c1"># convolution</span>
+        <span class="n">delta_wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">wave</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">range_wave</span> <span class="o">=</span> <span class="n">wave</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span>
+        <span class="n">n_wave</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">range_wave</span> <span class="o">/</span> <span class="n">delta_wave</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">wave_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">wave</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wave</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_wave</span><span class="p">)</span>
+        <span class="n">flux_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wave_</span><span class="p">,</span> <span class="n">wave</span><span class="p">,</span> <span class="n">flux</span><span class="p">)</span>
+        <span class="n">dwave</span> <span class="o">=</span> <span class="n">wave_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">wave_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_kernel</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">vmac_rad</span><span class="p">,</span> <span class="n">vmac_tan</span><span class="p">)</span> <span class="o">/</span> <span class="n">dwave</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_kernel</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">n_kernel</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># The kernel might be of too low resolution, or the the wavelength range</span>
+        <span class="c1"># might be too narrow. In both cases, raise an appropriate error</span>
+        <span class="k">if</span> <span class="n">n_kernel</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;Spectrum resolution too low for macroturbulent broadening&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">n_kernel</span> <span class="o">&gt;</span> <span class="n">n_wave</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;Spectrum range too narrow for macroturbulent broadening&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="c1"># Construct the broadening kernel</span>
+        <span class="n">wave_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_kernel</span><span class="p">)</span> <span class="o">*</span> <span class="n">dwave</span>
+        <span class="n">wave_k</span> <span class="o">-=</span> <span class="n">wave_k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">vmacro_kernel</span><span class="p">(</span><span class="n">wave_k</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">vmac_rad</span><span class="p">,</span> <span class="n">vmac_tan</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+
+        <span class="n">flux_conv</span> <span class="o">=</span> <span class="n">fftconvolve</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">flux_</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+        <span class="c1"># And interpolate the results back on to the original wavelength array,</span>
+        <span class="c1"># taking care of even vs. odd-length kernels</span>
+        <span class="k">if</span> <span class="n">n_kernel</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">dwave</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wave</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">wave_</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">flux_conv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">flux</span>
+
+    <span class="c1"># vmac broadening</span>
+    <span class="n">y_mac</span> <span class="o">=</span> <span class="n">vmac_broadening</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">vmacro_rad</span><span class="o">=</span><span class="n">vmac</span><span class="p">)</span>
+    <span class="c1"># vsini broadening</span>
+    <span class="n">y_rot</span> <span class="o">=</span> <span class="n">vsini_broadening</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_mac</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">vsini</span><span class="p">)</span>
+    <span class="c1"># Instrumental broadening</span>
+    <span class="n">y_inst</span> <span class="o">=</span> <span class="n">instrumental_profile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_rot</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y_inst</span></div>
+
+
+<span class="k">def</span> <span class="nf">_read_raw_moog</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s1">&#39;summary.out&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read the summary.out and return them</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    fname : str (default: summary.out)</span>
+<span class="sd">      Filename of the output file from MOOG from summary_out</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    wavelenth : ndarray</span>
+<span class="sd">      The wavelenth vector</span>
+<span class="sd">    flux : ndarray</span>
+<span class="sd">      The flux vector</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">itertools</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;summary.out&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">start_wave</span><span class="p">,</span> <span class="n">end_wave</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">flux_step</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="n">flux</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">flux</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">flux</span>
+
+    <span class="n">w0</span><span class="p">,</span> <span class="n">dw</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">start_wave</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">step</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w0</span> <span class="o">+</span> <span class="n">dw</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">flux</span>
+
+
+<div class="viewcode-block" id="read_linelist"><a class="viewcode-back" href="../../source/index.html#FASMA.synthetic.read_linelist">[docs]</a><span class="k">def</span> <span class="nf">read_linelist</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">intname</span><span class="o">=</span><span class="s1">&#39;intervals.lst&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read the line list (atomic data) and the file which includes the ranges</span>
+<span class="sd">    where the synthesis will happen.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname : str</span>
+<span class="sd">      File that contains the linelist</span>
+<span class="sd">    intname : str</span>
+<span class="sd">      File that contains the intervals</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    ranges : wavelength ranges of the linelist</span>
+<span class="sd">    atomic : atomic data</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">fname</span><span class="p">,</span>
+        <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span>
+        <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+        <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;wl&#39;</span><span class="p">,</span> <span class="s1">&#39;elem&#39;</span><span class="p">,</span> <span class="s1">&#39;excit&#39;</span><span class="p">,</span> <span class="s1">&#39;loggf&#39;</span><span class="p">,</span> <span class="s1">&#39;vdwaals&#39;</span><span class="p">,</span> <span class="s1">&#39;Do&#39;</span><span class="p">],</span>
+        <span class="n">converters</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;Do&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">),</span>
+            <span class="s1">&#39;vdwaals&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;wl&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">intervals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">intname</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">],</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">ranges</span> <span class="o">=</span> <span class="n">intervals</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">atomic</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">intervals</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[(</span><span class="n">lines</span><span class="o">.</span><span class="n">wl</span> <span class="o">&gt;</span> <span class="n">ri</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">wl</span> <span class="o">&lt;</span> <span class="n">ri</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="n">atomic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">N</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">atomic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">atomic</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Linelist contains </span><span class="si">%s</span><span class="s1"> lines in </span><span class="si">%s</span><span class="s1"> intervals&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ranges</span><span class="p">)))</span>
+
+    <span class="c1"># Create line list for MOOG</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%10.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.2f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%7.4s</span><span class="s1">&#39;</span><span class="p">]</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;Wavelength     ele       EP      loggf   vdwaals   Do&#39;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s1">&#39;linelist.moog&#39;</span><span class="p">,</span> <span class="n">atomic</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">atomic</span></div>
+
+
+<div class="viewcode-block" id="read_linelist_elem"><a class="viewcode-back" href="../../source/index.html#FASMA.synthetic.read_linelist_elem">[docs]</a><span class="k">def</span> <span class="nf">read_linelist_elem</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">element</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">intname</span><span class="o">=</span><span class="s1">&#39;intervals_elements.lst&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Read the line list (atomic data) and the file which includes the ranges</span>
+<span class="sd">    where the synthesis will happen for the element abundances.</span>
+
+<span class="sd">    Input</span>
+<span class="sd">    -----</span>
+<span class="sd">    fname : str</span>
+<span class="sd">      File that contains the linelist</span>
+<span class="sd">    element : str</span>
+<span class="sd">      The element to be searched in the line list</span>
+<span class="sd">    intname : str</span>
+<span class="sd">      File that contains the central line where -+2.0 \AA{} are added to create</span>
+<span class="sd">      the interval around each line.</span>
+
+<span class="sd">    Output</span>
+<span class="sd">    ------</span>
+<span class="sd">    ranges : wavelength ranges of the linelist</span>
+<span class="sd">    atomic : atomic data</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">intname</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;The interval list is not in the correct place!&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Line list:&#39;</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Intervals list:&#39;</span><span class="p">,</span> <span class="n">intname</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">fname</span><span class="p">,</span>
+        <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span>
+        <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+        <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;wl&#39;</span><span class="p">,</span> <span class="s1">&#39;elem&#39;</span><span class="p">,</span> <span class="s1">&#39;excit&#39;</span><span class="p">,</span> <span class="s1">&#39;loggf&#39;</span><span class="p">,</span> <span class="s1">&#39;vdwaals&#39;</span><span class="p">,</span> <span class="s1">&#39;Do&#39;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;wl&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">intname</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;El&#39;</span><span class="p">,</span> <span class="s1">&#39;wave&#39;</span><span class="p">],</span>
+        <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">intervals</span><span class="p">[</span><span class="s1">&#39;El&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intervals</span><span class="p">[</span><span class="s1">&#39;El&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;I&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The format of the line list is not correct.&#39;</span><span class="p">)</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="n">intervals</span><span class="p">[</span><span class="n">intervals</span><span class="p">[</span><span class="s1">&#39;El&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">element</span><span class="p">]</span>
+    <span class="n">intervals</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;wave&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ranges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">atomic</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([])</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="p">[[</span><span class="n">intervals</span><span class="o">.</span><span class="n">wave</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">intervals</span><span class="o">.</span><span class="n">wave</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">intervals</span><span class="o">.</span><span class="n">wave</span><span class="p">):</span>
+        <span class="n">r1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ri</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ri</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span>
+        <span class="n">previous</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">r1</span> <span class="o">&lt;=</span> <span class="n">previous</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">previous</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">previous</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">r2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">merged</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">])</span>
+        <span class="n">ranges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">ri</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">[:]:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[(</span><span class="n">lines</span><span class="o">.</span><span class="n">wl</span> <span class="o">&gt;</span> <span class="n">ri</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">wl</span> <span class="o">&lt;</span> <span class="n">ri</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="n">atomic</span> <span class="o">=</span> <span class="n">atomic</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">N</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+    <span class="n">atomic</span> <span class="o">=</span> <span class="n">atomic</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="n">atomic</span> <span class="o">=</span> <span class="n">atomic</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+    <span class="n">atomic</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;wl&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="c1"># Create line list for MOOG</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Linelist contains </span><span class="si">%s</span><span class="s1"> lines in </span><span class="si">%s</span><span class="s1"> interval(s).&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">merged</span><span class="p">)))</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%10.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.2f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%9.3f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%7.4s</span><span class="s1">&#39;</span><span class="p">]</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;Wavelength     ele       EP      loggf   vdwaals   Do&#39;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s1">&#39;linelist.moog&#39;</span><span class="p">,</span> <span class="n">atomic</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">merged</span><span class="p">,</span> <span class="n">atomic</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FASMA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../FASMA.tests.html">FASMA.tests package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, FASMA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

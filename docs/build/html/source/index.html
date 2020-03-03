@@ -5,18 +5,17 @@
   <head>
     <meta charset="utf-8" />
     <title>FASMA documentation &#8212; FASMA 2.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="FASMA.tests package" href="FASMA.tests.html" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -41,14 +40,6 @@
 <div class="section" id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="FASMA.tests.html">FASMA.tests package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="FASMA.tests.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="FASMA.tests.html#module-FASMA.tests.test_FASMA">FASMA.tests.test_FASMA module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="FASMA.tests.html#module-FASMA.tests">Module contents</a></li>
-</ul>
-</li>
-</ul>
 </div>
 </div>
 <div class="section" id="module-FASMA.fasma">
@@ -58,7 +49,7 @@
 <span id="fasma-interpolation-module"></span><h2>FASMA.interpolation module<a class="headerlink" href="#module-FASMA.interpolation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="FASMA.interpolation.interpolator">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">elem=False</em>, <em class="sig-param">save=True</em>, <em class="sig-param">atmtype='apogee_kurucz'</em>, <em class="sig-param">result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#interpolator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">elem=False</em>, <em class="sig-param">save=True</em>, <em class="sig-param">atmtype='apogee_kurucz'</em>, <em class="sig-param">result=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#interpolator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to connect all. For a given set of params, return a model atmosphere.</p>
 <dl class="simple">
 <dt>params<span class="classifier">list of length 3</span></dt><dd><p>Teff, logg, [Fe/H].</p>
@@ -82,7 +73,7 @@
 
 <dl class="function">
 <dt id="FASMA.interpolation.interpolator_kurucz">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator_kurucz</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">atmtype='apogee_kurucz'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#interpolator_kurucz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator_kurucz" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator_kurucz</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">atmtype='apogee_kurucz'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#interpolator_kurucz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator_kurucz" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolation for Kurucz model atmospheres.
 Input
 —–
@@ -98,7 +89,7 @@ params : ndarray</p>
 
 <dl class="function">
 <dt id="FASMA.interpolation.interpolator_marcs">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator_marcs</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">fesun=7.47</em>, <em class="sig-param">microlim=3.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#interpolator_marcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator_marcs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">interpolator_marcs</code><span class="sig-paren">(</span><em class="sig-param">params</em>, <em class="sig-param">fesun=7.47</em>, <em class="sig-param">microlim=3.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#interpolator_marcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.interpolator_marcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolation for marcs models. The function is taken from STEPAR
 (Tabernero et al. 2019) to deal the gaps in the grid.
 Input
@@ -115,7 +106,7 @@ params : ndarray</p>
 
 <dl class="function">
 <dt id="FASMA.interpolation.read_model">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">read_model</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#read_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.read_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">read_model</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#read_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.read_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read the KURUCZ model atmosphere.</p>
 <dl class="simple">
 <dt>fname<span class="classifier">str</span></dt><dd><p>The gz file of the model atmosphere.</p>
@@ -129,7 +120,7 @@ params : ndarray</p>
 
 <dl class="function">
 <dt id="FASMA.interpolation.save_model">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">save_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">params</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">elem=False</em>, <em class="sig-param">type='apogee_kurucz'</em>, <em class="sig-param">fout='out.atm'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#save_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.save_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">save_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">params</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">elem=False</em>, <em class="sig-param">type='apogee_kurucz'</em>, <em class="sig-param">fout='out.atm'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#save_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.save_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the model atmosphere in the right format.</p>
 <dl class="simple">
 <dt>model<span class="classifier">ndarray</span></dt><dd><p>The interpolated model atmosphere.</p>
@@ -150,7 +141,7 @@ params : ndarray</p>
 
 <dl class="function">
 <dt id="FASMA.interpolation.solar_abundance">
-<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">solar_abundance</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/interpolation.html#solar_abundance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.solar_abundance" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.interpolation.</code><code class="sig-name descname">solar_abundance</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/interpolation.html#solar_abundance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.interpolation.solar_abundance" title="Permalink to this definition">¶</a></dt>
 <dd><p>For a given atomic number, return solar abundance from Asplund et al. 2009.</p>
 <dl class="simple">
 <dt>element<span class="classifier">str</span></dt><dd><p>The name of an element</p>
@@ -169,12 +160,12 @@ params : ndarray</p>
 <span id="fasma-minimization-module"></span><h2>FASMA.minimization module<a class="headerlink" href="#module-FASMA.minimization" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="FASMA.minimization.MinimizeSynth">
-<em class="property">class </em><code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">MinimizeSynth</code><span class="sig-paren">(</span><em class="sig-param">p0</em>, <em class="sig-param">xobs</em>, <em class="sig-param">yobs</em>, <em class="sig-param">ranges</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">MinimizeSynth</code><span class="sig-paren">(</span><em class="sig-param">p0</em>, <em class="sig-param">xobs</em>, <em class="sig-param">yobs</em>, <em class="sig-param">ranges</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Minimize the chi square function between a synthetic spectrum to an observed.</p>
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.bounds">
-<code class="sig-name descname">bounds</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.bounds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">bounds</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to check if parameters during minimization are within bounds.
 Input
 —–
@@ -184,7 +175,7 @@ i: the index of the bounds we want to check.</p>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.convergence_info">
-<code class="sig-name descname">convergence_info</code><span class="sig-paren">(</span><em class="sig-param">res</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.convergence_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.convergence_info" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">convergence_info</code><span class="sig-paren">(</span><em class="sig-param">res</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.convergence_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.convergence_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Information on convergence from mpfit function. All values greater
 than zero can represent success (however status == 5 may indicate failure
 to converge).
@@ -203,25 +194,25 @@ stellar parameters or abundances with their errors</p>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.exclude_bad_points">
-<code class="sig-name descname">exclude_bad_points</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.exclude_bad_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.exclude_bad_points" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">exclude_bad_points</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.exclude_bad_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.exclude_bad_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to exclude points from the spectrum, e.g. lines which are not
 in line list by comparing observations with the best synthetic model.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.minimize">
-<code class="sig-name descname">minimize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.minimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.minimize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">minimize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.minimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.minimize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to glue the minimization together. Set the minimization options here.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.minimizeElement">
-<code class="sig-name descname">minimizeElement</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.minimizeElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.minimizeElement" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">minimizeElement</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.minimizeElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.minimizeElement" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.myfunct">
-<code class="sig-name descname">myfunct</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.myfunct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.myfunct" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">myfunct</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.myfunct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.myfunct" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function that returns the weighted deviates (to be minimized).</p>
 <dl class="simple">
 <dt>p<span class="classifier">list</span></dt><dd><p>Parameters to be minimized</p>
@@ -235,7 +226,7 @@ in line list by comparing observations with the best synthetic model.</p>
 
 <dl class="method">
 <dt id="FASMA.minimization.MinimizeSynth.parinfo_limit">
-<code class="sig-name descname">parinfo_limit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#MinimizeSynth.parinfo_limit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.parinfo_limit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">parinfo_limit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#MinimizeSynth.parinfo_limit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.MinimizeSynth.parinfo_limit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Smart way to calculate the bounds of each of parameters depending on
 the grid of model atmospheres.</p>
 </dd></dl>
@@ -244,7 +235,7 @@ the grid of model atmospheres.</p>
 
 <dl class="function">
 <dt id="FASMA.minimization.getMac">
-<code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">getMac</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#getMac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.getMac" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">getMac</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#getMac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.getMac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate macroturbulence.
 For hotter dwarfs: Doyle et al. 2014
 5200 &lt; teff &lt; 6400 K
@@ -255,7 +246,7 @@ For subgiants and giants (logg &lt; 3.80 dex): Hekker &amp; Melendez 2007</p>
 
 <dl class="function">
 <dt id="FASMA.minimization.getMic">
-<code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">getMic</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em>, <em class="sig-param">feh</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/minimization.html#getMic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.getMic" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.minimization.</code><code class="sig-name descname">getMic</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em>, <em class="sig-param">feh</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/minimization.html#getMic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.minimization.getMic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate microturbulence.</p>
 </dd></dl>
 
@@ -679,13 +670,13 @@ Converted from Numeric to numpy (Sergey Koposov, July 2008)</p>
 </div></blockquote>
 <dl class="class">
 <dt id="FASMA.mpfit.machar">
-<em class="property">class </em><code class="sig-prename descclassname">FASMA.mpfit.</code><code class="sig-name descname">machar</code><span class="sig-paren">(</span><em class="sig-param">double=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#machar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.machar" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">FASMA.mpfit.</code><code class="sig-name descname">machar</code><span class="sig-paren">(</span><em class="sig-param">double=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#machar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.machar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="FASMA.mpfit.mpfit">
-<em class="property">class </em><code class="sig-prename descclassname">FASMA.mpfit.</code><code class="sig-name descname">mpfit</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">xall=None</em>, <em class="sig-param">functkw={}</em>, <em class="sig-param">parinfo=None</em>, <em class="sig-param">ftol=1e-10</em>, <em class="sig-param">xtol=1e-10</em>, <em class="sig-param">gtol=1e-10</em>, <em class="sig-param">damp=0.0</em>, <em class="sig-param">maxiter=200</em>, <em class="sig-param">factor=100.0</em>, <em class="sig-param">nprint=1</em>, <em class="sig-param">iterfunct='default'</em>, <em class="sig-param">iterkw={}</em>, <em class="sig-param">nocovar=0</em>, <em class="sig-param">rescale=0</em>, <em class="sig-param">autoderivative=1</em>, <em class="sig-param">quiet=0</em>, <em class="sig-param">diag=None</em>, <em class="sig-param">epsfcn=None</em>, <em class="sig-param">debug=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">FASMA.mpfit.</code><code class="sig-name descname">mpfit</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">xall=None</em>, <em class="sig-param">functkw={}</em>, <em class="sig-param">parinfo=None</em>, <em class="sig-param">ftol=1e-10</em>, <em class="sig-param">xtol=1e-10</em>, <em class="sig-param">gtol=1e-10</em>, <em class="sig-param">damp=0.0</em>, <em class="sig-param">maxiter=200</em>, <em class="sig-param">factor=100.0</em>, <em class="sig-param">nprint=1</em>, <em class="sig-param">iterfunct='default'</em>, <em class="sig-param">iterkw={}</em>, <em class="sig-param">nocovar=0</em>, <em class="sig-param">rescale=0</em>, <em class="sig-param">autoderivative=1</em>, <em class="sig-param">quiet=0</em>, <em class="sig-param">diag=None</em>, <em class="sig-param">epsfcn=None</em>, <em class="sig-param">debug=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="attribute">
 <dt id="FASMA.mpfit.mpfit.blas_enorm32">
@@ -699,52 +690,52 @@ Converted from Numeric to numpy (Sergey Koposov, July 2008)</p>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.calc_covar">
-<code class="sig-name descname">calc_covar</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">ipvt=None</em>, <em class="sig-param">tol=1e-14</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.calc_covar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.calc_covar" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_covar</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">ipvt=None</em>, <em class="sig-param">tol=1e-14</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.calc_covar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.calc_covar" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.call">
-<code class="sig-name descname">call</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">functkw</em>, <em class="sig-param">fjac=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.call" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">call</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">functkw</em>, <em class="sig-param">fjac=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.call" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.defiter">
-<code class="sig-name descname">defiter</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">iter</em>, <em class="sig-param">fnorm=None</em>, <em class="sig-param">functkw=None</em>, <em class="sig-param">quiet=0</em>, <em class="sig-param">iterstop=None</em>, <em class="sig-param">parinfo=None</em>, <em class="sig-param">format=None</em>, <em class="sig-param">pformat='%.10g'</em>, <em class="sig-param">dof=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.defiter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.defiter" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">defiter</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">iter</em>, <em class="sig-param">fnorm=None</em>, <em class="sig-param">functkw=None</em>, <em class="sig-param">quiet=0</em>, <em class="sig-param">iterstop=None</em>, <em class="sig-param">parinfo=None</em>, <em class="sig-param">format=None</em>, <em class="sig-param">pformat='%.10g'</em>, <em class="sig-param">dof=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.defiter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.defiter" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.enorm">
-<code class="sig-name descname">enorm</code><span class="sig-paren">(</span><em class="sig-param">vec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.enorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.enorm" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">enorm</code><span class="sig-paren">(</span><em class="sig-param">vec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.enorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.enorm" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.fdjac2">
-<code class="sig-name descname">fdjac2</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">fvec</em>, <em class="sig-param">step=None</em>, <em class="sig-param">ulimited=None</em>, <em class="sig-param">ulimit=None</em>, <em class="sig-param">dside=None</em>, <em class="sig-param">epsfcn=None</em>, <em class="sig-param">autoderivative=1</em>, <em class="sig-param">functkw=None</em>, <em class="sig-param">xall=None</em>, <em class="sig-param">ifree=None</em>, <em class="sig-param">dstep=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.fdjac2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.fdjac2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fdjac2</code><span class="sig-paren">(</span><em class="sig-param">fcn</em>, <em class="sig-param">x</em>, <em class="sig-param">fvec</em>, <em class="sig-param">step=None</em>, <em class="sig-param">ulimited=None</em>, <em class="sig-param">ulimit=None</em>, <em class="sig-param">dside=None</em>, <em class="sig-param">epsfcn=None</em>, <em class="sig-param">autoderivative=1</em>, <em class="sig-param">functkw=None</em>, <em class="sig-param">xall=None</em>, <em class="sig-param">ifree=None</em>, <em class="sig-param">dstep=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.fdjac2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.fdjac2" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.lmpar">
-<code class="sig-name descname">lmpar</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">ipvt</em>, <em class="sig-param">diag</em>, <em class="sig-param">qtb</em>, <em class="sig-param">delta</em>, <em class="sig-param">x</em>, <em class="sig-param">sdiag</em>, <em class="sig-param">par=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.lmpar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.lmpar" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">lmpar</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">ipvt</em>, <em class="sig-param">diag</em>, <em class="sig-param">qtb</em>, <em class="sig-param">delta</em>, <em class="sig-param">x</em>, <em class="sig-param">sdiag</em>, <em class="sig-param">par=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.lmpar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.lmpar" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.parinfo">
-<code class="sig-name descname">parinfo</code><span class="sig-paren">(</span><em class="sig-param">parinfo=None</em>, <em class="sig-param">key='a'</em>, <em class="sig-param">default=None</em>, <em class="sig-param">n=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.parinfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.parinfo" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">parinfo</code><span class="sig-paren">(</span><em class="sig-param">parinfo=None</em>, <em class="sig-param">key='a'</em>, <em class="sig-param">default=None</em>, <em class="sig-param">n=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.parinfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.parinfo" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.qrfac">
-<code class="sig-name descname">qrfac</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">pivot=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.qrfac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.qrfac" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">qrfac</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">pivot=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.qrfac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.qrfac" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.qrsolv">
-<code class="sig-name descname">qrsolv</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">ipvt</em>, <em class="sig-param">diag</em>, <em class="sig-param">qtb</em>, <em class="sig-param">sdiag</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.qrsolv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.qrsolv" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">qrsolv</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">ipvt</em>, <em class="sig-param">diag</em>, <em class="sig-param">qtb</em>, <em class="sig-param">sdiag</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.qrsolv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.qrsolv" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="FASMA.mpfit.mpfit.tie">
-<code class="sig-name descname">tie</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">ptied=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/mpfit.html#mpfit.tie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.tie" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">tie</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">ptied=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/mpfit.html#mpfit.tie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.mpfit.mpfit.tie" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -754,7 +745,7 @@ Converted from Numeric to numpy (Sergey Koposov, July 2008)</p>
 <span id="fasma-observations-module"></span><h2>FASMA.observations module<a class="headerlink" href="#module-FASMA.observations" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="FASMA.observations.eso_fits">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">eso_fits</code><span class="sig-paren">(</span><em class="sig-param">hdulist</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#eso_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.eso_fits" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">eso_fits</code><span class="sig-paren">(</span><em class="sig-param">hdulist</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#eso_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.eso_fits" title="Permalink to this definition">¶</a></dt>
 <dd><p>A little demo utility to illustrate the ESO SDP 1D spectrum file format.
 2017-Aug-08, archive(at)eso.org
 The ESO 1D spectral format is compliant with the IVOA Spectrum data model.
@@ -769,7 +760,7 @@ flux : raw observed flux</p>
 
 <dl class="function">
 <dt id="FASMA.observations.local_norm">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">local_norm</code><span class="sig-paren">(</span><em class="sig-param">obs_fname</em>, <em class="sig-param">r</em>, <em class="sig-param">snr</em>, <em class="sig-param">lol=1.0</em>, <em class="sig-param">plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#local_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.local_norm" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">local_norm</code><span class="sig-paren">(</span><em class="sig-param">obs_fname</em>, <em class="sig-param">r</em>, <em class="sig-param">snr</em>, <em class="sig-param">lol=1.0</em>, <em class="sig-param">plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#local_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.local_norm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Very local Normalization function. Makes a linear fit from the maximum points
 of each segment.
 Input
@@ -784,13 +775,13 @@ delta_l : wavelenghth spacing</p>
 
 <dl class="function">
 <dt id="FASMA.observations.mad">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">mad</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">axis=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#mad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.mad" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">mad</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">axis=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#mad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.mad" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to calculate the median average deviation.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="FASMA.observations.plot">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">xobs</em>, <em class="sig-param">yobs</em>, <em class="sig-param">xinit</em>, <em class="sig-param">yinit</em>, <em class="sig-param">xfinal</em>, <em class="sig-param">yfinal</em>, <em class="sig-param">res=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">xobs</em>, <em class="sig-param">yobs</em>, <em class="sig-param">xinit</em>, <em class="sig-param">yinit</em>, <em class="sig-param">xfinal</em>, <em class="sig-param">yfinal</em>, <em class="sig-param">res=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to plot synthetic and observed spectra.
 Input
 —–
@@ -806,7 +797,7 @@ res: Flag to plot residuals</p>
 
 <dl class="function">
 <dt id="FASMA.observations.read_obs_intervals">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">read_obs_intervals</code><span class="sig-paren">(</span><em class="sig-param">obs_fname</em>, <em class="sig-param">r</em>, <em class="sig-param">snr=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#read_obs_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.read_obs_intervals" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">read_obs_intervals</code><span class="sig-paren">(</span><em class="sig-param">obs_fname</em>, <em class="sig-param">r</em>, <em class="sig-param">snr=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#read_obs_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.read_obs_intervals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read only the spectral chunks from the observed spectrum and normalize
 the regions.
 Input
@@ -822,7 +813,7 @@ delta_l : wavelenghth spacing</p>
 
 <dl class="function">
 <dt id="FASMA.observations.read_observations">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">read_observations</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">start_synth</em>, <em class="sig-param">end_synth</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#read_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.read_observations" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">read_observations</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">start_synth</em>, <em class="sig-param">end_synth</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#read_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.read_observations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read observed spectrum of different types and return wavelength and flux.
 Input
 —–
@@ -836,7 +827,7 @@ flux_obs : raw observed flux</p>
 
 <dl class="function">
 <dt id="FASMA.observations.snr">
-<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">snr</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/observations.html#snr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.snr" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.observations.</code><code class="sig-name descname">snr</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/observations.html#snr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.observations.snr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate SNR using for various intervals.
 Input
 —-
@@ -853,39 +844,39 @@ plot : plot snr fit</p>
 <span id="fasma-synthdriver-module"></span><h2>FASMA.synthDriver module<a class="headerlink" href="#module-FASMA.synthDriver" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="FASMA.synthDriver.FASMA">
-<em class="property">class </em><code class="sig-prename descclassname">FASMA.synthDriver.</code><code class="sig-name descname">FASMA</code><span class="sig-paren">(</span><em class="sig-param">cfgfile='config.yml'</em>, <em class="sig-param">overwrite=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">FASMA.synthDriver.</code><code class="sig-name descname">FASMA</code><span class="sig-paren">(</span><em class="sig-param">cfgfile='config.yml'</em>, <em class="sig-param">overwrite=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.configure">
-<code class="sig-name descname">configure</code><span class="sig-paren">(</span><em class="sig-param">cfgfile='config.yml'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.configure" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">configure</code><span class="sig-paren">(</span><em class="sig-param">cfgfile='config.yml'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.configure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create configuration file from kwargs.
 Otherwise set to default.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.minizationElementRunner">
-<code class="sig-name descname">minizationElementRunner</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.minizationElementRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.minizationElementRunner" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">minizationElementRunner</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.minizationElementRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.minizationElementRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to run the minimization routine for element abundances.</p>
 <p>params : output parameters</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.minizationRunner">
-<code class="sig-name descname">minizationRunner</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.minizationRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.minizationRunner" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">minizationRunner</code><span class="sig-paren">(</span><em class="sig-param">p=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.minizationRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.minizationRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to run the minimization routine</p>
 <p>params : output parameters</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.plotRunner">
-<code class="sig-name descname">plotRunner</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xs=None</em>, <em class="sig-param">ys=None</em>, <em class="sig-param">xf=None</em>, <em class="sig-param">yf=None</em>, <em class="sig-param">res=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.plotRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.plotRunner" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plotRunner</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xs=None</em>, <em class="sig-param">ys=None</em>, <em class="sig-param">xf=None</em>, <em class="sig-param">yf=None</em>, <em class="sig-param">res=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.plotRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.plotRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to plot spectra with or without residuals.</p>
 <p>plots</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.result">
-<code class="sig-name descname">result</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.result" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">result</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.result" title="Permalink to this definition">¶</a></dt>
 <dd><p>If any, get the output parameters.</p>
 <p>status : if None, no minimization happened</p>
 <p>params : output parameters in dictionary</p>
@@ -893,7 +884,7 @@ Otherwise set to default.</p>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.saveRunner">
-<code class="sig-name descname">saveRunner</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.saveRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.saveRunner" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">saveRunner</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.saveRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.saveRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to save spectra in a fits like format in the results/ folder.
 If initial spectrum exists, save it.</p>
 <p>saved spectrum</p>
@@ -901,7 +892,7 @@ If initial spectrum exists, save it.</p>
 
 <dl class="method">
 <dt id="FASMA.synthDriver.FASMA.synthdriver">
-<code class="sig-name descname">synthdriver</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthDriver.html#FASMA.synthdriver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.synthdriver" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">synthdriver</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthDriver.html#FASMA.synthdriver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthDriver.FASMA.synthdriver" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to connect all. This function applies the options set by
 the user in the config.yml file.</p>
 </dd></dl>
@@ -913,7 +904,7 @@ the user in the config.yml file.</p>
 <span id="fasma-synthetic-module"></span><h2>FASMA.synthetic module<a class="headerlink" href="#module-FASMA.synthetic" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="FASMA.synthetic.broadening">
-<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">broadening</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">vsini</em>, <em class="sig-param">vmac</em>, <em class="sig-param">resolution=None</em>, <em class="sig-param">epsilon=0.6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthetic.html#broadening"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.broadening" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">broadening</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">vsini</em>, <em class="sig-param">vmac</em>, <em class="sig-param">resolution=None</em>, <em class="sig-param">epsilon=0.6</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthetic.html#broadening"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.broadening" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function broadens the given data using velocity kernels,
 e.g. instrumental profile, vsini and vmac.
 Based on <a class="reference external" href="http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html">http://www.hs.uni-hamburg.de/DE/Ins/Per/Czesla/PyA/PyA/pyaslDoc/aslDoc/broadening.html</a>
@@ -944,7 +935,7 @@ x : ndarray</p>
 
 <dl class="function">
 <dt id="FASMA.synthetic.read_linelist">
-<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">read_linelist</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">intname='intervals.lst'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthetic.html#read_linelist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.read_linelist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">read_linelist</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">intname='intervals.lst'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthetic.html#read_linelist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.read_linelist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read the line list (atomic data) and the file which includes the ranges
 where the synthesis will happen.</p>
 <dl class="simple">
@@ -959,7 +950,7 @@ atomic : atomic data</p>
 
 <dl class="function">
 <dt id="FASMA.synthetic.read_linelist_elem">
-<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">read_linelist_elem</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">element=None</em>, <em class="sig-param">intname='intervals_elements.lst'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthetic.html#read_linelist_elem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.read_linelist_elem" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">read_linelist_elem</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">element=None</em>, <em class="sig-param">intname='intervals_elements.lst'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthetic.html#read_linelist_elem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.read_linelist_elem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read the line list (atomic data) and the file which includes the ranges
 where the synthesis will happen for the element abundances.</p>
 <dl class="simple">
@@ -977,7 +968,7 @@ atomic : atomic data</p>
 
 <dl class="function">
 <dt id="FASMA.synthetic.save_synth_spec">
-<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">save_synth_spec</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">initial=None</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/synthetic.html#save_synth_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.save_synth_spec" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.synthetic.</code><code class="sig-name descname">save_synth_spec</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">initial=None</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/synthetic.html#save_synth_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.synthetic.save_synth_spec" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save synthetic spectrum of all intervals</p>
 <dl class="simple">
 <dt>x<span class="classifier">ndarray</span></dt><dd><p>Wavelength</p>
@@ -995,7 +986,7 @@ atomic : atomic data</p>
 <span id="fasma-utils-module"></span><h2>FASMA.utils module<a class="headerlink" href="#module-FASMA.utils" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="FASMA.utils.GetModels">
-<em class="property">class </em><code class="sig-prename descclassname">FASMA.utils.</code><code class="sig-name descname">GetModels</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em>, <em class="sig-param">feh</em>, <em class="sig-param">atmtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/utils.html#GetModels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">FASMA.utils.</code><code class="sig-name descname">GetModels</code><span class="sig-paren">(</span><em class="sig-param">teff</em>, <em class="sig-param">logg</em>, <em class="sig-param">feh</em>, <em class="sig-param">atmtype</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/utils.html#GetModels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Find the names of the closest grid points for a given effective
 temperature, surface gravity, and iron abundance (proxy for metallicity).</p>
@@ -1011,7 +1002,7 @@ temperature, surface gravity, and iron abundance (proxy for metallicity).</p>
 </dl>
 <dl class="method">
 <dt id="FASMA.utils.GetModels.getmodels">
-<code class="sig-name descname">getmodels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/utils.html#GetModels.getmodels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels.getmodels" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">getmodels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/utils.html#GetModels.getmodels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels.getmodels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the atmosphere models surrounding the requested atmospheric
 parameters. This function should be called before using the interpolation
 code within FASMA.</p>
@@ -1032,7 +1023,7 @@ to them.</p>
 
 <dl class="method">
 <dt id="FASMA.utils.GetModels.neighbour">
-<code class="sig-name descname">neighbour</code><span class="sig-paren">(</span><em class="sig-param">arr</em>, <em class="sig-param">val</em>, <em class="sig-param">k=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/utils.html#GetModels.neighbour"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels.neighbour" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">neighbour</code><span class="sig-paren">(</span><em class="sig-param">arr</em>, <em class="sig-param">val</em>, <em class="sig-param">k=2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/utils.html#GetModels.neighbour"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.GetModels.neighbour" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the K surrounding neighbours of an array, given a certain value.</p>
 <dl class="simple">
 <dt>arr<span class="classifier">array_like</span></dt><dd><p>The array from which some neighbours should be found (assumed sorted).</p>
@@ -1052,7 +1043,7 @@ to them.</p>
 
 <dl class="function">
 <dt id="FASMA.utils.fun_moog_synth">
-<code class="sig-prename descclassname">FASMA.utils.</code><code class="sig-name descname">fun_moog_synth</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">atmtype</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">par='batch.par'</em>, <em class="sig-param">ranges=None</em>, <em class="sig-param">results='summary.out'</em>, <em class="sig-param">driver='synth'</em>, <em class="sig-param">version=2014</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FASMA/utils.html#fun_moog_synth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.fun_moog_synth" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">FASMA.utils.</code><code class="sig-name descname">fun_moog_synth</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">atmtype</em>, <em class="sig-param">abund=0.0</em>, <em class="sig-param">par='batch.par'</em>, <em class="sig-param">ranges=None</em>, <em class="sig-param">results='summary.out'</em>, <em class="sig-param">driver='synth'</em>, <em class="sig-param">version=2014</em>, <em class="sig-param">**options</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/FASMA/utils.html#fun_moog_synth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#FASMA.utils.fun_moog_synth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run MOOG and create synthetic spectrum for the synth driver.
 :x: A tuple/list with values (teff, logg, [Fe/H], vt, vmic, vmac)
 :atmtype: model atmosphere
@@ -1075,7 +1066,7 @@ to them.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="#">FASMA</a></h1>
+<h1 class="logo"><a href="../index.html">FASMA</a></h1>
 
 
 
@@ -1086,21 +1077,20 @@ to them.</p>
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="FASMA.tests.html">FASMA.tests package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FASMA.tests.html">FASMA.tests package</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
-  <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="FASMA.tests.html" title="next chapter">FASMA.tests package</a></li>
+  <li><a href="../index.html">Documentation overview</a><ul>
   </ul></li>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
+    <form class="search" action="../search.html" method="get">
       <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
@@ -1127,7 +1117,7 @@ to them.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/index.rst.txt"
+      <a href="../_sources/source/index.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

@@ -1,0 +1,542 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FASMA.minimization &#8212; FASMA 2.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for FASMA.minimization</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf8 -*-</span>
+
+<span class="c1"># My imports</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">.mpfit</span> <span class="kn">import</span> <span class="n">mpfit</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;TkAgg&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<div class="viewcode-block" id="MinimizeSynth"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth">[docs]</a><span class="k">class</span> <span class="nc">MinimizeSynth</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;Minimize the chi square function between a synthetic spectrum to an observed.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">xobs</span><span class="p">,</span> <span class="n">yobs</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        p0 : list</span>
+<span class="sd">        Initial parameters (teff, logg, feh, vt, vmac, vsini)</span>
+<span class="sd">        xobs : ndarray</span>
+<span class="sd">        Observed wavelength</span>
+<span class="sd">        yobs : ndarray</span>
+<span class="sd">        Observed flux</span>
+<span class="sd">        ranges : ndarray</span>
+<span class="sd">        ranges of the intervals</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">p0</span> <span class="o">=</span> <span class="n">p0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span> <span class="o">=</span> <span class="n">xobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span> <span class="o">=</span> <span class="n">yobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="n">ranges</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elem</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_obserr</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># arbitary value, the error of the flux</span>
+        <span class="c1"># Set which values are fixed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_teff</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_teff&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_logg</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_logg&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_feh</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_feh&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_vt</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_vt&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_vmac</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_vmac&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_vsini</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fix_vsini&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="MinimizeSynth.parinfo_limit"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.parinfo_limit">[docs]</a>    <span class="k">def</span> <span class="nf">parinfo_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Smart way to calculate the bounds of each of parameters depending on</span>
+<span class="sd">        the grid of model atmospheres.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3500</span><span class="p">,</span> <span class="mi">30000</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;marcs&#39;</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3500</span><span class="p">,</span> <span class="mi">7500</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">bounds</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.bounds"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.bounds">[docs]</a>    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Function to check if parameters during minimization are within bounds.</span>
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        p: parameter we want to check;</span>
+<span class="sd">        i: the index of the bounds we want to check.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;apogee_kurucz&#39;</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3500</span><span class="p">,</span> <span class="mi">30000</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">9.99</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">99.9</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;marcs&#39;</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3500</span><span class="p">,</span> <span class="mi">7500</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">9.99</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">99.9</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">&lt;</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="n">p</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">p</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+            <span class="n">p</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.convergence_info"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.convergence_info">[docs]</a>    <span class="k">def</span> <span class="nf">convergence_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Information on convergence from mpfit function. All values greater</span>
+<span class="sd">        than zero can represent success (however status == 5 may indicate failure</span>
+<span class="sd">        to converge).</span>
+<span class="sd">        If the fit is unweighted (i.e. no errors were given, or the weights</span>
+<span class="sd">        were uniformly set to unity), then .perror will probably not represent</span>
+<span class="sd">        the true parameter uncertainties.</span>
+<span class="sd">        *If* you can assume that the true reduced chi-squared value is unity --</span>
+<span class="sd">        meaning that the fit is implicitly assumed to be of good quality --</span>
+<span class="sd">        then the estimated parameter uncertainties can be computed by scaling</span>
+<span class="sd">        .perror by the measured chi-squared value.</span>
+
+<span class="sd">        Input</span>
+<span class="sd">        -----</span>
+<span class="sd">        res : ndarray</span>
+<span class="sd">        the result of the mpfit function</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        ------</span>
+<span class="sd">        parameters : ndarray</span>
+<span class="sd">        stellar parameters or abundances with their errors</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="o">-</span><span class="mi">16</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : A parameter or function value has become infinite or an undefined number.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="o">-</span><span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : MYFUNCT or iterfunct functions return to terminate the fitting process. &#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : Improper input parameters.&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : Both actual and predicted relative reductions in the sum of squares are at most ftol.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : Relative error between two consecutive iterates is at most xtol.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : Conditions for status = 1 and status = 2 both hold.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : The maximum number of iterations has been reached.&#39;</span>
+                <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : ftol is too small.&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : xtol is too small.&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;status = </span><span class="si">%s</span><span class="s1"> : gtol is too small.&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+
+        <span class="n">xreduced</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">res</span><span class="o">.</span><span class="n">fnorm</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dof</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Iterations: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">niter</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Value of the summed squared residuals: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">res</span><span class="o">.</span><span class="n">fnorm</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reduced chi squared: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">xreduced</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Fitted parameters with uncertainties:&#39;</span><span class="p">)</span>
+        <span class="c1"># scaled uncertainties</span>
+        <span class="n">pcerror</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">perror</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fnorm</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dof</span><span class="p">)</span>
+        <span class="c1"># This should separate elements from parameters</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">teff</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">logg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">feh</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">vt</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">vmac</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">vsini</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">5</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># scaled error</span>
+            <span class="n">erteff</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">erlogg</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">erfeh</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">ervt</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">ervmac</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">ervsini</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="mi">5</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># Save only the scaled error</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">teff</span><span class="p">,</span>
+                <span class="n">erteff</span><span class="p">,</span>
+                <span class="n">logg</span><span class="p">,</span>
+                <span class="n">erlogg</span><span class="p">,</span>
+                <span class="n">feh</span><span class="p">,</span>
+                <span class="n">erfeh</span><span class="p">,</span>
+                <span class="n">vt</span><span class="p">,</span>
+                <span class="n">ervt</span><span class="p">,</span>
+                <span class="n">vmac</span><span class="p">,</span>
+                <span class="n">ervmac</span><span class="p">,</span>
+                <span class="n">vsini</span><span class="p">,</span>
+                <span class="n">ervsini</span><span class="p">,</span>
+                <span class="n">xreduced</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\t</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> +- </span><span class="si">%s</span><span class="s2"> (scaled error +- </span><span class="si">%s</span><span class="s2">)&quot;</span>
+                    <span class="o">%</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;parname&#39;</span><span class="p">],</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">perror</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">abund</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">erabund</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pcerror</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="c1"># Save only the scaled error</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">abund</span><span class="p">,</span> <span class="n">erabund</span><span class="p">,</span> <span class="n">xreduced</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\t</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> +- </span><span class="si">%s</span><span class="s2"> (scaled error +- </span><span class="si">%s</span><span class="s2">)&quot;</span>
+                    <span class="o">%</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;parname&#39;</span><span class="p">],</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">perror</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">pcerror</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">parameters</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.myfunct"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.myfunct">[docs]</a>    <span class="k">def</span> <span class="nf">myfunct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Function that returns the weighted deviates (to be minimized).</span>
+
+<span class="sd">        Input</span>
+<span class="sd">        ----</span>
+<span class="sd">        p : list</span>
+<span class="sd">          Parameters to be minimized</span>
+
+<span class="sd">        Output</span>
+<span class="sd">        -----</span>
+<span class="sd">        (y-ymodel)/err : ndarray</span>
+<span class="sd">          Model deviation from observation</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">fun_moog_synth</span> <span class="k">as</span> <span class="n">func</span>
+        <span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">InterpolatedUnivariateSpline</span>
+
+        <span class="n">options</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;options&#39;</span><span class="p">]</span>
+
+        <span class="c1"># minimize for element abundance</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">]:</span>
+            <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">p0</span><span class="p">,</span>
+                <span class="n">atmtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">abund</span><span class="o">=</span><span class="n">p</span><span class="p">,</span>
+                <span class="n">elem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">elem</span><span class="p">,</span>
+                <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;synth&#39;</span><span class="p">,</span>
+                <span class="n">ranges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">options</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;    [&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elem</span> <span class="o">+</span> <span class="s1">&#39;/H]: </span><span class="si">{:1.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">))</span>
+
+        <span class="c1"># minimize for stellar parameters</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Check if parameters are within bounds</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s1">&#39;    Teff:</span><span class="si">{:8.1f}</span><span class="s1">   logg: </span><span class="si">{:1.2f}</span><span class="s1">   [Fe/H]: </span><span class="si">{:1.2f}</span><span class="s1">   vt: </span><span class="si">{:1.2f}</span><span class="s1">   vmac: </span><span class="si">{:1.2f}</span><span class="s1">   vsini: </span><span class="si">{:1.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">p</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span>
+                <span class="n">p</span><span class="p">,</span> <span class="n">atmtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;synth&#39;</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span>
+            <span class="p">)</span>
+
+        <span class="n">sl</span> <span class="o">=</span> <span class="n">InterpolatedUnivariateSpline</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span> <span class="o">=</span> <span class="n">sl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">)</span>
+        <span class="c1"># Check if interpolation is done correctly</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: Check overlapping intervals.&#39;</span><span class="p">)</span>
+        <span class="c1"># Error on the flux</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_obserr</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Print parameters at each function call</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">status</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yobs</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span><span class="p">)</span> <span class="o">/</span> <span class="n">err</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.exclude_bad_points"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.exclude_bad_points">[docs]</a>    <span class="k">def</span> <span class="nf">exclude_bad_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Function to exclude points from the spectrum, e.g. lines which are not</span>
+<span class="sd">        in line list by comparing observations with the best synthetic model.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">delta_y</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yobs_lpts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">delta_y</span> <span class="o">&lt;</span> <span class="mf">0.03</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span> <span class="o">&lt;</span> <span class="mf">0.99</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xobs_lpts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">delta_y</span> <span class="o">&lt;</span> <span class="mf">0.03</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ymodel</span> <span class="o">&lt;</span> <span class="mf">0.99</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs_lpts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs_lpts</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.minimize"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.minimize">[docs]</a>    <span class="k">def</span> <span class="nf">minimize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Function to glue the minimization together. Set the minimization options here.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Set PARINFO structure for all free parameters for mpfit</span>
+        <span class="c1"># The limits are also cheched by the bounds function</span>
+        <span class="n">teff_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;Teff&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">1</span><span class="p">]],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_teff</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">logg_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;logg&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">3</span><span class="p">]],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_logg</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">feh_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;[Fe/H]&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">4</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parinfo_limit</span><span class="p">()[</span><span class="mi">5</span><span class="p">]],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_feh</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">vt_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;vt&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">9.99</span><span class="p">],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_vt</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">vmac_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;vmac&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_vmac</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">vsini_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="s1">&#39;vsini&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;limited&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="s1">&#39;limits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">99.0</span><span class="p">],</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>
+            <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;fixed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_vsini</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span> <span class="o">=</span> <span class="p">[</span><span class="n">teff_info</span><span class="p">,</span> <span class="n">logg_info</span><span class="p">,</span> <span class="n">feh_info</span><span class="p">,</span> <span class="n">vt_info</span><span class="p">,</span> <span class="n">vmac_info</span><span class="p">,</span> <span class="n">vsini_info</span><span class="p">]</span>
+
+        <span class="c1"># A dictionary which contains the parameters to be passed to the user-supplied function specified by myfunct.</span>
+        <span class="c1"># This is the way you can pass additional data to your user-supplied function without using global variables.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fa</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;xobs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">,</span>
+            <span class="s1">&#39;ranges&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">,</span>
+            <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="s1">&#39;yobs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">,</span>
+            <span class="s1">&#39;y_obserr&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_obserr</span><span class="p">,</span>
+            <span class="s1">&#39;options&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">mpfit</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">myfunct</span><span class="p">,</span>
+            <span class="n">xall</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p0</span><span class="p">,</span>
+            <span class="n">parinfo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span><span class="p">,</span>
+            <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">xtol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">functkw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fa</span><span class="p">,</span>
+            <span class="n">maxiter</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dof</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convergence_info</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="c1"># Prepare observations for the next iteration because of the refine option.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;refine&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xobs_lpts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs_lpts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_bad_points</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xobs_lpts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs_lpts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs_lpts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs_lpts</span></div>
+
+<div class="viewcode-block" id="MinimizeSynth.minimizeElement"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.MinimizeSynth.minimizeElement">[docs]</a>    <span class="k">def</span> <span class="nf">minimizeElement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Initial value is the initial metallicity.</span>
+        <span class="n">pelem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># Set PARINFO structure for all free parameters for mpfit, Limits to be added..</span>
+        <span class="n">elem_info</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;parname&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">elem</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span> <span class="s1">&#39;mpside&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span> <span class="o">=</span> <span class="p">[</span><span class="n">elem_info</span><span class="p">]</span>
+
+        <span class="c1"># A dictionary which contains the parameters to be passed to the user-supplied function specified by myfunct.</span>
+        <span class="c1"># This is the way you can pass additional data to your user-supplied function without using global variables.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fa</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;xobs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">,</span>
+            <span class="s1">&#39;ranges&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">,</span>
+            <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="s1">&#39;yobs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">,</span>
+            <span class="s1">&#39;y_obserr&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_obserr</span><span class="p">,</span>
+            <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">p0</span><span class="p">,</span>
+            <span class="s1">&#39;element&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">elem</span><span class="p">,</span>
+            <span class="s1">&#39;options&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">mpfit</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">myfunct</span><span class="p">,</span>
+            <span class="n">xall</span><span class="o">=</span><span class="p">[</span><span class="n">pelem</span><span class="p">],</span>
+            <span class="n">parinfo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parinfo</span><span class="p">,</span>
+            <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">xtol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+            <span class="n">functkw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fa</span><span class="p">,</span>
+            <span class="n">maxiter</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dof</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yobs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convergence_info</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xobs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yobs</span></div></div>
+
+
+<div class="viewcode-block" id="getMic"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.getMic">[docs]</a><span class="k">def</span> <span class="nf">getMic</span><span class="p">(</span><span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">,</span> <span class="n">feh</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Calculate microturbulence.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">logg</span> <span class="o">&gt;=</span> <span class="mf">3.80</span><span class="p">:</span>  <span class="c1"># Dwarfs (Tsantaki et al. 2013)</span>
+        <span class="n">mic</span> <span class="o">=</span> <span class="p">(</span><span class="mf">6.932</span> <span class="o">*</span> <span class="n">teff</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)))</span> <span class="o">-</span> <span class="p">(</span><span class="mf">0.348</span> <span class="o">*</span> <span class="n">logg</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.437</span>
+        <span class="c1"># mic = 1.163 + (7.808 * (10**(-4)) * (teff - 5800.0)) - (0.494*(logg - 4.30)) - (0.050*feh)</span>
+    <span class="k">elif</span> <span class="n">logg</span> <span class="o">&lt;</span> <span class="mf">3.80</span><span class="p">:</span>  <span class="c1"># Giants (Adibekyan et al. 2015)</span>
+        <span class="n">mic</span> <span class="o">=</span> <span class="mf">2.72</span> <span class="o">-</span> <span class="p">(</span><span class="mf">0.457</span> <span class="o">*</span> <span class="n">logg</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.072</span> <span class="o">*</span> <span class="n">feh</span><span class="p">)</span>
+
+    <span class="c1"># Take care of negative values</span>
+    <span class="k">if</span> <span class="n">mic</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+        <span class="n">mic</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">mic</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="getMac"><a class="viewcode-back" href="../../source/index.html#FASMA.minimization.getMac">[docs]</a><span class="k">def</span> <span class="nf">getMac</span><span class="p">(</span><span class="n">teff</span><span class="p">,</span> <span class="n">logg</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Calculate macroturbulence.</span>
+<span class="sd">    For hotter dwarfs: Doyle et al. 2014</span>
+<span class="sd">    5200 &lt; teff &lt; 6400 K</span>
+<span class="sd">    4.0 &lt; logg &lt; 4.6 dex</span>
+<span class="sd">    For cooler dwarfs: Valenti et al. 2005</span>
+<span class="sd">    For subgiants and giants (logg &lt; 3.80 dex): Hekker &amp; Melendez 2007</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">logg</span> <span class="o">&gt;</span> <span class="mf">3.80</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">teff</span> <span class="o">&gt;</span> <span class="mi">5200</span><span class="p">:</span>
+            <span class="n">mac</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="mf">3.21</span>
+                <span class="o">+</span> <span class="p">(</span><span class="mf">2.33</span> <span class="o">*</span> <span class="p">(</span><span class="n">teff</span> <span class="o">-</span> <span class="mf">5777.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)))</span>
+                <span class="o">+</span> <span class="p">(</span><span class="mf">2.00</span> <span class="o">*</span> <span class="p">((</span><span class="n">teff</span> <span class="o">-</span> <span class="mf">5777.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span>
+                <span class="o">-</span> <span class="p">(</span><span class="mf">2.00</span> <span class="o">*</span> <span class="p">(</span><span class="n">logg</span> <span class="o">-</span> <span class="mf">4.44</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mac</span> <span class="o">=</span> <span class="mf">3.98</span> <span class="o">+</span> <span class="p">((</span><span class="n">teff</span> <span class="o">-</span> <span class="mf">5770.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">650.0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="mf">2.90</span> <span class="o">&lt;=</span> <span class="n">logg</span> <span class="o">&lt;=</span> <span class="mf">3.80</span><span class="p">:</span>  <span class="c1"># subgiants</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="o">-</span><span class="mf">8.426</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.00241</span> <span class="o">*</span> <span class="n">teff</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="mf">1.50</span> <span class="o">&lt;=</span> <span class="n">logg</span> <span class="o">&lt;</span> <span class="mf">2.90</span><span class="p">:</span>  <span class="c1"># giants</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.953</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.00195</span> <span class="o">*</span> <span class="n">teff</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">logg</span> <span class="o">&lt;</span> <span class="mf">1.50</span><span class="p">:</span>  <span class="c1"># bright giants</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.214</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.00158</span> <span class="o">*</span> <span class="n">teff</span><span class="p">)</span>
+
+    <span class="c1"># Take care of negative values</span>
+    <span class="k">if</span> <span class="n">mac</span> <span class="o">&lt;</span> <span class="mf">0.30</span><span class="p">:</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="mf">0.30</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">mac</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FASMA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../FASMA.tests.html">FASMA.tests package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, FASMA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
