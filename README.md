@@ -405,6 +405,11 @@ The `linelist.moog` contains the line list in the format readable by MOOG and `r
 
 The MOOG configuration file is `batch.par` and its options are set from the `config.yml` file.
 
+# Contributing
+
+FASMA needs input to improve. Users are welcome to ask questions, propose a new features, or report a bugs either by opening an issue on GitHub or contact here: tsantaki@arcetri.astro.it
+
+
 # AUTHORS
 
    * [M. Tsantaki](https://github.com/MariaTsantaki)
