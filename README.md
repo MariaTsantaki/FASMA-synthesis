@@ -10,7 +10,6 @@ FASMA delivers the atmospheric stellar parameters (effective temperature, surfac
 The python code runs with python 3 and is wrapped around the spectral synthesis package in fortran: [MOOG version 2019](http://www.as.utexas.edu/~chris/moog.html) (Sneden et al. 1973).
 
 The spectral synthesis technique requires model atmospheres for the calculation of the synthetic spectra by MOOG which is provided with FASMA. FASMA includes two grids of models in MOOG readable format, [Kurucz](http://research.iac.es/proyecto/ATLAS-APOGEE/) and [marcs](https://marcs.astro.uu.se/) that cover the parameter space for both dwarf and giant stars with metallicity limit of -5.0 dex.
-The instructions below are also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf).
 
 Contact here for bugs: tsantaki@arcetri.astro.it
 
@@ -404,6 +403,10 @@ The raw synthetic spectrum without any broadening created by MOOG is saved in `s
 The `linelist.moog` contains the line list in the format readable by MOOG and `result.out` is a summary of all the parameters used for the synthesis of the spectrum.
 
 The MOOG configuration file is `batch.par` and its options are set from the `config.yml` file.
+
+# Documentation
+
+This content is also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) as a manual for easy access. Moreover, we provide documentation on the functions at `FASMA/docs` where the user can build the documentation with `make html` .
 
 # Contributing
 
