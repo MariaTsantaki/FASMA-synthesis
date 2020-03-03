@@ -406,7 +406,7 @@ The MOOG configuration file is `batch.par` and its options are set from the `con
 
 # Documentation
 
-This content is also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) as a manual for easy access. Moreover, we provide documentation on the functions at `FASMA/docs` where the user can build the documentation with `make html` .
+This content is also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) as a manual for easy access. Moreover, we provide documentation on the functions at `docs` folder where the user can build the documentation with `make html` .
 
 # Contributing
 
