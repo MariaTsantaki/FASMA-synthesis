@@ -11,7 +11,7 @@ authors:
     orcid: 0000-0002-0552-2313
     affiliation: "1, 2"
   - name: Daniel Andreasen
-    affiliation: 2
+    affiliation: "2, 3"
   - name: Guilherme Teixeira
     affiliation: 2
 affiliations:
@@ -19,6 +19,8 @@ affiliations:
    index: 1
  - name: Instituto de Astrofísica e Ciências do Espa\c{c}o, Universidade do Porto, CAUP, Rua das Estrelas, Porto, 4150-762, Portugal
    index: 2
+ - name: Department of Molecular Medicine, Aarhus University Hospital, Aarhus, Denmark
+   index: 3
 date: 13 January 2020
 bibliography: paper.bib
 
