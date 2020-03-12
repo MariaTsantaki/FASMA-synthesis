@@ -7,7 +7,7 @@
 FASMA delivers the atmospheric stellar parameters (effective temperature, surface gravity, metallicity, microturbulence, macroturbulence, and rotational velocity) based on the spectral synthesis technique. The principle of this technique relies on the comparison of synthetic spectra with observations to yield the best-fit parameters under a &chi;<sup>2</sup> minimization process. FASMA 2.0 is now updated to deliver also chemical abundances of 13 elements (Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, and Ni).
 
 
-The python code runs with python 3 and is wrapped around the spectral synthesis package in fortran: [MOOG version 2019](http://www.as.utexas.edu/~chris/moog.html) (Sneden et al. 1973).
+The python code runs with python 3 and is wrapped around the spectral synthesis package in fortran: [MOOG version 2019](http://www.as.utexas.edu/~chris/moog.html) (Sneden et al. 1973) that we plan to update with the latest releases.
 
 The spectral synthesis technique requires model atmospheres for the calculation of the synthetic spectra by MOOG which is provided with FASMA. FASMA includes two grids of models in MOOG readable format, [Kurucz](http://research.iac.es/proyecto/ATLAS-APOGEE/) and [marcs](https://marcs.astro.uu.se/) that cover the parameter space for both dwarf and giant stars with metallicity limit of -5.0 dex.
 
