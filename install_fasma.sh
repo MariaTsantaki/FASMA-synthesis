@@ -3,9 +3,10 @@
 tar -zxvf FASMA/models/apogee_kurucz.tar.gz -C FASMA/models/
 tar -zxvf FASMA/models/marcs.tar.gz -C FASMA/models/
 echo "Atmosphere models installed in dir: models"
-wget https://github.com/MariaTsantaki/moog-without-sm/archive/master.zip -P FASMA/
-unzip FASMA/master.zip 
-mv FASMA/moog-without-sm-master FASMA/MOOG
+wget https://github.com/MariaTsantaki/moog-without-sm/archive/master.zip 
+unzip -q -o master.zip && mv moog-without-sm-master MOOG
+mv MOOG FASMA
+rm master.zip
 echo -n "Press the type of system you have: 'rh64', 'rh', 'maclap', 'macdesk' "
 read answer
 
