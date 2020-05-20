@@ -33,10 +33,11 @@ class TestAbundances(TestCase):
     def test_minimization(self):
         options = {'linelist':'../rawLinelist/linelist.lst',
         'intervals_file':'../rawLinelist/intervals.lst',
-        'resolution':115000, 'observations': '../spectra/Sun_HARPS.fits'}
+        'resolution':115000, 'observations': '../spectra/Sun_HARPS.fits',
+        'minimize': True, 'fix_vmac': True, 'fix_vt': True, 'refine': True}
         r = FASMA(**options)
         result = r.result()
-        self.assertTrue(result is None)
+        self.assertTrue(result is not None)
 
 
 if __name__ == '__main__':

@@ -408,6 +408,10 @@ The MOOG configuration file is `batch.par` and its options are set from the `con
 
 This content is also included [here](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/manual/Manual_fasma.pdf) as a manual for easy access. Moreover, we provide documentation on the functions at `docs` folder where the user can build the documentation with `make html` .
 
+# Testing
+
+There are some basic tests to check if the installation is correct in `FASMA/test` for the solar spectrum. Run ```python test_FASMA.py``` and check the output files for the expected solar parameters. 
+
 # Contributing
 
 FASMA needs input to improve. Users are welcome to ask questions, propose a new features, or report a bugs either by opening an issue on GitHub or contact here: tsantaki@arcetri.astro.it
