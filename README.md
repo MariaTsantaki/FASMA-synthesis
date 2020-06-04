@@ -1,5 +1,7 @@
 ![My image](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/img/running_icon.png)
 
+[![status](https://joss.theoj.org/papers/f7ccdb0ee866455b4565684d1407fe1f/status.svg)](https://joss.theoj.org/papers/f7ccdb0ee866455b4565684d1407fe1f)
+
 
 # FASMA 2.0
 **Stellar spectral analysis package.**
