@@ -1,6 +1,9 @@
 ![My image](https://github.com/MariaTsantaki/FASMA-synthesis/blob/master/img/running_icon.png)
 
 [![status](https://joss.theoj.org/papers/f7ccdb0ee866455b4565684d1407fe1f/status.svg)](https://joss.theoj.org/papers/f7ccdb0ee866455b4565684d1407fe1f)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3885291.svg)](https://doi.org/10.5281/zenodo.3885291)
+
+
 
 
 # FASMA 2.0
