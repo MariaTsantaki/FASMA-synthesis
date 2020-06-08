@@ -57,6 +57,6 @@ Before we compare with observations, we perform a local normalization for the re
 
 # Acknowledgements
 
-We acknowledge contributions from V. Adibekyan, H. Tabernero, and E. Delgado-Mena. We also thank the referees for improving this work. This research made use of the Vienna Atomic Line Database operated at Uppsala University, the Institute of Astronomy RAS in Moscow, and the University of Vienna. This research made use of  PyAstronomy and [Astropy](http://www.astropy.org) communities [@astropy:2013; @astropy:2018].
+We acknowledge contributions from V. Adibekyan, H. Tabernero, and E. Delgado-Mena. We also thank the referees for improving this work. This research made use of the Vienna Atomic Line Database operated at Uppsala University, the Institute of Astronomy RAS in Moscow, and the University of Vienna. We thank the PyAstronomy and [Astropy](http://www.astropy.org) communities [@astropy:2013].
 
 # References
