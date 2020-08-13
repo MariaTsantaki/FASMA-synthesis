@@ -49,6 +49,7 @@ class FASMA:
             self.configure(**kwargs)
         self.synthdriver()
 
+    @classmethod
     def configure(cls, cfgfile='config.yml', **kwargs):
         '''Create configuration file from kwargs.
         Otherwise set to default.
