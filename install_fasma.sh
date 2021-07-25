@@ -2,6 +2,7 @@
 
 tar -zxvf FASMA/models/apogee_kurucz.tar.gz -C FASMA/models/
 tar -zxvf FASMA/models/marcs.tar.gz -C FASMA/models/
+cp FASMA/models/MARCS1M.bin FASMA/models/marcs
 echo "Atmosphere models installed in dir: models"
 
 # Installing MOOG
