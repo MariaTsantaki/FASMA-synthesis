@@ -252,7 +252,7 @@ def read_observations(fname, start_synth, end_synth):
             elif 'CRVAL1' in header:
                 # Only 1-D spectrum accepted.
                 flux = hdulist[0].data  # flux data in the primary
-                flux = np.array(flux, dtype=np.float64)
+                flux = np.array(flux, dtype=float)
                 start_wave = header['CRVAL1']  # initial wavelenght
                 # step = header['CD1_1'] # step in wavelenght
                 step = header['CDELT1']  # increment per pixel
