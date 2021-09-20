@@ -296,7 +296,7 @@ def _read_raw_moog(fname='summary.out'):
 
     flux = list(itertools.chain(*data))
     flux = np.array(flux)
-    flux = flux.astype(np.float)
+    flux = flux.astype(float)
     flux = 1.0 - flux
 
     w0, dw, n = float(start_wave), float(step), len(flux)
