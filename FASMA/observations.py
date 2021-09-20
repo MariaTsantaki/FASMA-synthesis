@@ -135,6 +135,8 @@ def eso_fits(hdulist):
     # Main arrays:
     wave = np.array(scidata[0][ispec - 1])
     flux = np.array(scidata[0][iflux - 1])
+    wave = np.array(wave, dtype=float)
+    flux = np.array(flux, dtype=float)
     return wave, flux
 
 
