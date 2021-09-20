@@ -16,12 +16,12 @@ The python code runs with python 3 and is wrapped around the spectral synthesis 
 
 The spectral synthesis technique requires model atmospheres for the calculation of the synthetic spectra by MOOG which is provided with FASMA. FASMA includes two grids of models in MOOG readable format, [Kurucz](http://research.iac.es/proyecto/ATLAS-APOGEE/) and [marcs](https://marcs.astro.uu.se/) that cover the parameter space for both dwarf and giant stars with metallicity limit of -5.0 dex.
 
-Contact here for bugs: tsantaki@arcetri.astro.it
+Contact here for bugs: maria.tsantaki@inaf.it
 
 # Installation
 Installing FASMA requires 2 simple steps.
 
-**1)** Run the installation script `install_fasma.sh`, in the `FASMA-synthesis` folder, in order to unzip the model atmospheres and install MOOG (MOOG uses gfortan, f77, or g77 compilers). During this installation, the user will be asked about system requirements:
+**1)** Run the installation script `install_fasma.sh`, in the `FASMA-synthesis` folder, in order to unzip the model atmospheres and install MOOG (MOOG uses gfortran, f77, or g77 compilers). During this installation, a recent version of gfortran is required and the user will be asked about system requirements:
 'rh64' for 64-bit linux system, 'rh' for 32-bit linux system, 'maclap' for mac laptop, 'macdesk' for mac desktop.
 
 ```sh
