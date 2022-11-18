@@ -34,9 +34,9 @@ if [ "$answer" == "rh64" ] ;then
 elif [ "$answer" == "rh" ] ;then
     make -C FASMA/MOOG/ -f Makefile.rhsilent clean ; make -C FASMA/MOOG/ -f Makefile.rhsilent
 elif [ "$answer" == "maclap" ] ;then
-    sed -i '29s/pcl/mac/' FASMA/MOOG/Moogsilent.f
+    sed -i .bak '29s/pcl/mac/' FASMA/MOOG/Moogsilent.f
     make -C FASMA/MOOG/ -f Makefile.maclapsilent clean ; make -C FASMA/MOOG/ -f Makefile.maclapsilent
-    sed -i '29s/mac/pcl/' FASMA/MOOG/Moogsilent.f
+    sed -i .bak '29s/mac/pcl/' FASMA/MOOG/Moogsilent.f
 elif [ "$answer" == "macdesk" ] ;then
     sed -i '29s/pcl/mac/' FASMA/MOOG/Moogsilent.f
     make -C FASMA/MOOG/ -f Makefile.macdesksilent clean ; make -C FASMA/MOOG/ -f Makefile.macdesksilent
