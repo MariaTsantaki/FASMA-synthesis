@@ -338,21 +338,20 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
         pass
     # if there is not observed spectrum, plot only synthetic
     if xobs is None:
-        plt.plot(xinit, yinit, label='synthetic')
+        plt.plot(xinit, yinit, '.', label='synthetic')
     # if all exist
     else:
-        plt.plot(xinit, yinit, label='initial synthetic')
-        plt.plot(xobs, yobs, label='observed')
+        plt.plot(xinit, yinit, '.', label='initial synthetic')
+        plt.plot(xobs, yobs, '.', label='observed')
         if xfinal is not None:
-            plt.plot(xfinal, yfinal, label='final synthetic')
+            plt.plot(xfinal, yfinal, '.', label='final synthetic')
         if res:
             sl = InterpolatedUnivariateSpline(xfinal, yfinal, k=1)
             ymodel = sl(xobs)
-            plt.plot(xobs, (yobs - ymodel) * 10, label='residuals x10')
+            plt.plot(xobs, (yobs - ymodel) * 10, '.', label='residuals x10')
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
     plt.legend(loc='best', frameon=False)
-    plt.grid(True)
     plt.show()
     return
 
