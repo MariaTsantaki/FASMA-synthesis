@@ -4,11 +4,7 @@
 # My imports
 from __future__ import division
 import numpy as np
-from copy import copy
 from .mpfit import mpfit
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
 
 class MinimizeSynth:
     '''Minimize the chi square function between a synthetic spectrum to an observed.
@@ -53,7 +49,7 @@ class MinimizeSynth:
         if self.model.lower() == 'apogee_kurucz':
             bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5]
         if self.model.lower() == 'marcs':
-            bounds = [3500, 7500, 0.0, 5.5, -4.0, 1.0]
+            bounds = [3000, 8000, 0.0, 5.0, -4.0, 1.0]
         return bounds
 
     def bounds(self, i, p):
@@ -66,9 +62,9 @@ class MinimizeSynth:
         '''
 
         if self.model.lower() == 'apogee_kurucz':
-            bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
+            bounds = [3500, 30000, 0.0, 5.0, -5.0, 1.5, 0.0, 9.99, 0.0, 15.0, 0.0, 120.0]
         if self.model.lower() == 'marcs':
-            bounds = [3500, 7500, 0.0, 5.5, -4.0, 1.0, 0.0, 9.99, 0.0, 20.0, 0.0, 99.9]
+            bounds = [3000, 8000, 0.0, 5.0, -4.0, 1.0, 0.0, 9.99, 0.0, 15.0, 0.0, 120.0]
 
         if p[int((i - 1) / 2)] < bounds[i - 1]:
             p[int((i - 1) / 2)] = bounds[i - 1]
@@ -284,7 +280,7 @@ class MinimizeSynth:
             'parname': 'Teff',
             'limited': [1, 1],
             'limits': [self.parinfo_limit()[0], self.parinfo_limit()[1]],
-            'step': 100,
+            'step': 150,
             'mpside': 2,
             'fixed': self.fix_teff,
         }
@@ -315,7 +311,7 @@ class MinimizeSynth:
         vmac_info = {
             'parname': 'vmac',
             'limited': [1, 1],
-            'limits': [0.0, 20.0],
+            'limits': [0.0, 15.0],
             'step': 0.5,
             'mpside': 2,
             'fixed': self.fix_vmac,
@@ -323,7 +319,7 @@ class MinimizeSynth:
         vsini_info = {
             'parname': 'vsini',
             'limited': [1, 1],
-            'limits': [0.0, 99.0],
+            'limits': [0.0, 120.0],
             'step': 1.5,
             'mpside': 2,
             'fixed': self.fix_vsini,
@@ -420,7 +416,7 @@ def getMac(teff, logg):
     '''
 
     if logg > 3.80:
-        if teff > 5200:
+        if (teff > 5200) & (teff < 6000):
             mac = (
                 3.21
                 + (2.33 * (teff - 5777.0) * (10 ** (-3)))
