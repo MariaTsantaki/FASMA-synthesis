@@ -4,7 +4,7 @@
 from __future__ import division
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
-import os
+import pandas as pd
 from astropy.io import fits
 import matplotlib
 
@@ -147,7 +147,7 @@ def mad(data, axis=None):
     return np.median(np.absolute(data - np.median(data, axis)), axis)
 
 
-def local_norm(obs_fname, r, snr, lol=1.0, plot=False):
+def local_norm(obs_fname, r, snr, plot=False):
     '''Very local Normalization function. Makes a linear fit from the maximum points
     of each segment.
     Input
@@ -303,9 +303,9 @@ def read_obs_intervals(obs_fname, r, snr=None):
     delta_l : wavelenghth spacing
     '''
 
-    lol = 1.0  # This is here for no reason. Just for fun
     # Obtain the normalized spectrum for all regions
-    spec = [local_norm(obs_fname, ri, snr, lol) for ri in r]
+    spec = [local_norm(obs_fname, ri, snr) for ri in r]
+    spec = np.array(spec, dtype=object)
     xobs = np.hstack(np.vstack(spec).T[0])
     yobs = np.hstack(np.vstack(spec).T[1])
     delta_l = spec[0][2]
