@@ -405,9 +405,7 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     intervals = intervals[intervals['El'] == element]
     intervals.sort_values(by='wave', inplace=True)
 
-    N = []
     ranges = []
-    atomic = pd.DataFrame([])
     merged = [[intervals.wave.iloc[0] - 1.0, intervals.wave.iloc[0] + 1.0]]
     for i, ri in enumerate(intervals.wave):
         r1 = float(ri) - 1.0
@@ -419,11 +417,14 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
             merged.append([r1, r2])
         ranges.append([r1, r2])
 
+    N = []
+    atomic = []
     for ri in merged[:]:
         a = lines[(lines.wl > ri[0]) & (lines.wl < ri[1])]
         atomic = atomic.append(a)
         N.append(len(a))
 
+    atomic = pd.concat(atomic)
     atomic = atomic.fillna(' ')
     atomic = atomic.drop_duplicates()
     atomic.sort_values(by='wl', inplace=True)
