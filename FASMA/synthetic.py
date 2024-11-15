@@ -1,12 +1,10 @@
 # -*- coding: utf8 -*-
-
 # My imports
 from __future__ import division
 import numpy as np
 import os
 import pandas as pd
 from astropy.io import fits
-
 
 def save_synth_spec(x, y, initial=None, **options):
     '''Save synthetic spectrum of all intervals
@@ -59,7 +57,6 @@ def save_synth_spec(x, y, initial=None, **options):
     tbhdu.writeto('results/%s' % fname, overwrite=True)
     print('Synthetic spectrum saved: results/%s' % fname)
     return
-
 
 def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     '''This function broadens the given data using velocity kernels,
@@ -263,7 +260,6 @@ def broadening(x, y, vsini, vmac, resolution=None, epsilon=0.60):
     y_inst = instrumental_profile(x, y_rot, resolution)
     return x, y_inst
 
-
 def _read_raw_moog(fname='summary.out'):
     '''Read the summary.out and return them
 
@@ -303,7 +299,6 @@ def _read_raw_moog(fname='summary.out'):
     w = w0 + dw * n
     wavelength = np.linspace(w0, w, n, endpoint=False)
     return wavelength, flux
-
 
 def read_linelist(fname, intname='intervals.lst'):
     '''Read the line list (atomic data) and the file which includes the ranges
@@ -355,7 +350,6 @@ def read_linelist(fname, intname='intervals.lst'):
     header = 'Wavelength     ele       EP      loggf   vdwaals   Do'
     np.savetxt('linelist.moog', atomic, fmt=fmt, header=header)
     return ranges, atomic
-
 
 def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     '''Read the line list (atomic data) and the file which includes the ranges
@@ -417,11 +411,11 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
             merged.append([r1, r2])
         ranges.append([r1, r2])
 
-    N = []
     atomic = []
+    N = []
     for ri in merged[:]:
         a = lines[(lines.wl > ri[0]) & (lines.wl < ri[1])]
-        atomic = atomic.append(a)
+        atomic.append(a)
         N.append(len(a))
 
     atomic = pd.concat(atomic)
