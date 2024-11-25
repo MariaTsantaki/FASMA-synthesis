@@ -341,6 +341,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
         plt.plot(xinit, yinit, '.', label='synthetic')
     # if all exist
     else:
+        plt.plot([min(xobs), max(xobs)],[1.0, 1.0], color='black')
         plt.plot(xinit, yinit, '.', label='initial synthetic')
         plt.plot(xobs, yobs, '.', label='observed')
         if xfinal is not None:
