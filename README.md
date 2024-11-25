@@ -57,10 +57,10 @@ FASMA is so easy. You can run FASMA from the terminal by configuring the options
 $ fasma
 ```
 
-If the configuration file is called something else (e.g. myConf.cfg), then run:
+If the configuration file is called something else (e.g. congig.yml), then run:
 
 ```sh
-$ fasma myConf.cfg
+$ fasma config.yml
 ```
 
 FASMA produces a log file, `fasma.log`, which catches errors in order to inform the user.
