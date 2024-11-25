@@ -6,9 +6,6 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 import pandas as pd
 from astropy.io import fits
-import matplotlib
-
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 def eso_fits(hdulist):
@@ -235,7 +232,7 @@ def read_observations(fname, start_synth, end_synth):
     flux_obs : raw observed flux
     '''
 
-    extension = ('.dat', '.txt', '.spec', '.fits')
+    extension = ('.dat', '.txt', '.csv', '.spec', '.fits')
     if fname.endswith(extension):
         if (fname[-4:] == '.dat') or (fname[-4:] == '.txt'):
             with open(fname, 'r') as f:
@@ -262,10 +259,13 @@ def read_observations(fname, start_synth, end_synth):
                 w = start_wave + step * n
                 wave = np.linspace(start_wave, w, n, endpoint=False)
             else:
-                print('Spectrum is not in acceptable format.')
+                print('Spectrum is not in acceptable fits format.')
                 wave_obs, flux_obs, delta_l = (None, None, None)
                 return wave_obs, flux_obs, delta_l
-
+        elif fname[-5:] == '.csv':
+            df = pd.read_csv(fname)
+            flux = df.iloc[:, 1].values
+            wave = df.iloc[:, 0].values
         # These types are produced by FASMA (fits format).
         elif fname[-5:] == '.spec':
             hdulist = fits.open(fname)
