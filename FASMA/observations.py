@@ -262,7 +262,7 @@ def read_observations(fname, start_synth, end_synth):
                 print('Spectrum is not in acceptable fits format.')
                 wave_obs, flux_obs, delta_l = (None, None, None)
                 return wave_obs, flux_obs, delta_l
-        elif fname[-5:] == '.csv':
+        elif fname[-4:] == '.csv':
             df = pd.read_csv(fname)
             flux = df.iloc[:, 1].values
             wave = df.iloc[:, 0].values
