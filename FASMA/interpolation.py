@@ -161,86 +161,6 @@ def interpolator_marcs(params, atmtype='marcs'):
     newatm = np.hstack((newatm, vt_array[:, np.newaxis]))
     return newatm
 
-def interpolator_marcs_(params, fesun=7.41, microlim=3.0):
-    '''Interpolation for marcs models. The function is taken from STEPAR
-    (Tabernero et al. 2019) to deal the gaps in the grid.
-    Input
-    -----
-    params : ndarray
-      Stellar parameters for the Interpolation.
-
-    Output
-    ------
-    newatm : ndarray
-      The interpolated atmosphere, the columns and tauross in a tuple
-    '''
-
-    import _pickle as pic
-    import os
-
-    cwd = os.path.dirname(os.path.abspath(__file__))
-    fname = cwd + '/models/marcs/MARCS1M.bin'
-    if not os.path.isfile(fname):
-        return False
-
-    with open(fname, "rb") as gridMODS:
-        tmod = pic.load(gridMODS)
-        gmod = pic.load(gridMODS)
-        mmod = pic.load(gridMODS)
-        ltaumod = pic.load(gridMODS)
-        Temod = pic.load(gridMODS)
-        lpgmod = pic.load(gridMODS)
-        lpemod = pic.load(gridMODS)
-        rhoxmod = pic.load(gridMODS)
-        kmod = pic.load(gridMODS)
-
-    x = list(params)
-    Teff = int(x[0])
-    logg = np.round(x[1], 2)
-    metal = np.round(x[2], 2)
-    micro = np.round(x[3], 2)
-    sel = np.where((np.abs(tmod - Teff) <= 251.0) & (np.abs(mmod - metal) <= 0.251) & (np.abs(gmod - logg) <= 0.5))
-    lT = np.shape(tmod[sel])[0]
-    lm = np.shape(mmod[sel])[0]
-    lg = np.shape(gmod[sel])[0]
-    if micro > microlim:
-        micro = microlim
-
-    if lT > 1 and lm > 1 and lg > 1 and micro <= microlim and micro >= 0.0:
-        dT = max(tmod[sel]) - min(tmod[sel])
-        dg = max(gmod[sel]) - min(gmod[sel])
-        dm = max(mmod[sel]) - min(mmod[sel])
-        testt = (min(tmod[sel]) <= Teff) and (max(tmod[sel]) >= Teff) and dT > 0.0
-        testg = (min(gmod[sel]) <= logg) and (max(gmod[sel]) >= logg) and dg > 0.0
-        testm = (min(mmod[sel]) <= metal) and (max(mmod[sel]) >= metal) and dm > 0.0
-        if testt and testm and testg:
-            testint = True
-        else:
-            testint = False
-    else:
-        testint = False
-    if testint:
-
-        teint = griddata((tmod[sel], gmod[sel], mmod[sel]), Temod[sel], (Teff, logg, metal), method='linear', fill_value=np.nan, rescale=True)
-        if np.isfinite(teint[0]):
-            lpgint = griddata((tmod[sel], gmod[sel], mmod[sel]), lpgmod[sel], (Teff, logg, metal), method='linear', fill_value=np.nan, rescale=True)
-            lpeint = griddata((tmod[sel], gmod[sel], mmod[sel]), lpemod[sel], (Teff, logg, metal), method='linear', fill_value=np.nan, rescale=True)
-            rhoxint = griddata((tmod[sel], gmod[sel], mmod[sel]), rhoxmod[sel], (Teff, logg, metal), method='linear', fill_value=np.nan, rescale=True)
-            kint = griddata((tmod[sel], gmod[sel], mmod[sel]), kmod[sel], (Teff, logg, metal), method='linear', fill_value=np.nan, rescale=True)
-            nlayers = len(kint)
-            newatm = []
-            for i in range(nlayers):
-                newatm.append([rhoxint[i], teint[i], 10.0 ** lpgint[i], 10.0 ** lpeint[i], kint[i], ])
-            newatm = np.array(newatm)
-            vt_array = np.zeros(nlayers) + params[-1] * 1e5
-            newatm = np.hstack((newatm, vt_array[:, np.newaxis]))
-            return newatm
-        else:
-            print('There is a problem in the interpolation')
-            return False
-    else:
-        return False
-
 def interpolator(params, abund=0.0, elem=False, save=True, atmtype='apogee_kurucz', result=None):
     '''Function to connect all. For a given set of params, return a model atmosphere.
 
@@ -316,6 +236,7 @@ def save_model(model, params, abund=0.0, elem=False, type='apogee_kurucz', fout=
     if elem:
         # Get atomic number and solar abundance, only one element per time.
         num, solabund = solar_abundance(elem)
+        num_fe, solabund_fe = solar_abundance('Fe')
         footer = (
             '    %.3e\n'
             'NATOMS     2  %.2f\n'
@@ -325,10 +246,11 @@ def save_model(model, params, abund=0.0, elem=False, type='apogee_kurucz', fout=
             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'
             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'
             '         8.1    822.0     22.1'
-            % (vt * 1e5, feh, 7.41 + feh, num, solabund + abund)
+            % (vt * 1e5, feh, solabund_fe + feh, num, solabund + abund)
         )
 
     else:
+        num_fe, solabund_fe = solar_abundance('Fe')
         footer = (
             '    %.3e\n'
             'NATOMS     1  %.2f\n'
@@ -336,7 +258,7 @@ def save_model(model, params, abund=0.0, elem=False, type='apogee_kurucz', fout=
             'NMOL      19\n'
             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'
             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'
-            '         8.1    822.0     22.1' % (vt * 1e5, feh, 7.41 + feh)
+            '         8.1    822.0     22.1' % (vt * 1e5, feh, solabund_fe + feh)
         )
 
     _fmt = ('%15.8E', '%8.1f', '%.3E', '%.3E', '%.3E', '%.3E', '%.3E')
