@@ -5,6 +5,7 @@
 from __future__ import division
 import numpy as np
 from .mpfit import mpfit
+from .interpolation import solar_abundance
 
 class MinimizeSynth:
     '''Minimize the chi square function between a synthetic spectrum to an observed.
@@ -190,6 +191,9 @@ class MinimizeSynth:
         else:
             abund = round(float(res.params), 3)
             erabund = round(float(pcerror), 3)
+            # Get atomic number and solar abundance, only one element per time.
+            num, solabund = solar_abundance(self.elem)
+            abund = abund + solabund 
             # Save only the scaled error
             parameters = [abund, erabund, xreduced]
             for i, x in enumerate(res.params):
@@ -361,7 +365,7 @@ class MinimizeSynth:
         # Initial value is the initial metallicity.
         pelem = self.p0[2]
         # Set PARINFO structure for all free parameters for mpfit, Limits to be added..
-        elem_info = {'parname': self.elem, 'step': 0.10, 'mpside': 2}
+        elem_info = {'parname': self.elem, 'step': 0.15, 'mpside': 2, 'limited': [1, 1], 'limits': [-7.0, 6.0]}
         self.parinfo = [elem_info]
 
         # A dictionary which contains the parameters to be passed to the user-supplied function specified by myfunct.
@@ -380,16 +384,15 @@ class MinimizeSynth:
             self.myfunct,
             xall=[pelem],
             parinfo=self.parinfo,
-            ftol=1e-4,
-            xtol=1e-4,
-            gtol=1e-4,
+            ftol=1e-8,
+            xtol=1e-8,
+            gtol=1e-16,
             functkw=self.fa,
             maxiter=20,
         )
         self.dof = len(self.yobs) - len(m.params)
         self.parameters = self.convergence_info(m)
         return self.parameters, self.xobs, self.yobs
-
 
 def getMic(teff, logg, feh):
     '''Calculate microturbulence.
@@ -404,7 +407,6 @@ def getMic(teff, logg, feh):
     if mic < 0.1:
         mic = 0.1
     return round(mic, 2)
-
 
 def getMac(teff, logg):
     '''Calculate macroturbulence.
