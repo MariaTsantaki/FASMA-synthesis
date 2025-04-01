@@ -11,6 +11,7 @@ from .minimization import MinimizeSynth, getMic, getMac
 from .synthetic import read_linelist, read_linelist_elem, save_synth_spec
 import time
 import yaml
+from .interpolation import solar_abundance
 
 class FASMA:
     def __init__(self, cfgfile='config.yml', overwrite=None, **kwargs):
@@ -122,7 +123,8 @@ class FASMA:
 
         for item, line in data.items():
             self._setup(line)
-            yield self.initial, self.options
+            self.item = item
+            yield self.initial, self.options, self.item
 
     def _prepare(self):
         '''Check if linelist exists and create the first synthetic spectrum with
@@ -142,7 +144,7 @@ class FASMA:
             raise StopIteration
 
         if self.options['element']:
-            el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+            el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
             if self.options['element'] not in el:
                 message = 'This element is not in the line list:', self.options['element']
                 print(message)
@@ -303,6 +305,8 @@ class FASMA:
                     'erMn',
                     'Ni',
                     'erNi',
+                    'Fe',
+                    'erFe',
                     'chi^2',
                     'time',
                     'model',
@@ -394,7 +398,7 @@ class FASMA:
             if round(params2[1], 2) == 5.0:
                 params2[1] = 4.9
                 self.options['fix_logg'] = True
-            self.options['fix_vt'] = True
+            # self.options['fix_vt'] = True
             self.options['fix_vmac'] = True
             function = MinimizeSynth(
                 params2, self.xo, self.yo, self.ranges, **self.options
@@ -436,10 +440,10 @@ class FASMA:
         self.logger.info('Minimization done.')
 
         # Make the output array to save results.
-        el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni']
+        el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
         a = np.empty(2 * len(el) + 1)
         a[:] = np.nan
-        ind1 = el.index(self.options['element'])
+        ind1 = (el.index(self.options['element'])*2)
         ind2 = ind1 + 1
         a[ind1] = self.elemabund[0]
         a[ind2] = self.elemabund[1]
@@ -448,7 +452,7 @@ class FASMA:
         self.status = 1
         return self.status
 
-    def plotRunner(self, x=None, y=None, xs=None, ys=None, xf=None, yf=None, res=False):
+    def plotRunner(self, x=None, y=None, xs=None, ys=None, xf=None, yf=None, res=False, star=None):
         '''A function to plot spectra with or without residuals.
 
         Output
@@ -475,6 +479,8 @@ class FASMA:
                 **self.options
             )
         elif self.options['element']:
+            num, solabund = solar_abundance(self.options['element'])
+            self.elemabund[0] = self.elemabund[0] - solabund 
             # Create final spectrum with final parameters.
             xf, yf = func(
                 self.initial,
@@ -490,9 +496,9 @@ class FASMA:
             xf, yf = (None, None)
 
         if self.options['plot_res']:
-            plot(x, y, xs, ys, xf, yf, res=True)
+            plot(x, y, xs, ys, xf, yf, res=True, star=self.item)
         else:
-            plot(x, y, xs, ys, xf, yf)
+            plot(x, y, xs, ys, xf, yf, star=self.item)
 
     def saveRunner(self):
         '''A function to save spectra in a fits like format in the results/ folder.
@@ -523,7 +529,7 @@ class FASMA:
         self._output(header=True, stellarparams=True, abundance=True)
 
         # Define options
-        for (self.initial, self.options) in self._genStar():
+        for (self.initial, self.options, self.item) in self._genStar():
             self.logger.info(
                 'Initial parameters: {:.0f}, {:.2f}, {:.2f}, {:.2f}'.format(
                     *self.initial
@@ -541,6 +547,10 @@ class FASMA:
                     self.ranges, snr=self.options['snr'])
                     print('Observed spectrum contains %s points' % len(self.xobs))
                     self.logger.info('Observed spectrum read.')
+                    print(
+                        'This is your observed spectrum: %s'
+                        % self.options['observations']
+                    )
                 elif os.path.isfile('spectra/' + self.options['observations']):
                     print(
                         'This is your observed spectrum: %s'
@@ -624,7 +634,7 @@ class FASMA:
 
             if self.options['plot']:
                 self.logger.info('Plotting results.')
-                self.plotRunner(x=self.xobs, y=self.yobs, xs=self.xspec, ys=self.yspec)
+                self.plotRunner(x=self.xobs, y=self.yobs, xs=self.xspec, ys=self.yspec, star=self.item)
 
     def result(self):
         '''If any, get the output parameters.
