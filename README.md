@@ -419,7 +419,7 @@ There are some basic tests to check if the installation is correct in `FASMA/tes
 
 # Contributing
 
-FASMA needs input to improve. Users are welcome to ask questions, propose a new features, or report a bugs either by opening an issue on GitHub or contact here: maria.tsantaki@inaf.it
+FASMA needs input to improve. Users are welcome to ask questions, propose a new features, or report a bugs either by opening an issue on GitHub (preferably) or contact here: maria.tsantaki@inaf.it
 
 
 # AUTHORS
