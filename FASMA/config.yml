@@ -8,7 +8,6 @@ star1:
     vmac: 3.21
     vsini: 1.90
     model: apogee_kurucz
-    MOOGv: 2014
     save: False
     element: False
     fix_teff: False
