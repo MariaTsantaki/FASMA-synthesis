@@ -175,7 +175,6 @@ star:
   vmac: 3.21
   vsini: 1.9
   vt: 1.0
-  MOOGv: 2019
   damping: 1
   element: False
   fix_feh: False
@@ -291,18 +290,13 @@ The default options of FASMA can be changed in the configuration file `config.cf
 model:        marcs
 ```
 
-2) The version of MOOG currently is 2019 but can easily updated to newer versions. This is relevant only if the output files change for future updates of MOOG.
-```yaml
-MOOGv:        2019
-```
-
-3) If save is True, the output synthetic spectrum is saved in the folder `results`. The output is saved in a .spec format and is read with the astropy.io fits module.
+2) If save is True, the output synthetic spectrum is saved in the folder `results`. The output is saved in a .spec format and is read with the astropy.io fits module.
 
 ```yaml
 save:         False
 ```
 
-4) If any of these options is set to True, then they are fixed during the minimization process.
+3) If any of these options is set to True, then they are fixed during the minimization process.
 ```yaml
 teff:         False
 logg:         False
@@ -313,39 +307,39 @@ vsini:        False
 ```
 
 
-5) These are plotting options of the synthetic/observed spectra (plot) and of their residuals in case of minimization (plot_res).
+4) These are plotting options of the synthetic/observed spectra (plot) and of their residuals in case of minimization (plot_res).
 ```yaml
 plot:         False
 plot_res:     False
 ```
 
-6) The damping option of MOOG to deal with the van der Waals broadening. The acceptable values are: 0, 1, 2.
+5) The damping option of MOOG to deal with the van der Waals broadening. The acceptable values are: 0, 1, 2.
 ```yaml
 damping:      1
 ```
 
-7) The wavelength step for the synthetic spectrum to be created (step_wave) and the flux limit to consider opacity distributions from the neighboring lines (step_flux), both measured in Angstrom. These are the same options in MOOG.
+6) The wavelength step for the synthetic spectrum to be created (step_wave) and the flux limit to consider opacity distributions from the neighboring lines (step_flux), both measured in Angstrom. These are the same options in MOOG.
 ```yaml
 step_wave:    0.01
 step_flux:    3.0
 ```
 
-8) If minimize appears in the options, the minimization process will start to find the best-fit parameters for the observed spectrum, therefore observations must be included in the options.
+7) If minimize appears in the options, the minimization process will start to find the best-fit parameters for the observed spectrum, therefore observations must be included in the options.
 ```yaml
 minimize:     False
 ```
 
-9) The refine option performs corrections on the derived parameters after the minimization for a more detailed analysis. After a first run, a second minimization starts with optimized microturbulence and macroturbulence values according to the parameters of the first run. Refine will also remove bad flux points and missing lines.
+8) The refine option performs corrections on the derived parameters after the minimization for a more detailed analysis. After a first run, a second minimization starts with optimized microturbulence and macroturbulence values according to the parameters of the first run. Refine will also remove bad flux points and missing lines.
 ```yaml
 refine:       False
 ```
 
-10) The name of the spectrum is given here. The full path of the spectrum should be given. Note that the spectrum has to be in a specific format (see below).
+9) The name of the spectrum is given here. The full path of the spectrum should be given. Note that the spectrum has to be in a specific format (see below).
 ```yaml
 observations: False
 ```
 
-11) These files contain the lines with their atomic parameters (`linelist.lst`) and the intervals of the synthesis (`intervals.lst`). FASMA already has specific lists in the `rawLinelist` folder.
+10) These files contain the lines with their atomic parameters (`linelist.lst`) and the intervals of the synthesis (`intervals.lst`). FASMA already has specific lists in the `rawLinelist` folder.
 The complete path should be given.
 
 ```yaml
@@ -353,22 +347,22 @@ linelist:   linelist.lst
 intervals_file:   intervals.lst
 ```
 
-12) The signal-to-noise (SNR) value of the observed spectra can be given by the user (optional). It is used for the normalization process. Otherwise, the SNR is calculated by the PyAstronomy function within FASMA.
+11) The signal-to-noise (SNR) value of the observed spectra can be given by the user (optional). It is used for the normalization process. Otherwise, the SNR is calculated by the PyAstronomy function within FASMA.
 ```yaml
 snr:          null
 ```
 
-13) The resolution of the synthetic spectrum or the resolution of the observed spectrum. This value is necessary when minimization is on.
+12) The resolution of the synthetic spectrum or the resolution of the observed spectrum. This value is necessary when minimization is on.
 ```yaml
 resolution:   null
 ```
 
-14) The limb darkening coefficient for the vsini broadening calculations. It is set fixed to 0.6 but can have different values depending on luminosity class.
+13) The limb darkening coefficient for the vsini broadening calculations. It is set fixed to 0.6 but can have different values depending on luminosity class.
 ```yaml
 limb:         0.6
 ```
 
-15) This option will start the minimization process to derive the chemical abundance of a specific element. The element has to be set from this list: Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni. In this case the line list and intervals are different than the standard derivation of the stellar parameters and should be changed to `elements.lst` and `intervals_elements.lst`, respectively located in the `rawLinelist` folder. For the derivation of the chemical abundance the minimize option should be False.
+14) This option will start the minimization process to derive the chemical abundance of a specific element. The element has to be set from this list: Li, Na, Mg, Al, Si, Ca, Sc, Ti, V, Cr, Mn, Ni. In this case the line list and intervals are different than the standard derivation of the stellar parameters and should be changed to `elements.lst` and `intervals_elements.lst`, respectively located in the `rawLinelist` folder. For the derivation of the chemical abundance the minimize option should be False.
 ```yaml
 element:     False
 ```
