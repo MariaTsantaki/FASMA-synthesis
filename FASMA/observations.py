@@ -316,7 +316,7 @@ def read_obs_intervals(obs_fname, r, snr=None):
     return xobs, yobs, delta_l
 
 
-def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
+def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False, star='HD105'):
     '''Function to plot synthetic and observed spectra.
     Input
     -----
@@ -343,7 +343,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
     else:
         plt.plot([min(xobs), max(xobs)],[1.0, 1.0], color='black')
         plt.plot(xinit, yinit, '.', label='initial synthetic')
-        plt.plot(xobs, yobs, '.', label='observed')
+        plt.plot(xobs, yobs, label='observed')
         if xfinal is not None:
             plt.plot(xfinal, yfinal, '.', label='final synthetic')
         if res:
@@ -352,6 +352,7 @@ def plot(xobs, yobs, xinit, yinit, xfinal, yfinal, res=False):
             plt.plot(xobs, (yobs - ymodel) * 10, '.', label='residuals x10')
     plt.xlabel(r'Wavelength $\AA{}$')
     plt.ylabel('Normalized flux')
+    plt.title(str(star))
     plt.legend(loc='best', frameon=False)
     plt.show()
     return
