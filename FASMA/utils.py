@@ -148,7 +148,6 @@ marcs = {
     'logg': (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0),
 }
 
-
 class GetModels:
     '''
     Find the names of the closest grid points for a given effective
@@ -180,7 +179,7 @@ class GetModels:
             self.grid = atmmodels[atmtype][0]
         else:
             raise NotImplementedError(
-                'You request for atmospheric models: %s is not available' % atmtype
+                'Your request for atmospheric models: %s is not available' % atmtype
             )
         self.grid['teff'] = np.asarray(self.grid['teff'])
         self.grid['logg'] = np.asarray(self.grid['logg'])
@@ -250,11 +249,12 @@ class GetModels:
         if os.path.isfile(fname):
             return fname, teff_model, logg_model
         else:
-            print('Models do not exist.')
-            return False
+            print('Models do not exist:', teff_model, logg_model, feh_model)
+            # return False
         # Change the Teff (up or down) to compensate for the gap
         teff_model0 = teff_model
         idx = np.where(teff_model == self.grid['teff'])[0][0]
+        print(teff_model, logg_model, feh_model)
         while True:
             idx = idx + 1 if upper else idx - 1
             try:
@@ -282,6 +282,7 @@ class GetModels:
                 for feh_m in feh_model:
                     upper = True if self.teff < teff_m else False
                     if self._model_exists(teff_m, logg_m, feh_m, upper) is False:
+                        # do sth
                         return False
                     fname, Te, ge = self._model_exists(teff_m, logg_m, feh_m, upper)
                     teff_model[i] = Te
@@ -370,7 +371,6 @@ class GetModels:
             'logg': (self.logg, logg_model),
             'feh': (self.feh, feh_model),
         }
-
 
 def _update_par_synth(start_wave, end_wave, **kwargs):
     '''Update the parameter file (batch.par) with new linelists, atmosphere
@@ -482,7 +482,6 @@ def _update_par_synth(start_wave, end_wave, **kwargs):
     with open('batch.par', 'w') as moog:
         moog.writelines(moog_contents)
 
-
 def _run_moog(par='batch.par', driver='synth'):
     '''Run MOOGSILENT with the given parameter file
 
@@ -506,7 +505,6 @@ def _run_moog(par='batch.par', driver='synth'):
         os.system(path + '/MOOG/./MOOGSILENT < stupid.tmp > /dev/null 2>&1')
         os.remove('stupid.tmp')
 
-
 def fun_moog_synth(
     x,
     atmtype,
@@ -515,7 +513,6 @@ def fun_moog_synth(
     ranges=None,
     results='summary.out',
     driver='synth',
-    version=2014,
     **options
 ):
     '''Run MOOG and create synthetic spectrum for the synth driver.
@@ -526,7 +523,6 @@ def fun_moog_synth(
     :par: The parameter file (batch.par)
     :results: The summary file
     :driver: Which driver to use when running MOOG
-    :version: The version of MOOG
     :returns: w, f : wavelength and flux
     '''
 
