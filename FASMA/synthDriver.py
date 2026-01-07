@@ -63,7 +63,6 @@ class FASMA:
             'vmac': 3.21,
             'vsini': 1.90,
             'model': 'apogee_kurucz',
-            'MOOGv': 2014,
             'save': False,
             'element': False,
             'fix_teff': False,
@@ -88,6 +87,7 @@ class FASMA:
 
         defaults.update(kwargs)
         dic = {}
+        print(defaults)
         dic['star'] = defaults
         with open(cfgfile, 'w') as f:
             yaml.dump(dic, f)
@@ -144,8 +144,9 @@ class FASMA:
             raise StopIteration
 
         if self.options['element']:
-            el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
+            el = ['Li', 'N', 'O', 'C', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
             if self.options['element'] not in el:
+                print(el)
                 message = 'This element is not in the line list:', self.options['element']
                 print(message)
                 self.logger.error(message)
@@ -175,7 +176,6 @@ class FASMA:
                 elem=self.options['element'],
                 ranges=self.ranges,
                 driver='synth',
-                version=self.options['MOOGv'],
                 **self.options
             )
         else:
@@ -188,14 +188,8 @@ class FASMA:
                 atmtype=self.options['model'],
                 ranges=self.ranges,
                 driver='synth',
-                version=self.options['MOOGv'],
                 **self.options
             )
-
-        if __name__ in ('__main__', 'synthDriver'):
-            self.options['GUI'] = False  # Running batch mode
-        else:
-            self.options['GUI'] = True
 
     def _options(self, options=None):
         '''Reads the options inside the config file otherwise set to defaults.
@@ -210,7 +204,6 @@ class FASMA:
             'vmac': 3.21,
             'vsini': 1.90,
             'model': 'apogee_kurucz',
-            'MOOGv': 2014,
             'save': False,
             'element': False,
             'fix_teff': False,
@@ -241,7 +234,6 @@ class FASMA:
             defaults['step_wave'] = float(defaults['step_wave'])
             defaults['step_flux'] = float(defaults['step_flux'])
             defaults['limb'] = float(defaults['limb'])
-            defaults['MOOGv'] = int(defaults['MOOGv'])
             if defaults['observations'] and (defaults['snr'] is None):
                 if os.path.isfile(str(defaults['observations'])):
                     defaults['snr'] = snr(defaults['observations'])
@@ -283,6 +275,12 @@ class FASMA:
                     'vsini',
                     'Li',
                     'erLi',
+                    'N',
+                    'erN',
+                    'O',
+                    'erO',
+                    'C',
+                    'erC',
                     'Na',
                     'erNa',
                     'Mg',
@@ -440,7 +438,7 @@ class FASMA:
         self.logger.info('Minimization done.')
 
         # Make the output array to save results.
-        el = ['Li', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
+        el = ['Li', 'N', 'O', 'C', 'Na', 'Mg', 'Al', 'Si', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Ni', 'Fe']
         a = np.empty(2 * len(el) + 1)
         a[:] = np.nan
         ind1 = (el.index(self.options['element'])*2)
@@ -475,21 +473,19 @@ class FASMA:
                 atmtype=self.options['model'],
                 ranges=self.ranges,
                 driver='synth',
-                version=self.options['MOOGv'],
                 **self.options
             )
         elif self.options['element']:
             num, solabund = solar_abundance(self.options['element'])
-            self.elemabund[0] = self.elemabund[0] - solabund 
+            fabund = self.elemabund[0] - solabund 
             # Create final spectrum with final parameters.
             xf, yf = func(
                 self.initial,
                 atmtype=self.options['model'],
-                abund=self.elemabund[0],
+                abund=fabund,
                 elem=self.options['element'],
                 ranges=self.ranges,
                 driver='synth',
-                version=self.options['MOOGv'],
                 **self.options
             )
         else:
@@ -500,7 +496,7 @@ class FASMA:
         else:
             plot(x, y, xs, ys, xf, yf, star=self.item)
 
-    def saveRunner(self):
+    def saveRunner(self, xobs=None, yobs=None, xs=None, ys=None, xf=None, yf=None, star=None):
         '''A function to save spectra in a fits like format in the results/ folder.
         If initial spectrum exists, save it.
 
@@ -513,10 +509,60 @@ class FASMA:
             os.mkdir('results')
             self.logger.info('results directory was created')
 
-        if self.xspec is not None:
-            save_synth_spec(
-                self.xspec, self.yspec, initial=self.initial, **self.options
+        if self.options['minimize']:
+            # Create final spectrum with final parameters.
+            p1 = [
+                self.params[0],
+                self.params[2],
+                self.params[4],
+                self.params[6],
+                self.params[8],
+                self.params[10],
+            ]
+            xf, yf = func(
+                p1,
+                atmtype=self.options['model'],
+                ranges=self.ranges,
+                driver='synth',
+                **self.options
             )
+        elif self.options['element']:
+
+            num, solabund = solar_abundance(self.options['element'])
+            fabund = self.elemabund[0] - solabund 
+            # Create final spectrum with final parameters.
+            xf, yf = func(
+                self.initial,
+                atmtype=self.options['model'],
+                abund=fabund,
+                elem=self.options['element'],
+                ranges=self.ranges,
+                driver='synth',
+                **self.options
+            )
+
+            p1 = [
+                self.initial[0],
+                self.initial[1],
+                self.initial[2],
+                self.initial[3],
+                self.initial[4],
+                self.initial[5],
+            ]
+        else:
+            p1 = [
+                self.initial[0],
+                self.initial[1],
+                self.initial[2],
+                self.initial[3],
+                self.initial[4],
+                self.initial[5],
+            ]
+
+            xf, yf = (None, None)
+
+        if xs is not None:
+            save_synth_spec(xobs=xobs, yobs=yobs, xs=xs, ys=ys, xf=xf, yf=yf, params=p1, star=self.item, **self.options)
         else:
             print('No spectrum was created.')
 
@@ -630,7 +676,7 @@ class FASMA:
 
             if self.options['save']:
                 self.logger.info('Save synthetic spectrum.')
-                self.saveRunner()
+                self.saveRunner(xobs=self.xobs, yobs=self.yobs, xs=self.xspec, ys=self.yspec, star=self.item)
 
             if self.options['plot']:
                 self.logger.info('Plotting results.')
