@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from astropy.io import fits
 
-def save_synth_spec(x, y, initial=None, **options):
+def save_synth_spec(xobs=None, yobs=None, xs=None, ys=None, xf=None, yf=None, params=None, star=None, **options):
     '''Save synthetic spectrum of all intervals
 
     Input
@@ -24,33 +24,46 @@ def save_synth_spec(x, y, initial=None, **options):
     '''
     # Create header
     header = fits.Header()
-    header['CRVAL1'] = x[0]
-    header['CDELT1'] = x[1] - x[0]
+    header['CRVAL1'] = xs[0]
+    header['CDELT1'] = xs[1] - xs[0]
 
-    if initial:
-        fname = (
-            str(initial[0])
+    fname = (
+            str(star) 
             + '_'
-            + str(initial[1])
+            + str(params[0])
             + '_'
-            + str(initial[2])
+            + str(params[1])
             + '_'
-            + str(initial[3])
+            + str(params[2])
             + '_'
-            + str(initial[4])
+            + str(params[3])
             + '_'
-            + str(initial[5])
+            + str(params[4])
+            + '_'
+            + str(params[5])
             + '_'
             + str(options['resolution'])
             + '.spec'
-        )
-    else:
-        fname = 'synthetic.spec'
-
+        )        
+    if xf is None: 
+        xf = np.empty(len(xs))
+        xf[:] = np.nan
+        yf = np.empty(len(xs))
+        yf[:] = np.nan
+    if xobs is None: 
+        xobs = np.empty(len(xs))
+        xobs[:] = np.nan
+        yobs = np.empty(len(xs))
+        yobs[:] = np.nan
+        
     tbhdu = fits.BinTableHDU.from_columns(
         [
-            fits.Column(name='wavelength', format='D', array=x),
-            fits.Column(name='flux', format='D', array=y),
+            fits.Column(name='wavelength_synthetic_initial', format='D', array=xs),
+            fits.Column(name='flux_synthetic_initial', format='D', array=ys),
+            fits.Column(name='wavelength_synthetic_final', format='D', array=xf),
+            fits.Column(name='flux_synthetic_final', format='D', array=yf),
+            fits.Column(name='wavelength_observed', format='D', array=xobs),
+            fits.Column(name='flux_observed', format='D', array=yobs),
         ],
         header=header,
     )
@@ -397,13 +410,14 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     except AttributeError:
         print('The format of the line list is not correct.')
     intervals = intervals[intervals['El'] == element]
+    intervals['wave'] = intervals['wave'].apply(pd.to_numeric)
     intervals.sort_values(by='wave', inplace=True)
 
     ranges = []
-    merged = [[intervals.wave.iloc[0] - 1.0, intervals.wave.iloc[0] + 1.0]]
+    merged = [[intervals.wave.iloc[0] - 2.0, intervals.wave.iloc[0] + 2.0]]
     for i, ri in enumerate(intervals.wave):
-        r1 = float(ri) - 1.0
-        r2 = float(ri) + 1.0
+        r1 = float(ri) - 2.0
+        r2 = float(ri) + 2.0
         previous = merged[-1]
         if r1 <= previous[1]:
             previous[1] = max(previous[1], r2)
@@ -423,6 +437,7 @@ def read_linelist_elem(fname, element=None, intname='intervals_elements.lst'):
     atomic = atomic.drop_duplicates()
     atomic.sort_values(by='wl', inplace=True)
     N = sum(N)
+    merged = [[x[0]-3., x[1]+3.] for x in merged]
     # Create line list for MOOG
     print('Linelist contains %s lines in %s interval(s).' % (N, len(merged)))
     fmt = ['%9.3f', '%10.1f', '%9.2f', '%9.3f', '%9.3f', '%7.4s']
