@@ -357,7 +357,11 @@ class GetModels:
         if logg_model != logg0:
             if len(np.unique(logg_model)) == 1:  # We have the same values, change one
                 idx = np.where(logg_model[1] == self.grid['logg'])[0][0]
-                logg_model[1] = self.grid['logg'][idx + 1]
+                try:
+                    logg_model[1] = self.grid['logg'][idx + 1]
+                except IndexError:
+                    logg_model[1] = self.grid['logg'][idx - 1]
+                    
             models = []
             teff_model = list(teff0)
             models, teff_model, logg_model = self._looping_models(
