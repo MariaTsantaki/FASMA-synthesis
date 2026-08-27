@@ -131,17 +131,26 @@ def interpolator_marcs(params, atmtype='marcs'):
     feh = mdict['feh']
     # Making the surrounding grid points
     gridpoints = []
-    for temp in teff[1]:
-        for grav in logg[1]:
-            for metal in feh[1]:
-                gridpoints.append((temp, grav, metal))
+    if len(logg[1]) == 1:
+        for temp in teff[1]:
+                for metal in feh[1]:
+                    gridpoints.append((temp, metal))
+    elif len(feh[1]) == 1:
+        for temp in teff[1]:
+            for grav in logg[1]:
+                gridpoints.append((temp, grav))
+    else: 
+        for temp in teff[1]:
+            for grav in logg[1]:
+                for metal in feh[1]:
+                    gridpoints.append((temp, grav, metal))
+
     gridpoints = np.asarray(gridpoints)
     # Define the points to obtain at the end
-    teff = teff[0]
-    logg = logg[0]
-    feh = feh[0]
+    teff_point = teff[0]
+    logg_point = logg[0]
+    feh_point = feh[0]
     options = {'method': 'linear', 'rescale': True}
-
     # Reading the models
     models = []
     for mname in mnames:
@@ -151,12 +160,30 @@ def interpolator_marcs(params, atmtype='marcs'):
     layers = range(min([model.shape[0] for model in models]))
     columns = range(6)
     newatm = np.zeros((len(layers), len(columns)))
-    for layer in layers:
-        for column in columns:
-            tlayer = [model[layer, column] for model in models]
-            newatm[layer, column] = griddata(
-                gridpoints, tlayer, (teff, logg, feh), **options
-            )
+
+    if len(logg[1]) == 1:
+        print('Fewer models for logg')
+        for layer in layers:
+            for column in columns:
+                tlayer = [model[layer, column] for model in models]
+                newatm[layer, column] = griddata(
+                gridpoints, tlayer, (teff_point, feh_point), **options
+                )
+    elif len(feh[1]) == 1:
+        print('Fewer models for metallicity')
+        for layer in layers:
+            for column in columns:
+                tlayer = [model[layer, column] for model in models]
+                newatm[layer, column] = griddata(
+                gridpoints, tlayer, (teff_point, logg_point), **options
+                )
+    else:
+        for layer in layers:
+            for column in columns:
+                tlayer = [model[layer, column] for model in models]
+                newatm[layer, column] = griddata(
+                gridpoints, tlayer, (teff_point, logg_point, feh_point), **options
+                )
     vt_array = np.zeros(len(layers)) + params[-1] * 1e5
     newatm = np.hstack((newatm, vt_array[:, np.newaxis]))
     return newatm
@@ -187,7 +214,6 @@ def interpolator(params, abund=0.0, elem=False, save=True, atmtype='apogee_kuruc
 
     params = list(params)
     if atmtype == 'marcs':
-        # newatm = interpolator_marcs(params, fesun=7.41, microlim=3.0)
         newatm = interpolator_marcs(params, atmtype=atmtype)
     elif atmtype == 'apogee_kurucz':
         newatm = interpolator_kurucz(params, atmtype=atmtype)
@@ -251,14 +277,55 @@ def save_model(model, params, abund=0.0, elem=False, type='apogee_kurucz', fout=
 
     else:
         num_fe, solabund_fe = solar_abundance('Fe')
+        num_li, solabund_li = solar_abundance('Li')
+        num_be, solabund_be = solar_abundance('Be')
+        num_c, solabund_c = solar_abundance('C')
+        num_n, solabund_n = solar_abundance('N')
+        num_o, solabund_o = solar_abundance('O')
+        num_na, solabund_na = solar_abundance('Na')
+        num_mg, solabund_mg = solar_abundance('Mg')
+        num_al, solabund_al = solar_abundance('Al')
+        num_si, solabund_si = solar_abundance('Si')
+        num_cl, solabund_cl = solar_abundance('Cl')
+        num_ar, solabund_ar = solar_abundance('Ar')
+        num_ca, solabund_ca = solar_abundance('Ca')
+        num_ti, solabund_ti = solar_abundance('Ti')
+        num_cr, solabund_cr = solar_abundance('Cr')
+        num_mn, solabund_mn = solar_abundance('Mn')
+        num_co, solabund_co = solar_abundance('Co')
+        num_ni, solabund_ni = solar_abundance('Ni')
+        num_ba, solabund_ba = solar_abundance('Ba')
         footer = (
             '    %.3e\n'
-            'NATOMS     1  %.2f\n'
+            'NATOMS     19  %.2f\n'
             '      26.0    %.2f\n'
+            '      3.0    %.2f\n'
+            '      4.0    %.2f\n'
+            '      6.0    %.2f\n'
+            '      7.0    %.2f\n'
+            '      8.0    %.2f\n'
+            '      11.0    %.2f\n'
+            '      12.0    %.2f\n'
+            '      13.0    %.2f\n'
+            '      14.0    %.2f\n'
+            '      17.0    %.2f\n'
+            '      18.0    %.2f\n'
+            '      20.0    %.2f\n'
+            '      22.0    %.2f\n'
+            '      24.0    %.2f\n'
+            '      25.0    %.2f\n'
+            '      27.0    %.2f\n'
+            '      28.0    %.2f\n'
+            '      56.1    %.2f\n'
             'NMOL      19\n'
             '      606.0    106.0    607.0    608.0    107.0    108.0    112.0  707.0\n'
             '       708.0    808.0     12.1  60808.0  10108.0    101.0     6.1    7.1\n'
-            '         8.1    822.0     22.1' % (vt * 1e5, feh, solabund_fe + feh)
+            '         8.1    822.0     22.1' % (vt * 1e5, feh, solabund_fe + feh, 
+            solabund_li + feh, solabund_be + feh, 
+            solabund_c + feh, solabund_n + feh, solabund_o + feh, solabund_na + feh, solabund_mg + feh,
+            solabund_al + feh, solabund_si + feh, solabund_cl + feh, solabund_ar + feh,
+            solabund_ca + feh, solabund_ti + feh, solabund_cr + feh, solabund_mn + feh,
+            solabund_co + feh, solabund_ni + feh, solabund_ba + feh)
         )
 
     _fmt = ('%15.8E', '%8.1f', '%.3E', '%.3E', '%.3E', '%.3E', '%.3E')
